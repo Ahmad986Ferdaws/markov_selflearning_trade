@@ -1,0 +1,791 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>REGIME — the model has no edge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* Black, white, neutrals — one neon pop. Data keeps green/red. */
+    --bg:#FAFAF7; --bg2:#FFFFFF; --bg3:#F0EFE9;
+    --line:#E5E4DE; --line2:#D2D1C9;
+    --text:#0E0F0C; --soft:#3F4039; --muted:#6F7068; --faint:#A5A69E; --silver:#9CA3AF;
+    --black:#0B0B0A; --black2:#141412; --wline:#262622;
+    --neon:#CCFF00;
+    --gain:#00C805; --loss:#FF5000; --loss-text:#C23B00;
+    --serif:'Newsreader','Iowan Old Style',Georgia,serif;
+    --sans:'Schibsted Grotesk','Inter',system-ui,-apple-system,sans-serif;
+    --mono:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,monospace;
+    --e:cubic-bezier(.22,1,.36,1);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  ::selection{background:var(--neon);color:#0B0B0A}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.55;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overflow-x:hidden}
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums slashed-zero;font-feature-settings:"tnum" 1,"zero" 1}
+  td,.num,.big,.eqv,.stat{font-variant-numeric:tabular-nums slashed-zero;font-feature-settings:"tnum" 1,"zero" 1}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1160px;margin:0 auto;padding:0 48px}
+  h1,h2,h3{font-family:var(--serif);font-weight:400;letter-spacing:-.015em;color:inherit}
+  .eyebrow{font-family:var(--sans);font-weight:500;font-size:13px;letter-spacing:.01em;color:var(--muted)}
+
+  /* ---- nav ---- */
+  nav{position:fixed;top:0;left:0;right:0;z-index:80;background:rgba(250,250,247,0);
+    border-bottom:1px solid transparent;transition:background .3s,border-color .3s;backdrop-filter:blur(8px)}
+  nav.solid{background:rgba(250,250,247,.88);border-bottom:1px solid var(--line)}
+  .nbar{max-width:1160px;margin:0 auto;padding:16px 48px;display:flex;align-items:center;justify-content:space-between}
+  .mark{font-family:var(--serif);font-weight:500;font-size:19px;letter-spacing:0;display:flex;align-items:center;gap:8px}
+  .mark .feather{width:10px;height:10px;background:var(--neon);border:1.5px solid var(--text);border-radius:50% 50% 50% 0;transform:rotate(45deg)}
+  .nlinks{display:flex;gap:28px;align-items:center}
+  .nlinks a:not(.pill){font-family:var(--sans);font-weight:500;font-size:14px;color:var(--soft);transition:color .2s;padding:10px 0}
+  .nlinks a:not(.pill):hover{color:var(--text)}
+  .nlinks a.pill{color:#fff}
+  .nlinks a.pill:hover{color:var(--text)}
+  a:focus-visible,.pill:focus-visible{outline:2px solid var(--text);outline-offset:3px}
+  .dark a:focus-visible,footer a:focus-visible{outline-color:var(--neon)}
+  .pill{display:inline-flex;align-items:center;gap:8px;font-family:var(--sans);font-weight:600;font-size:14px;
+    padding:10px 20px;border-radius:999px;border:1.5px solid var(--text);background:var(--text);color:#fff;
+    transition:background .2s,color .2s,transform .2s}
+  .pill:hover{background:transparent;color:var(--text)}
+  .pill.neon{background:var(--neon);border-color:var(--neon);color:var(--black)}
+  .pill.neon:hover{background:transparent;border-color:var(--text);color:var(--text)}
+  .pill.ghost{background:transparent;color:var(--text)}
+  .pill.ghost:hover{background:var(--text);color:#fff}
+
+  /* ---- hero ---- */
+  .hero{position:relative;min-height:100vh;display:flex;flex-direction:column;justify-content:center;overflow:hidden;padding-top:70px}
+  #heroline{position:absolute;inset:0;width:100%;height:100%;z-index:0;opacity:.55}
+  .hero .wrap{position:relative;z-index:2;width:100%}
+  .hero .eyebrow{display:block;margin-bottom:28px}
+  .hl{font-family:var(--serif);font-weight:400;font-size:clamp(52px,8.6vw,124px);line-height:.96;letter-spacing:-.02em;margin-bottom:34px;color:var(--text)}
+  .hl .ln{display:block;overflow:hidden;padding-bottom:.06em;margin-bottom:-.06em}
+  .hl .ln > span{display:inline-block}
+  .hl .em{font-style:italic;font-weight:400}
+  .hi{background-image:linear-gradient(var(--neon),var(--neon));background-repeat:no-repeat;
+    background-position:0 72%;background-size:0% 34%;padding:0 .06em;margin:0 -.06em}
+  .hsub{max-width:46ch;font-size:clamp(17px,1.5vw,20px);color:var(--soft);line-height:1.6;font-weight:400}
+  .hsub b{color:var(--text);font-weight:600}
+  .hcta{margin-top:36px;display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+  .hmeta{margin-top:54px;display:flex;gap:0;flex-wrap:wrap;border-top:1px solid var(--line)}
+  .hmeta .cell{padding:18px 40px 0 0;margin-right:40px}
+  .hmeta .cell .k{font-family:var(--sans);font-weight:500;font-size:12px;letter-spacing:.01em;color:var(--muted);margin-bottom:6px}
+  .hmeta .cell .v{font-family:var(--mono);font-size:22px;color:var(--text)}
+  .hmeta .cell .v small{color:var(--muted);font-size:13px}
+
+  /* ---- ticker marquee (black band) ---- */
+  .tape{position:absolute;left:0;right:0;bottom:0;z-index:3;background:var(--black);overflow:hidden;height:48px;display:flex;align-items:center}
+  .tape .track{display:flex;white-space:nowrap;animation:slide 40s linear infinite;will-change:transform}
+  .tape .ti{font-family:var(--mono);font-size:12.5px;color:#8B8C84;padding:0 28px;border-right:1px solid #1F1F1C}
+  .tape .ti b{color:#F4F4F0;font-weight:500}
+  .tape .up{color:var(--gain)} .tape .dn{color:var(--loss)} .tape .nn{color:var(--neon)}
+  @keyframes slide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+  /* ---- reveals ---- */
+  .rv{opacity:0;transform:translateY(26px);will-change:opacity,transform}
+  .rv.in{opacity:1;transform:none}
+
+  section{position:relative}
+  .band{padding:140px 0}
+  .seclabel{display:flex;align-items:center;gap:16px;margin-bottom:48px}
+  .seclabel .n{font-family:var(--mono);font-size:12px;color:var(--text);letter-spacing:.1em}
+  .seclabel .t{font-family:var(--sans);font-weight:500;font-size:13px;color:var(--muted);letter-spacing:.01em}
+  .seclabel .rule{flex:1;height:1px;background:var(--line)}
+
+  /* ---- dark sections ---- */
+  .dark{background:var(--black);color:#F4F4F0}
+  .dark .seclabel .n{color:var(--neon)}
+  .dark .seclabel .t{color:#8B8C84}
+  .dark .seclabel .rule{background:var(--wline)}
+  .dark .eyebrow{color:#8B8C84}
+
+  /* ---- verdict (dark) ---- */
+  .verdict h2{font-size:clamp(34px,4.4vw,60px);font-weight:400;line-height:1.08;letter-spacing:-.02em;max-width:21ch;margin-bottom:10px}
+  .verdict h2 em{font-style:italic;color:var(--neon)}
+  .vlede{color:#8B8C84;max-width:54ch;font-size:17px;margin-bottom:72px}
+  .race{display:grid;gap:34px;max-width:920px}
+  .lane{display:grid;grid-template-columns:170px 1fr 96px;align-items:center;gap:26px}
+  .lane .name{font-family:var(--sans);font-weight:600;font-size:14px;color:#F4F4F0}
+  .lane .name small{display:block;font-family:var(--mono);font-weight:400;color:#8B8C84;font-size:11px;margin-top:3px;letter-spacing:.04em}
+  .lane .meter{position:relative;height:12px;background:var(--black2);border:1px solid var(--wline);border-radius:999px;overflow:hidden}
+  .lane .meter .fill{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:999px}
+  .lane.m .fill{background:var(--neon)}
+  .lane.p .fill{background:#F4F4F0}
+  .lane.n .fill{background:#4A4B45}
+  .lane .val{font-family:var(--mono);font-size:21px;text-align:right;color:#F4F4F0}
+  .lane.n .name,.lane.n .val{color:#8B8C84}
+  .tieband{margin-top:64px;display:flex;align-items:baseline;justify-content:center;gap:32px;
+    padding:44px 0;border-top:1px solid var(--wline);border-bottom:1px solid var(--wline)}
+  .tieband .big{font-family:var(--serif);font-weight:300;font-size:clamp(52px,7.5vw,96px);letter-spacing:-.03em;color:#F4F4F0}
+  .tieband .eqv{font-family:var(--mono);font-size:clamp(30px,4vw,48px);color:var(--neon)}
+  .stamp{margin-top:34px;text-align:center}
+  .stamp svg{width:min(430px,70%);height:16px;display:block;margin:0 auto}
+  .stamp svg path{stroke:#6E6F67;stroke-width:1;fill:none}
+  .stamp .lab{margin-top:14px;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8B8C84}
+  .stamp .sub{margin-top:18px;font-family:var(--sans);font-size:14px;letter-spacing:.01em;color:#8B8C84;max-width:62ch;margin-left:auto;margin-right:auto}
+  .stamp .sub b{color:#F4F4F0;font-weight:600}
+
+  /* ---- sticky story ---- */
+  .story .grid{display:grid;grid-template-columns:1fr 1fr;gap:0;align-items:start}
+  .stage{position:sticky;top:0;height:100vh;display:flex;align-items:center;justify-content:center;border-right:1px solid var(--line)}
+  .scene{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    opacity:0;transform:scale(.985);transition:opacity .6s var(--e),transform .6s var(--e);pointer-events:none}
+  .scene.on{opacity:1;transform:none;pointer-events:auto}
+  .scene canvas{display:block;width:min(520px,86vw);height:auto;aspect-ratio:1/1}
+  .steps .step{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:0 0 0 76px}
+  .steps .step .si{font-family:var(--sans);font-weight:600;font-size:13px;letter-spacing:.02em;color:var(--muted);margin-bottom:24px}
+  .steps .step h3{font-size:clamp(32px,3.6vw,50px);font-weight:400;letter-spacing:-.02em;margin-bottom:22px}
+  .steps .step p{color:var(--soft);max-width:42ch;font-size:17px;line-height:1.65}
+  .steps .step p b{color:var(--text);font-weight:600}
+  .steps .step .tag{margin-top:28px;display:inline-flex;gap:10px;font-family:var(--mono);font-size:11px;
+    color:var(--muted);letter-spacing:.06em;border:1px solid var(--line2);padding:9px 16px;border-radius:999px}
+  .steps .step{opacity:.3;transition:opacity .5s var(--e)}
+  .steps .step.active{opacity:1}
+  .m3d{position:relative;width:min(540px,80vw);aspect-ratio:1/1}
+  .m3d canvas{width:100%!important;height:100%!important;display:block}
+  .m3d-labels{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .6s var(--e)}
+  .m3d-labels.show{opacity:1}
+  .m3d-label{position:absolute;top:0;left:0;text-align:center;font-family:var(--mono);font-size:11px;line-height:1.3;letter-spacing:.04em;white-space:nowrap}
+  .m3d-label b{display:block;font-weight:500}
+  .m3d-label i{font-style:normal;color:var(--muted)}
+
+  /* ---- results ---- */
+  .chartwrap{position:relative;border:1px solid var(--line);background:var(--bg2);border-radius:14px;padding:30px 30px 20px}
+  .chartwrap .top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:14px}
+  .legend{display:flex;gap:26px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .legend i{display:inline-block;width:16px;height:0;border-top:2px solid;vertical-align:middle;margin-right:9px;border-radius:2px}
+  .legend .b i{border-color:var(--gain)} .legend .h i{border-color:var(--silver)}
+  .legend b{color:var(--text);font-weight:500}
+  #equity{width:100%;height:auto;aspect-ratio:1000/380;display:block;cursor:crosshair;touch-action:pan-y}
+  #equity .grid{stroke:var(--line);stroke-width:1}
+  #equity .zero{stroke:var(--line2);stroke-width:1;stroke-dasharray:2 5}
+  #equity .ax{font-family:var(--mono);font-size:10.5px;fill:var(--muted)}
+  #equity .ln{fill:none;stroke-width:1.8;stroke-linejoin:round}
+  #equity .ln.b{stroke:var(--gain)} #equity .ln.h{stroke:var(--silver)}
+  .scrub{font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .scrub b{color:var(--text)}
+  .tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .rtable{width:100%;min-width:560px;border-collapse:collapse;margin-top:10px}
+  .rtable th{font-family:var(--sans);font-weight:500;font-size:12px;letter-spacing:.01em;
+    color:var(--muted);text-align:right;padding:0 0 14px;border-bottom:1.5px solid var(--text)}
+  .rtable th:first-child{text-align:left}
+  .rtable td{font-family:var(--mono);font-size:15px;text-align:right;padding:19px 0;border-bottom:1px solid var(--line);color:var(--soft)}
+  .rtable td:first-child{text-align:left;font-family:var(--sans);font-weight:600;font-size:15px;color:var(--text)}
+  .rtable tr:last-child td{border-bottom:none}
+  .rtable .neg{color:var(--loss-text)}
+  .rtable .pend td{color:var(--muted)}
+  .rtable .pend td:first-child{color:var(--muted)}
+  .rtable .pend .badge{font-family:var(--mono);font-weight:500;font-size:10px;color:var(--black);background:var(--neon);
+    padding:3px 9px;margin-left:10px;letter-spacing:.08em;border-radius:999px}
+
+  /* ---- quote (dark) ---- */
+  .quote{max-width:78ch;margin:0 auto;text-align:center}
+  .quote p{font-family:var(--serif);font-weight:300;font-size:clamp(24px,3vw,40px);line-height:1.35;letter-spacing:-.015em;color:#F4F4F0}
+  .quote p .mk{color:var(--neon);font-style:italic}
+  .quote cite{display:block;margin-top:34px;font-family:var(--mono);font-size:12px;color:#8B8C84;font-style:normal;letter-spacing:.04em}
+
+  /* ---- disclosures ---- */
+  .cav{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .cav .c{background:var(--bg2);padding:36px 32px}
+  .cav .c .n{font-family:var(--mono);font-size:12px;color:var(--text);margin-bottom:16px}
+  .cav .c p{font-size:14.5px;color:var(--soft);line-height:1.62}
+  .cav .c p b{color:var(--text);font-weight:600}
+
+  /* ---- footer (dark, dense) ---- */
+  footer{background:var(--black);color:#F4F4F0;padding:84px 0 56px}
+  .fcols{display:flex;justify-content:space-between;align-items:flex-start;gap:40px;flex-wrap:wrap;padding-bottom:56px;border-bottom:1px solid var(--wline)}
+  .fcols .links{display:flex;gap:36px;font-family:var(--sans);font-weight:500;font-size:14px;color:#8B8C84}
+  .fcols .links a:hover{color:var(--neon)}
+  .fcols p{margin-top:18px;max-width:36ch;color:#8B8C84;font-size:14.5px;line-height:1.6}
+  .disc{margin-top:36px;font-family:var(--sans);font-size:12.5px;line-height:1.7;color:#8B8C84;max-width:100ch}
+  .disc b{color:#F4F4F0}
+  .dchips{margin-top:28px;display:flex;gap:10px;flex-wrap:wrap}
+  .dchips span{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:#8B8C84;border:1px solid var(--wline);
+    padding:6px 12px;border-radius:999px}
+
+  @media(max-width:920px){
+    .story .grid{grid-template-columns:1fr}
+    .stage{position:relative;height:64vh;border-right:none;border-bottom:1px solid var(--line)}
+    .steps .step{min-height:auto;padding:64px 0}
+    .cav{grid-template-columns:1fr}
+    .nlinks a:not(.pill){display:none}
+    .hmeta .cell{padding-right:24px;margin-right:24px}
+  }
+  @media(max-width:560px){.wrap{padding:0 26px}.nbar{padding:14px 26px}.lane{grid-template-columns:104px 1fr 72px;gap:14px}
+    .hl{font-size:clamp(42px,13vw,52px)}}
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto}
+    *{animation-duration:.001s!important;transition-duration:.001s!important}
+    .rv{opacity:1!important;transform:none!important}
+    .hi{background-size:100% 34%!important}
+  }
+
+  html.lenis,html.lenis body{height:auto}
+  .lenis.lenis-smooth{scroll-behavior:auto!important}
+  .lenis.lenis-smooth [data-lenis-prevent]{overscroll-behavior:contain}
+  .lenis.lenis-stopped{overflow:hidden}
+
+  /* fallback when CDN libs are unavailable: everything visible, no motion deps */
+  .nogsap .rv,.nogsap .hero .eyebrow,.nogsap .hsub,.nogsap .hcta,.nogsap .hmeta,.nogsap .hmeta .cell,.nogsap .lane .val{opacity:1!important;transform:none!important;visibility:visible!important}
+  .nogsap .hl .ln > span{transform:none!important}
+  .nogsap .hi{background-size:100% 34%!important}
+  .nogsap .lane.m .fill{width:90.9%}.nogsap .lane.p .fill{width:90.9%}.nogsap .lane.n .fill{width:72%}
+</style>
+</head>
+<body>
+<nav id="nav"><div class="nbar">
+  <span class="mark"><span class="feather"></span>Regime</span>
+  <div class="nlinks">
+    <a href="#verdict">Verdict</a>
+    <a href="#method">Method</a>
+    <a href="#results">Results</a>
+    <a href="#disclosures">Disclosures</a>
+    <a class="pill" href="#verdict">See the data</a>
+  </div>
+</div></nav>
+
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <canvas id="heroline" aria-hidden="true"></canvas>
+  <div class="wrap">
+    <span class="eyebrow">Autonomous trading agent · simulation only · no real funds</span>
+    <h1 class="hl">
+      <span class="ln"><span>The model has</span></span>
+      <span class="ln"><span class="em"><span class="hi">no edge.</span></span></span>
+    </h1>
+    <p class="hsub">We built a Markov regime model, gave it honest rules — daily bars, real costs, data it had never seen — and asked it to beat the dumbest benchmarks in finance. <b>It couldn't. This site is the receipt.</b></p>
+    <div class="hcta">
+      <a class="pill" href="#verdict">See the verdict</a>
+      <a class="pill ghost" href="#method">How it works</a>
+    </div>
+    <div class="hmeta">
+      <div class="cell"><div class="k">Held-out test</div><div class="v">328&nbsp;<small>days</small></div></div>
+      <div class="cell"><div class="k">Hit-rate</div><div class="v">90.9<small>%</small></div></div>
+      <div class="cell"><div class="k">Edge vs persistence</div><div class="v">0.0<small>pp</small></div></div>
+      <div class="cell"><div class="k">Markets re-tested</div><div class="v">20<small>&nbsp;/ 20 null</small></div></div>
+    </div>
+  </div>
+  <div class="tape" aria-hidden="true"><div class="track" id="tape"></div></div>
+</section>
+
+<!-- ============ VERDICT (dark) ============ -->
+<section class="dark band" id="verdict">
+  <div class="wrap">
+    <div class="seclabel rv"><span class="n">01</span><span class="t">The verdict</span><span class="rule"></span></div>
+    <div class="verdict">
+      <h2 class="rv">It predicts tomorrow’s regime <em>90.9%</em> of the time. So does guessing “same as today.”</h2>
+      <p class="vlede rv">Three predictors, one held-out window. The bars grow to the score each one earned. Watch the top two finish in exactly the same place.</p>
+      <div class="race" id="race">
+        <div class="lane m" data-w="90.9">
+          <div class="name">Markov model<small>transition matrix</small></div>
+          <div class="meter"><div class="fill"></div></div>
+          <div class="val" data-to="90.9" data-suf="%">0.0%</div>
+        </div>
+        <div class="lane p" data-w="90.9">
+          <div class="name">Persistence<small>t = t − 1</small></div>
+          <div class="meter"><div class="fill"></div></div>
+          <div class="val" data-to="90.9" data-suf="%">0.0%</div>
+        </div>
+        <div class="lane n" data-w="72.0">
+          <div class="name">Naive<small>always majority</small></div>
+          <div class="meter"><div class="fill"></div></div>
+          <div class="val" data-to="72.0" data-suf="%">0.0%</div>
+        </div>
+      </div>
+      <div class="tieband">
+        <span class="big">90.9%</span>
+        <span class="eqv">≡</span>
+        <span class="big">90.9%</span>
+      </div>
+      <div class="stamp">
+        <svg viewBox="0 0 430 16" preserveAspectRatio="none" aria-hidden="true"><path d="M1 1 V15 M1 15 H429 M429 15 V1"/></svg>
+        <div class="lab">No skill added</div>
+        <div class="sub">And not just Bitcoin — re-tested across <b>20 markets</b> (crypto, equities, gold, bonds, oil, FX), the edge is <b>0.000 on every one</b>. Verified pointwise: 0 divergences in 5,425 predictions.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ STICKY STORY ============ -->
+<section class="story" id="method">
+  <div class="wrap">
+    <div class="seclabel rv" style="padding-top:120px"><span class="n">02</span><span class="t">How it works · sense → reason → act</span><span class="rule"></span></div>
+  </div>
+  <div class="wrap">
+    <div class="grid">
+      <div class="stage" id="stage" aria-hidden="true">
+        <div class="scene" data-i="0"><canvas id="sceneSense" width="520" height="520"></canvas></div>
+        <div class="scene" data-i="1"><div class="m3d"><canvas id="sceneReason" width="520" height="520"></canvas><div class="m3d-labels" id="m3dLabels"></div></div></div>
+        <div class="scene" data-i="2"><canvas id="sceneAct" width="520" height="520"></canvas></div>
+      </div>
+      <div class="steps" id="steps">
+        <div class="step" data-i="0">
+          <div class="si">01 — Sense</div>
+          <h3>Label the market’s mood.</h3>
+          <p>Every day, fresh bars come in. A volatility-aware z-score sorts the move into one of three regimes — <b>bull</b>, <b>bear</b>, or <b>sideways</b> — so the threshold adapts to the asset instead of a brittle fixed cut-off.</p>
+          <span class="tag">window = 30 · k = 0.2 · z-score</span>
+        </div>
+        <div class="step" data-i="1">
+          <div class="si">02 — Reason</div>
+          <h3>Forecast the next state.</h3>
+          <p>A Markov transition matrix turns history into probabilities: given today’s regime, where does tomorrow land? The thick self-loops say it plainly — markets mostly stay put. That <b>persistence</b> is exactly what the model can’t beat.</p>
+          <span class="tag">3 states · estimated walk-forward · no lookahead</span>
+        </div>
+        <div class="step" data-i="2">
+          <div class="si">03 — Act</div>
+          <h3>Trade it. Pay for it.</h3>
+          <p>Each decision flows through one fill engine with hard risk guards — long or flat only, no shorts, no leverage. Every fill is charged a realistic <b>0.3% fee + 0.5% slippage.</b> No real funds, ever.</p>
+          <span class="tag">paper ledger · fee 0.3% · slip 0.5%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ RESULTS ============ -->
+<section class="band" id="results" style="background:var(--bg3)">
+  <div class="wrap">
+    <div class="seclabel rv"><span class="n">03</span><span class="t">Held-out equity · net of costs</span><span class="rule"></span></div>
+    <div class="chartwrap rv">
+      <div class="top">
+        <div class="legend">
+          <span class="b"><i></i>Regime baseline <b>−41.1%</b></span>
+          <span class="h"><i></i>Buy &amp; hold <b>−47.7%</b></span>
+        </div>
+        <div class="scrub" id="scrub">drag across · <b>—</b></div>
+      </div>
+      <svg id="equity" viewBox="0 0 1000 380" role="img" aria-label="Held-out equity curves: regime baseline −41.1%, buy &amp; hold −47.7% over 328 days"></svg>
+    </div>
+    <div class="tscroll">
+    <table class="rtable rv">
+      <thead><tr><th>Policy</th><th>Return</th><th>Sharpe</th><th>Max DD</th><th>Trades</th><th>Cost</th></tr></thead>
+      <tbody>
+        <tr><td>Regime baseline</td><td class="neg">−41.1%</td><td class="neg">−1.87</td><td class="neg">−42.9%</td><td>6</td><td>4.8%</td></tr>
+        <tr><td>Buy &amp; hold</td><td class="neg">−47.7%</td><td class="neg">−1.17</td><td class="neg">−51.2%</td><td>1</td><td>0.8%</td></tr>
+        <tr class="pend"><td>LLM agent <span class="badge">PHASE C</span></td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ QUOTE (dark) ============ -->
+<section class="dark band">
+  <div class="wrap">
+    <div class="quote rv">
+      <p>“The transition matrix is adding little beyond regime autocorrelation. High accuracy here is mostly <span class="mk">persistence</span>, not skill.”</p>
+      <cite>— the instrument, flagging itself · warnings[0] · results/BTC-USD_4a150b23.json</cite>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DISCLOSURES ============ -->
+<section class="band" id="disclosures">
+  <div class="wrap">
+    <div class="seclabel rv"><span class="n">04</span><span class="t">Disclosures · read before you believe it</span><span class="rule"></span></div>
+    <div class="cav">
+      <div class="c"><div class="n">01</div><p>Reproduced across <b>20 markets + sub-periods</b> — the zero-edge result holds on every one (0 / 20). Remaining limit: one ~3-year window per asset; a longer multi-cycle history is the next test.</p></div>
+      <div class="c"><div class="n">02</div><p>Regimes come from overlapping rolling windows, so consecutive days are highly correlated — which is precisely why persistence is so hard to beat.</p></div>
+      <div class="c"><div class="n">03</div><p>The test window trended down. A different period could flip the baseline-vs-hold order. Treat the <b>sign</b> as the finding, not the magnitude.</p></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="fcols">
+      <div>
+        <span class="mark" style="color:#F4F4F0"><span class="feather"></span>Regime</span>
+        <p>Built to find an edge. Found none. Published anyway.</p>
+      </div>
+      <div class="links">
+        <a href="#verdict">Verdict</a><a href="#method">Method</a><a href="#results">Results</a><a href="#disclosures">Disclosures</a><a href="#">Source</a>
+      </div>
+    </div>
+    <p class="disc"><b>Simulation only.</b> REGIME is a research and educational artifact. It executes no real trades, connects to no exchange, holds no wallets or keys, and manages no real funds. Nothing on this page is investment advice or a recommendation of any security or strategy. All figures are from a paper-trading simulation on historical data (BTC-USD primary, n = 328 held-out days, net of 0.3% fee + 0.5% slippage per fill) and are reported precisely because they show <b>no</b> edge. Past simulated performance — especially the absence of it — does not guarantee future results.</p>
+    <div class="dchips">
+      <span>NO REAL FUNDS</span><span>NO WALLETS · NO KEYS</span><span>BTC-USD · n=328</span><span>20 MARKETS · 0/20 EDGE</span><span>DATA 4a150b23</span>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" integrity="sha384-g4NTh/Iv5PPU4xPyhEWqPcwtNXOvdaDI8LLnyYfyNZOjKJeYQyjzQ9X5275eBjpt" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js" integrity="sha384-Z3REaz79l2IaAZqJsSABtTbhjgOUYyV3p90XNnAPCSHg3EMTz1fouunq9WZRtj3d" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.14/dist/lenis.min.js" integrity="sha384-O55L/6rhHr9CFvrxqv5luxOCcmVaBmETbZbJDP+Do8T0pztTACsFBD/IXCNkj7DV" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+(function(){
+"use strict";
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+
+/* palette from CSS — single source of truth for canvas + WebGL */
+const _cs=getComputedStyle(document.documentElement);
+const CSSV=n=>_cs.getPropertyValue(n).trim();
+function rgba(hex,a){let h=hex.replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');
+  const n=parseInt(h,16);return 'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+','+a+')';}
+const PAL={bg:CSSV('--bg'),bg2:CSSV('--bg2'),text:CSSV('--text'),soft:CSSV('--soft'),
+  muted:CSSV('--muted'),faint:CSSV('--faint'),silver:CSSV('--silver'),
+  neon:CSSV('--neon'),gain:CSSV('--gain'),loss:CSSV('--loss')};
+
+const HAS_GSAP = !!(window.gsap && window.ScrollTrigger);
+if(!HAS_GSAP) document.documentElement.classList.add('nogsap');
+
+const nav=$('#nav');
+addEventListener('scroll',()=>{ nav.classList.toggle('solid',document.documentElement.scrollTop>40); },{passive:true});
+
+/* ---------- ticker tape ---------- */
+(function(){
+  const items=[
+    ['BTC','—','—'],['TEST','n=328',''],['HIT','90.9%','up'],['PERSIST','90.9%','up'],
+    ['EDGE','0.0pp','nn'],['BASELINE','−41.1%','dn'],['HOLD','−47.7%','dn'],['SHARPE','−1.87','dn'],
+    ['MAX·DD','−42.9%','dn'],['FEE','0.30%',''],['SLIP','0.50%',''],
+    ['ROBUSTNESS','20·MARKETS','nn'],['EDGE·ALL','0/20','nn'],['VERDICT','NO·EDGE','nn']
+  ];
+  const tape=$('#tape'); if(!tape) return;
+  const make=()=>items.map(([k,v,c])=>`<span class="ti"><b>${k}</b> <span class="${c}">${v}</span></span>`).join('');
+  tape.innerHTML=make()+make();
+})();
+
+/* ---------- hero living line ---------- */
+(function(){
+  const cv=$('#heroline'); if(!cv) return; const ctx=cv.getContext('2d');
+  let W,H,DPR,t=0; const N=160; let buf=[];
+  function seed(){ let v=60; buf=[]; for(let i=0;i<N;i++){ v+=(Math.sin(i*0.18)+Math.sin(i*0.041)*1.6)*0.9; buf.push(v);} }
+  function size(){ DPR=Math.min(2,devicePixelRatio||1); W=cv.clientWidth; H=cv.clientHeight;
+    cv.width=W*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); }
+  seed(); size(); addEventListener('resize',size);
+  function frame(){
+    t+=0.6; ctx.clearRect(0,0,W,H);
+    const mid=H*0.6, amp=H*0.13, step=W/(N-2);
+    ctx.lineWidth=1.3; ctx.strokeStyle=rgba(PAL.text,0.10); ctx.beginPath();
+    for(let i=0;i<N;i++){ const ph=(i+t*0.05);
+      const y=mid-((buf[i%N]-60)/22)*amp - Math.sin(ph*0.12)*amp*0.25;
+      const x=i*step - (t*0.4)%step*2;
+      if(i===0)ctx.moveTo(x,y); else ctx.lineTo(x,y); }
+    ctx.stroke();
+    ctx.fillStyle=rgba(PAL.text,0.45);
+    ctx.beginPath(); ctx.arc(W*0.5, mid-((buf[Math.floor(t*0.4)%N]-60)/22)*amp,2.4,0,7); ctx.fill();
+    requestAnimationFrame(frame);
+  }
+  if(!RM) requestAnimationFrame(frame); else size();
+})();
+
+/* ---------- sticky story: shared refs ---------- */
+const scenes=$$('.stage .scene'), steps=$$('.steps .step');
+function setActive(i){
+  scenes.forEach(s=>s.classList.toggle('on',+s.dataset.i===i));
+  steps.forEach(s=>s.classList.toggle('active',+s.dataset.i===i));
+}
+
+/* ---------- SCENE 0: SENSE — candles ---------- */
+(function(){
+  const cv=$('#sceneSense'); if(!cv) return; const ctx=cv.getContext('2d'); const W=cv.width,H=cv.height;
+  const cols={bull:PAL.gain,bear:PAL.loss,side:PAL.silver};
+  const n=26, pad=46, gw=(W-pad*2)/n;
+  let bars=[]; let p=H*0.5;
+  for(let i=0;i<n;i++){ const drift=Math.sin(i*0.5)*10+Math.sin(i*0.13)*22; p+=drift*0.5+((i*73%17)-8);
+    const o=p, c=p+drift*0.7, hi=Math.max(o,c)+8+(i*53%14), lo=Math.min(o,c)-8-(i*37%14);
+    const reg=i%9<2?'bear':(i%9<3?'bull':'side'); bars.push({o,c,hi,lo,reg}); }
+  let sweep=0, raf=null, started=false;
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    ctx.strokeStyle=rgba(PAL.text,0.06); ctx.lineWidth=1;
+    for(let g=0;g<5;g++){const y=pad+g*((H-pad*2)/4);ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(W-pad,y);ctx.stroke();}
+    const lim=Math.floor(sweep*n);
+    for(let i=0;i<n;i++){ const x=pad+gw*i+gw/2; const a=i<lim?1:(i===lim?(sweep*n-lim):0);
+      if(a<=0) continue; const col=cols[bars[i].reg]; ctx.globalAlpha=a;
+      ctx.strokeStyle=col; ctx.lineWidth=1.2; ctx.beginPath();ctx.moveTo(x,bars[i].hi);ctx.lineTo(x,bars[i].lo);ctx.stroke();
+      const yt=Math.min(bars[i].o,bars[i].c), hh=Math.max(6,Math.abs(bars[i].c-bars[i].o));
+      ctx.fillStyle=col; ctx.globalAlpha=a*0.9; ctx.fillRect(x-gw*0.32, yt, gw*0.64, hh); ctx.globalAlpha=1; }
+    const li=Math.min(n-1,Math.max(0,Math.floor(sweep*n)-1));
+    const r=bars[li]?bars[li].reg:'side'; const lab={bull:'BULL',bear:'BEAR',side:'SIDEWAYS'}[r];
+    ctx.globalAlpha=Math.min(1,sweep*2);
+    ctx.fillStyle=cols[r]; ctx.fillRect(pad, H-40, 9,9);
+    ctx.fillStyle=PAL.text; ctx.font='500 14px "IBM Plex Mono",monospace'; ctx.textBaseline='middle';
+    ctx.fillText('REGIME · '+lab, pad+18, H-35);
+    ctx.fillStyle=PAL.muted; ctx.font='11px "IBM Plex Mono",monospace';
+    ctx.fillText('z-score · window 30', pad, 30); ctx.globalAlpha=1;
+  }
+  function run(){ if(sweep<1){sweep=Math.min(1,sweep+0.018);draw();raf=requestAnimationFrame(run);} else draw(); }
+  function start(){ if(started)return; started=true; sweep=0; if(RM){sweep=1;draw();return;} run(); }
+  new MutationObserver(()=>{ if(scenes[0].classList.contains('on'))start(); }).observe(scenes[0],{attributes:true,attributeFilter:['class']});
+  draw();
+})();
+
+/* ---------- SCENE 1: REASON — Markov graph in 3D (Three.js, matte) ---------- */
+(function(){
+  const canvas=$('#sceneReason'); const labelsEl=$('#m3dLabels');
+  if(!canvas || !window.THREE || !labelsEl){ return; }
+  const THREE=window.THREE;
+  const C={bull:PAL.gain,bear:PAL.loss,side:PAL.silver};
+  const col=h=>new THREE.Color(h);
+  const keys=['bull','side','bear'];
+  const P={bull:0.137,side:0.720,bear:0.143};
+  const M={bull:{bull:.70,side:.22,bear:.08},side:{bull:.09,side:.82,bear:.09},bear:{bull:.08,side:.24,bear:.68}};
+  const labelTxt={bull:'BULL',side:'SIDE',bear:'BEAR'};
+
+  const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+  renderer.setClearColor(0x000000,0);
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(38,1,0.1,100);
+  camera.position.set(0,0,6.6);
+  const group=new THREE.Group(); scene.add(group);
+
+  const R=1.5;
+  const pos={
+    bull:new THREE.Vector3(0, R*0.95, 0.0),
+    side:new THREE.Vector3(R*0.98, -R*0.6, 0.35),
+    bear:new THREE.Vector3(-R*0.98, -R*0.6, -0.35),
+  };
+  const nodeR=k=>0.32+P[k]*0.55;
+
+  keys.forEach(k=>{
+    const r=nodeR(k);
+    const disc=new THREE.Mesh(new THREE.CircleGeometry(r,48), new THREE.MeshBasicMaterial({color:col(PAL.bg2)}));
+    const ring=new THREE.Mesh(new THREE.RingGeometry(r-0.014,r+0.014,56), new THREE.MeshBasicMaterial({color:col(C[k])}));
+    disc.position.copy(pos[k]); ring.position.copy(pos[k]);
+    disc.position.z-=0.001;
+    group.add(disc); group.add(ring);
+  });
+
+  const edges=[];
+  keys.forEach(a=>keys.forEach(b=>{ if(a!==b) edges.push({a,b,p:M[a][b]}); }));
+  function ctrl(p0,p2){ const mid=p0.clone().add(p2).multiplyScalar(0.5);
+    const out=mid.clone().setZ(0).normalize().multiplyScalar(0.55); out.z+=0.5; return mid.add(out); }
+  edges.forEach(e=>{
+    const A=pos[e.a], B=pos[e.b];
+    const dir=B.clone().sub(A).normalize();
+    const p0=A.clone().add(dir.clone().multiplyScalar(nodeR(e.a)));
+    const p2=B.clone().sub(dir.clone().multiplyScalar(nodeR(e.b)));
+    e.curve=new THREE.QuadraticBezierCurve3(p0, ctrl(p0,p2), p2);
+    const geo=new THREE.BufferGeometry().setFromPoints(e.curve.getPoints(50));
+    const mat=new THREE.LineBasicMaterial({color:col(PAL.text),transparent:true,opacity:0.18});
+    group.add(new THREE.Line(geo,mat));
+  });
+
+  const parts=[];
+  edges.forEach(e=>{ const cnt=Math.round(e.p*7)+1; for(let i=0;i<cnt;i++){
+    const m=new THREE.Mesh(new THREE.CircleGeometry(0.05,18), new THREE.MeshBasicMaterial({color:col(C[e.a])}));
+    group.add(m); parts.push({m,e,t:i/cnt, sp:0.0018+e.p*0.004}); } });
+
+  keys.forEach(k=>{ const r=nodeR(k), s=M[k][k];
+    const t=new THREE.Mesh(
+      new THREE.TorusGeometry(0.16, 0.008+s*0.05, 10, 44, Math.PI*(0.9+s)),
+      new THREE.MeshBasicMaterial({color:col(C[k])}));
+    const off=pos[k].clone().setZ(0).normalize().multiplyScalar(r+0.06);
+    t.position.copy(pos[k].clone().add(off)); t.rotation.z=Math.atan2(off.y,off.x); group.add(t); });
+
+  const labels={};
+  keys.forEach(k=>{ const d=document.createElement('div'); d.className='m3d-label';
+    d.innerHTML=`<b style="color:${C[k]}">${labelTxt[k]}</b><i>${(M[k][k]*100|0)}% stay</i>`;
+    labelsEl.appendChild(d); labels[k]=d; });
+
+  function resize(){ const w=canvas.clientWidth||520, h=canvas.clientHeight||520;
+    renderer.setPixelRatio(Math.min(2,devicePixelRatio||1));
+    renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); }
+  resize(); addEventListener('resize',resize);
+
+  const camTarget={x:0,y:0};
+  canvas.addEventListener('pointermove',ev=>{ const r=canvas.getBoundingClientRect();
+    const nx=((ev.clientX-r.left)/r.width-0.5), ny=((ev.clientY-r.top)/r.height-0.5);
+    if(window.gsap) gsap.to(camTarget,{x:nx*0.7,y:-ny*0.45,duration:1.0,ease:'power2.out',overwrite:true});
+    else { camTarget.x=nx*0.7; camTarget.y=-ny*0.45; } });
+  canvas.addEventListener('pointerleave',()=>{ if(window.gsap) gsap.to(camTarget,{x:0,y:0,duration:1.4,overwrite:true}); else {camTarget.x=0;camTarget.y=0;} });
+
+  const v=new THREE.Vector3();
+  function projectLabels(){
+    keys.forEach(k=>{ v.copy(pos[k]).applyMatrix4(group.matrixWorld).project(camera);
+      const x=(v.x*0.5+0.5)*canvas.clientWidth, y=(-v.y*0.5+0.5)*canvas.clientHeight;
+      labels[k].style.transform=`translate(-50%,-110%) translate(${x}px,${y}px)`; });
+  }
+
+  let running=false, theta=0;
+  function frame(){
+    theta+=RM?0:0.0016;
+    group.rotation.y=Math.sin(theta)*0.2 + camTarget.x*0.6;
+    group.rotation.x=camTarget.y*0.4 - 0.04;
+    parts.forEach(pt=>{ pt.t+=RM?0:pt.sp; if(pt.t>1)pt.t-=1; pt.e.curve.getPoint(pt.t, pt.m.position); });
+    renderer.render(scene,camera);
+    projectLabels();
+  }
+  function start(){ if(running)return; running=true; labelsEl.classList.add('show');
+    if(window.gsap){ gsap.ticker.add(frame); } else (function loop(){ if(!running)return; frame(); requestAnimationFrame(loop); })(); }
+  function stop(){ if(!running)return; running=false; labelsEl.classList.remove('show'); if(window.gsap) gsap.ticker.remove(frame); }
+  new MutationObserver(()=>{ scenes[1].classList.contains('on')?(resize(),start()):stop(); }).observe(scenes[1],{attributes:true,attributeFilter:['class']});
+  renderer.render(scene,camera); projectLabels();
+})();
+
+/* ---------- SCENE 2: ACT — ledger ---------- */
+(function(){
+  const cv=$('#sceneAct'); if(!cv) return; const ctx=cv.getContext('2d'); const W=cv.width,H=cv.height;
+  const gain=PAL.gain, loss=PAL.loss;
+  const seq=[{pos:'FLAT'},{pos:'LONG'},{pos:'LONG'},{pos:'FLAT'},{pos:'LONG'},{pos:'FLAT'}];
+  let eq=100, equ=[100], t=0, idx=0, running=false, raf=null, phase=0;
+  function draw(){
+    ctx.clearRect(0,0,W,H); const pad=46;
+    ctx.fillStyle=PAL.muted; ctx.font='11px "IBM Plex Mono",monospace'; ctx.textBaseline='top';
+    ctx.fillText('PAPER LEDGER · long / flat only', pad, 28);
+    const cur=seq[idx%seq.length]; const isLong=cur.pos==='LONG';
+    ctx.fillStyle=isLong?rgba(PAL.gain,0.12):rgba(PAL.silver,0.12);
+    ctx.beginPath(); ctx.roundRect(pad,60,150,46,23); ctx.fill();
+    ctx.strokeStyle=isLong?gain:PAL.silver; ctx.lineWidth=1.2;
+    ctx.beginPath(); ctx.roundRect(pad,60,150,46,23); ctx.stroke();
+    ctx.fillStyle=isLong?gain:PAL.muted; ctx.font='600 18px "Schibsted Grotesk",sans-serif'; ctx.textBaseline='middle';
+    ctx.fillText(cur.pos, pad+24, 84);
+    ctx.fillStyle=PAL.muted; ctx.font='11px "IBM Plex Mono",monospace'; ctx.textBaseline='top';
+    ctx.fillText('EQUITY (paper)', W-pad-170, 64);
+    ctx.fillStyle=PAL.text; ctx.font='500 30px "IBM Plex Mono",monospace'; ctx.fillText('$'+eq.toFixed(2), W-pad-170, 80);
+    const gy0=160, gh=H-gy0-90, gx0=pad, gw=W-pad*2;
+    ctx.strokeStyle=rgba(PAL.text,0.06);
+    for(let g=0;g<4;g++){const y=gy0+g*(gh/3);ctx.beginPath();ctx.moveTo(gx0,y);ctx.lineTo(gx0+gw,y);ctx.stroke();}
+    const lo=Math.min(...equ,98), hi=Math.max(...equ,102);
+    ctx.beginPath(); ctx.strokeStyle=gain; ctx.lineWidth=2;
+    equ.forEach((vv,i)=>{ const x=gx0+gw*(i/Math.max(1,equ.length-1)); const y=gy0+gh*(1-(vv-lo)/(hi-lo)); i?ctx.lineTo(x,y):ctx.moveTo(x,y); });
+    ctx.stroke();
+    if(equ.length){ const vv=equ[equ.length-1]; const x=gx0+gw, y=gy0+gh*(1-(vv-lo)/(hi-lo)); ctx.fillStyle=gain; ctx.beginPath(); ctx.arc(x,y,3.2,0,7); ctx.fill(); }
+    if(phase>0){ ctx.globalAlpha=Math.max(0,1-phase); ctx.fillStyle=loss; ctx.font='12px "IBM Plex Mono",monospace'; ctx.textBaseline='top';
+      ctx.fillText('− fee 0.3% − slip 0.5%', pad, H-58); ctx.globalAlpha=1; }
+    ctx.fillStyle=PAL.muted; ctx.font='11px "IBM Plex Mono",monospace';
+    ctx.fillText('guards: 20% cap · liq floor · no shorts', pad, H-34);
+  }
+  function tick(){ if(!running)return; t+=1; const cur=seq[idx%seq.length];
+    const drift=cur.pos==='LONG'?(Math.sin(t*0.2)*0.5-0.18):0; eq+=drift; equ.push(eq); if(equ.length>60)equ.shift();
+    if(phase>0)phase-=0.04;
+    if(t%46===0){ idx++; phase=1; if(cur.pos!==seq[idx%seq.length].pos) eq-=0.25; }
+    draw(); raf=requestAnimationFrame(tick); }
+  function start(){ if(running)return; running=true; if(RM){draw();running=false;return;} tick(); }
+  function stop(){ running=false; if(raf)cancelAnimationFrame(raf); }
+  new MutationObserver(()=>{ scenes[2].classList.contains('on')?start():stop(); }).observe(scenes[2],{attributes:true,attributeFilter:['class']});
+  draw();
+})();
+
+/* ---------- EQUITY chart (SVG + scrub) ----------
+   REAL held-out series — results/BTC-USD_4a150b23, test window 2025-07-15 → 2026-06-08,
+   328 days downsampled to 165 points, % return net of costs. The flat shelves on the
+   baseline are the 6 trades' cash periods; you cannot fake those with noise. */
+(function(){
+  const svg=$('#equity'); if(!svg)return;
+  const W=1000,H=380,L=46,R=14,T=18,B=30;
+  const BD=[-2.53,-1.28,-2.39,-2.81,-1.72,-2.65,-1.15,-2.41,-4.2,-6.87,-4.77,-4.8,-3.43,-1.26,-0.55,-2.05,-2.77,-3.79,-5.43,-3.28,-6.1,-7.47,-6.86,-9.95,-9.59,-7.54,-8.43,-8,-7.7,-4.41,-4.04,-4.46,-3.61,-4.26,-4.57,-7.3,-9.75,-9.23,-5.32,-1.81,1.19,2.22,0.51,0.72,-8.3,-4.6,-8.32,-11.89,-10.07,-10.23,-8.91,-7.61,-5.56,-8.92,-9.33,-8.44,-15.93,-16.6,-16.6,-16.6,-16.6,-16.6,-16.6,-16.6,-16.6,-16.6,-16.6,-16.6,-16.6,-16.6,-16.6,-16.6,-16.6,-16.6,-16.6,-16.6,-16.6,-16.6,-16.6,-16.6,-16.6,-16.6,-16.6,-16.6,-16.6,-16.6,-16.6,-16.6,-16.6,-16.6,-16.6,-16.6,-18.45,-18.84,-21.01,-23.72,-23.61,-26.11,-23.95,-27.83,-32.9,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-34.83,-35.55,-36.87,-34.87,-34.57,-32.58,-33.35,-32.8,-31.92,-33.96,-34.13,-35.5,-36.06,-35.41,-36.13,-35.62,-38.07,-38.88,-38.7,-41.06,-41.06,-41.06,-41.06];
+  const HD=[-2.53,-1.28,-2.39,-2.81,-1.72,-2.65,-1.15,-2.41,-4.2,-6.87,-4.77,-4.8,-3.43,-1.26,-0.55,-2.05,-2.77,-3.79,-5.43,-3.28,-6.1,-7.47,-6.86,-9.95,-9.59,-7.54,-8.43,-8,-7.7,-4.41,-4.04,-4.46,-3.61,-4.26,-4.57,-7.3,-9.75,-9.23,-5.32,-1.81,1.19,2.22,0.51,0.72,-8.3,-4.6,-8.32,-11.89,-10.07,-10.23,-8.91,-7.61,-5.56,-8.92,-9.33,-8.44,-15.93,-16.16,-15.35,-12.28,-15.86,-21.88,-22.06,-23.08,-28.3,-29.95,-26.95,-25.09,-24.76,-25.19,-24.4,-23.74,-26.12,-24.99,-23.84,-25.29,-27.03,-27.3,-29.27,-26.89,-26.77,-27.49,-27.75,-27.31,-26.82,-26.57,-25.02,-22.3,-24.43,-25.09,-24.83,-21.11,-20.92,-21.3,-23.4,-26.03,-25.93,-28.35,-26.26,-30.02,-34.93,-34.88,-39.57,-41.61,-41.85,-43.07,-45.2,-42.26,-43.03,-45.03,-43.72,-44.01,-46.97,-44.18,-44.56,-43.08,-39.83,-43.61,-45.4,-42.13,-41.66,-41.06,-38.05,-41.04,-41.64,-43.85,-41.64,-43.07,-45.11,-44.81,-43.66,-44.61,-42.91,-40.46,-40.61,-39.54,-38.36,-38.09,-36.17,-38.88,-36.81,-35.23,-35.77,-35.97,-37.29,-35.3,-35,-33.03,-33.78,-33.24,-32.36,-34.39,-34.57,-35.92,-36.48,-35.83,-36.55,-36.04,-38.47,-39.28,-39.11,-44.8,-47.2,-49.63,-47.72];
+  const N=BD.length;
+  const base=BD.map(v=>100+v), hold=HD.map(v=>100+v);
+  const lo=46,hi=106;
+  const x=i=>L+(W-L-R)*(i/(N-1)); const y=v=>T+(H-T-B)*(1-(v-lo)/(hi-lo));
+  const NS='http://www.w3.org/2000/svg';
+  const E=(n,a)=>{const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);return e;};
+  [100,90,80,70,60,50].forEach(v=>{const gy=y(v);
+    svg.appendChild(E('line',{class:v===100?'zero':'grid',x1:L,x2:W-R,y1:gy,y2:gy}));
+    const t=E('text',{class:'ax',x:L-9,y:gy+3,'text-anchor':'end'});t.textContent=v;svg.appendChild(t);});
+  [['JUL ’25',0],['NOV ’25',.36],['FEB ’26',.66],['JUN ’26',1]].forEach(([l,f])=>{
+    const t=E('text',{class:'ax',x:L+(W-L-R)*f,y:H-9,'text-anchor':f===1?'end':f===0?'start':'middle'});t.textContent=l;svg.appendChild(t);});
+  const dpath=a=>a.map((v,i)=>(i?'L':'M')+x(i).toFixed(1)+' '+y(v).toFixed(1)).join(' ');
+  const ph=E('path',{class:'ln h',d:dpath(hold)}); svg.appendChild(ph);
+  const pb=E('path',{class:'ln b',d:dpath(base)}); svg.appendChild(pb);
+  /* draw choreography: grey hold first, green baseline follows — GSAP only;
+     without it (or with reduced motion) the lines simply ship drawn */
+  if(HAS_GSAP && !RM){
+    [ph,pb].forEach(p=>{ const l=p.getTotalLength(); p.style.strokeDasharray=l; p.style.strokeDashoffset=l; });
+    gsap.timeline({scrollTrigger:{trigger:svg,start:'top 80%',once:true}})
+      .to(ph,{strokeDashoffset:0,duration:1.6,ease:'power1.inOut'},0)
+      .to(pb,{strokeDashoffset:0,duration:1.6,ease:'power1.inOut'},0.4);
+  }
+  const guide=E('line',{class:'grid',x1:0,x2:0,y1:T,y2:H-B,style:'opacity:0;stroke:'+rgba(PAL.text,0.3)}); svg.appendChild(guide);
+  const dotB=E('circle',{r:3.6,fill:PAL.gain,style:'opacity:0'}); const dotH=E('circle',{r:3.6,fill:PAL.silver,style:'opacity:0'});
+  svg.appendChild(dotB);svg.appendChild(dotH);
+  const scrub=$('#scrub');
+  svg.addEventListener('pointermove',ev=>{ const r=svg.getBoundingClientRect();
+    const px=(ev.clientX-r.left)/r.width*W; let i=Math.round((px-L)/(W-L-R)*(N-1)); i=Math.max(0,Math.min(N-1,i));
+    const gx=x(i); guide.setAttribute('x1',gx);guide.setAttribute('x2',gx);guide.style.opacity=.9;
+    dotB.setAttribute('cx',gx);dotB.setAttribute('cy',y(base[i]));dotB.style.opacity=1;
+    dotH.setAttribute('cx',gx);dotH.setAttribute('cy',y(hold[i]));dotH.style.opacity=1;
+    scrub.innerHTML='baseline <b>'+(base[i]-100).toFixed(1)+'%</b> · hold <b>'+(hold[i]-100).toFixed(1)+'%</b>'; });
+  svg.addEventListener('pointerleave',()=>{guide.style.opacity=0;dotB.style.opacity=0;dotH.style.opacity=0;scrub.innerHTML='drag across · <b>—</b>';});
+})();
+
+/* ===================== ORCHESTRATION ===================== */
+if(!HAS_GSAP){ setActive(0); return; }
+
+gsap.registerPlugin(ScrollTrigger);
+
+/* scene switching is functional state, not decoration — runs with or without motion */
+function sceneTriggers(){
+  steps.forEach(step=>{ const i=+step.dataset.i;
+    ScrollTrigger.create({trigger:step,start:'top 55%',end:'bottom 45%',
+      onEnter:()=>setActive(i), onEnterBack:()=>setActive(i)});
+  });
+  setActive(0);
+}
+
+/* reduced motion: everything in its final state, scenes still switch on scroll */
+if(RM){
+  gsap.set('.rv',{autoAlpha:1,y:0});
+  $$('#race .lane').forEach(lane=>{ $('.fill',lane).style.width=lane.dataset.w+'%';
+    const v=$('.val',lane); v.textContent=(+v.dataset.to).toFixed(1)+v.dataset.suf; });
+  sceneTriggers();
+  ScrollTrigger.refresh();
+  return;
+}
+
+/* Lenis smooth scroll on the GSAP ticker (single tick for scroll + timelines + WebGL) */
+let lenis=null;
+if(window.Lenis){
+  lenis=new Lenis({duration:1.15, easing:t=>Math.min(1,1.001-Math.pow(2,-10*t)), smoothWheel:true, wheelMultiplier:1, touchMultiplier:1.6});
+  window.lenis=lenis;
+  lenis.on('scroll', ScrollTrigger.update);
+  gsap.ticker.add(t=>lenis.raf(t*1000));
+  gsap.ticker.lagSmoothing(0);
+  $$('a[href^="#"]').forEach(a=>a.addEventListener('click',e=>{ const id=a.getAttribute('href');
+    if(id.length>1){ const tgt=$(id); if(tgt){ e.preventDefault(); lenis.scrollTo(tgt,{offset:-8});
+      tgt.setAttribute('tabindex','-1'); tgt.focus({preventScroll:true}); } } }));
+}
+
+/* hero intro — natural state is visible; `from` can never strand it hidden.
+   The neon swipe is a timeline member, not a CSS afterthought. */
+const intro=gsap.timeline({defaults:{ease:'power3.out'}});
+intro.from('.hl .ln>span',{yPercent:118,duration:1.15,stagger:.13},0.1)
+     .from('.hero .eyebrow',{autoAlpha:0,y:14,duration:.8},0.15)
+     .from('.hsub',{autoAlpha:0,y:16,duration:.9},0.55)
+     .from('.hcta .pill',{autoAlpha:0,y:14,duration:.7,stagger:.09},0.75)
+     .from('.hmeta .cell',{autoAlpha:0,y:16,duration:.7,stagger:.08},0.9)
+     .from('.tape',{yPercent:100,duration:.8},0.5)
+     .to('.hi',{backgroundSize:'100% 34%',duration:.7,ease:'power4.inOut'},1.3);
+
+/* scroll reveals */
+$$('.rv').forEach(el=>gsap.fromTo(el,{autoAlpha:0,y:26},
+  {autoAlpha:1,y:0,duration:.9,ease:'power3.out',scrollTrigger:{trigger:el,start:'top 86%'}}));
+
+/* disclosures: cards step in, not one undifferentiated block */
+gsap.from('.cav .c',{y:24,autoAlpha:0,duration:.7,ease:'power3.out',stagger:.12,
+  scrollTrigger:{trigger:'.cav',start:'top 82%'}});
+
+/* verdict payoff: race -> tie -> stamp, one sequenced timeline */
+const raceEl=$('#race');
+if(raceEl){
+  gsap.set('.tieband .big,.tieband .eqv,.stamp',{autoAlpha:0});
+  ScrollTrigger.create({trigger:raceEl,start:'top 78%',once:true,onEnter:()=>{
+    const tl=gsap.timeline();
+    $$('.lane',raceEl).forEach((lane,i)=>{
+      const w=+lane.dataset.w, fill=$('.fill',lane), val=$('.val',lane), to=+val.dataset.to, suf=val.dataset.suf;
+      tl.to(fill,{width:w+'%',duration:1.5,ease:'expo.out'},i*0.09);
+      const o={v:0}; tl.to(o,{v:to,duration:1.5,ease:'expo.out',onUpdate:()=>val.textContent=o.v.toFixed(1)+suf},i*0.09);
+    });
+    tl.fromTo('.tieband .big',{xPercent:i=>i?14:-14,autoAlpha:0},{xPercent:0,autoAlpha:1,duration:.6,ease:'power3.out'},'>-0.15')
+      .fromTo('.tieband .eqv',{scale:0,autoAlpha:0},{scale:1,autoAlpha:1,duration:.35,ease:'back.out(2.5)'})
+      .to('.stamp',{autoAlpha:1,duration:.2})
+      .fromTo('.stamp .lab',{scale:1.15,rotate:-2,autoAlpha:0},{scale:1,rotate:0,autoAlpha:1,duration:.3,ease:'power4.out'});
+  }});
+}
+
+sceneTriggers();
+
+ScrollTrigger.refresh();
+})();
+</script>
+</body>
+</html>

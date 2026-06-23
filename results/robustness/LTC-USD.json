@@ -1,0 +1,47 @@
+{
+  "symbol": "LTC-USD",
+  "chosen_window": 30,
+  "chosen_k": 0.2,
+  "train_size": 706,
+  "test_size": 328,
+  "regime_mix": {
+    "sideways": 0.8201219512195121,
+    "bear": 0.09146341463414634,
+    "bull": 0.08841463414634146
+  },
+  "accuracy": {
+    "hit_rate": 0.9359756097560976,
+    "balanced_accuracy": 0.8670579250576926,
+    "log_loss": 0.2458114205500251,
+    "naive_hit_rate": 0.8170731707317073,
+    "naive_balanced": 0.3333333333333333,
+    "naive_log_loss": 0.6035470518683185,
+    "persistence_hit_rate": 0.9359756097560976,
+    "persistence_balanced": 0.8670579250576926,
+    "n": 328
+  },
+  "policies": [
+    {
+      "name": "baseline",
+      "total_return": -0.36271546711411284,
+      "sharpe": -0.5203499787479136,
+      "max_drawdown": -0.5016029210485949,
+      "num_trades": 4,
+      "total_cost": 0.032
+    },
+    {
+      "name": "buy_hold",
+      "total_return": -0.5643287012653954,
+      "sharpe": -0.8790062548790849,
+      "max_drawdown": -0.6843953332072805,
+      "num_trades": 1,
+      "total_cost": 0.008
+    }
+  ],
+  "train_best_score": 0.8677069509254106,
+  "data_hash": "86092ded0b3f811e05089fa3cdb90ae92afabbf3b6ff5f67f96ecf179a510a36",
+  "warnings": [
+    "Regime mix imbalanced: 'sideways' is 82% of test days (>80%).",
+    "Markov model barely beats persistence ('tomorrow = today'): balanced-acc 86.7% vs persistence 86.7%. The transition matrix is adding little beyond regime autocorrelation \u2014 high accuracy here is mostly persistence, not skill."
+  ]
+}

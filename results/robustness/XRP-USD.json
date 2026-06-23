@@ -1,0 +1,46 @@
+{
+  "symbol": "XRP-USD",
+  "chosen_window": 20,
+  "chosen_k": 0.2,
+  "train_size": 706,
+  "test_size": 328,
+  "regime_mix": {
+    "sideways": 0.7560975609756098,
+    "bear": 0.15853658536585366,
+    "bull": 0.08536585365853659
+  },
+  "accuracy": {
+    "hit_rate": 0.8597560975609756,
+    "balanced_accuracy": 0.7820373376013464,
+    "log_loss": 0.4326328433169871,
+    "naive_hit_rate": 0.7560975609756098,
+    "naive_balanced": 0.3333333333333333,
+    "naive_log_loss": 0.7584532490223348,
+    "persistence_hit_rate": 0.8597560975609756,
+    "persistence_balanced": 0.7820373376013464,
+    "n": 328
+  },
+  "policies": [
+    {
+      "name": "baseline",
+      "total_return": -0.5728804204905786,
+      "sharpe": -1.7046538584789208,
+      "max_drawdown": -0.64886950511824,
+      "num_trades": 10,
+      "total_cost": 0.08000000000000002
+    },
+    {
+      "name": "buy_hold",
+      "total_return": -0.6078240573972755,
+      "sharpe": -0.9645097713145566,
+      "max_drawdown": -0.6924830288188397,
+      "num_trades": 1,
+      "total_cost": 0.008
+    }
+  ],
+  "train_best_score": 0.8422367995912325,
+  "data_hash": "0cfb72ebf30d5fa94d1ede22d131f2a84f5e36b1ea542ed7f5956645550cc917",
+  "warnings": [
+    "Markov model barely beats persistence ('tomorrow = today'): balanced-acc 78.2% vs persistence 78.2%. The transition matrix is adding little beyond regime autocorrelation \u2014 high accuracy here is mostly persistence, not skill."
+  ]
+}

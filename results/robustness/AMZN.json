@@ -1,0 +1,46 @@
+{
+  "symbol": "AMZN",
+  "chosen_window": 10,
+  "chosen_k": 0.2,
+  "train_size": 465,
+  "test_size": 224,
+  "regime_mix": {
+    "sideways": 0.44642857142857145,
+    "bull": 0.3482142857142857,
+    "bear": 0.20535714285714285
+  },
+  "accuracy": {
+    "hit_rate": 0.78125,
+    "balanced_accuracy": 0.7813486749656962,
+    "log_loss": 0.6047514121640649,
+    "naive_hit_rate": 0.4419642857142857,
+    "naive_balanced": 0.3333333333333333,
+    "naive_log_loss": 1.0598277617077463,
+    "persistence_hit_rate": 0.78125,
+    "persistence_balanced": 0.7813486749656962,
+    "n": 224
+  },
+  "policies": [
+    {
+      "name": "baseline",
+      "total_return": -0.10890860832501836,
+      "sharpe": -0.3912258791627652,
+      "max_drawdown": -0.25341269936987393,
+      "num_trades": 16,
+      "total_cost": 0.12800000000000006
+    },
+    {
+      "name": "buy_hold",
+      "total_return": 0.08664353882940379,
+      "sharpe": 0.4555990039178191,
+      "max_drawdown": -0.21736223115695713,
+      "num_trades": 1,
+      "total_cost": 0.008
+    }
+  ],
+  "train_best_score": 0.7828759373261991,
+  "data_hash": "bacc280ac91065dc4d2c32e78dc76a0daced9afd3506c418a348a88e43daf523",
+  "warnings": [
+    "Markov model barely beats persistence ('tomorrow = today'): balanced-acc 78.1% vs persistence 78.1%. The transition matrix is adding little beyond regime autocorrelation \u2014 high accuracy here is mostly persistence, not skill."
+  ]
+}

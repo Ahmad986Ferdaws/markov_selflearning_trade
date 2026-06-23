@@ -1,0 +1,48 @@
+{
+  "symbol": "EURUSD=X",
+  "chosen_window": 30,
+  "chosen_k": 0.2,
+  "train_size": 483,
+  "test_size": 233,
+  "regime_mix": {
+    "sideways": 0.8626609442060086,
+    "bull": 0.07725321888412018,
+    "bear": 0.060085836909871244
+  },
+  "accuracy": {
+    "hit_rate": 0.9055793991416309,
+    "balanced_accuracy": 0.7463081418305298,
+    "log_loss": 0.32502235347505193,
+    "naive_hit_rate": 0.8626609442060086,
+    "naive_balanced": 0.3333333333333333,
+    "naive_log_loss": 0.5879032806916038,
+    "persistence_hit_rate": 0.9055793991416309,
+    "persistence_balanced": 0.7463081418305298,
+    "n": 233
+  },
+  "policies": [
+    {
+      "name": "baseline",
+      "total_return": -0.0911517054578711,
+      "sharpe": -1.847030150206371,
+      "max_drawdown": -0.09749988685774005,
+      "num_trades": 6,
+      "total_cost": 0.048
+    },
+    {
+      "name": "buy_hold",
+      "total_return": -0.019287414102680978,
+      "sharpe": -0.2938990682812762,
+      "max_drawdown": -0.04847343983000233,
+      "num_trades": 1,
+      "total_cost": 0.008
+    }
+  ],
+  "train_best_score": 0.859007590999345,
+  "data_hash": "c9f1c5536dbeaafe314e090ae5f51ffcc8fab4935ac14547f0d04475161f780d",
+  "warnings": [
+    "Regime mix imbalanced: 'sideways' is 86% of test days (>80%).",
+    "Markov model barely beats persistence ('tomorrow = today'): balanced-acc 74.6% vs persistence 74.6%. The transition matrix is adding little beyond regime autocorrelation \u2014 high accuracy here is mostly persistence, not skill.",
+    "Possible overfit: train balanced-acc 85.9% vs test 74.6% (gap > 10pp)."
+  ]
+}

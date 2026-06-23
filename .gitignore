@@ -1,0 +1,25 @@
+# Secrets — never commit the real .env (only .env.example is tracked)
+.env
+
+# Python / virtualenv
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# Runtime state (regenerable)
+paper_trading.db
+
+# Agent response cache (regenerated per provider/run)
+data/agent_cache/
+
+# OS / editor cruft
+.DS_Store
+.cursor/
+
+# NOTE: data/snapshots/ and results/ are intentionally COMMITTED — the pinned
+# snapshots + deterministic run records are what make the +0.000 result
+# byte-reproducible from a fresh clone. media/ is committed too (README embeds it).

@@ -1,0 +1,46 @@
+{
+  "symbol": "SOL-USD",
+  "chosen_window": 20,
+  "chosen_k": 0.2,
+  "train_size": 706,
+  "test_size": 328,
+  "regime_mix": {
+    "sideways": 0.6646341463414634,
+    "bear": 0.18292682926829268,
+    "bull": 0.1524390243902439
+  },
+  "accuracy": {
+    "hit_rate": 0.8780487804878049,
+    "balanced_accuracy": 0.8494234210453621,
+    "log_loss": 0.4210343905496135,
+    "naive_hit_rate": 0.6646341463414634,
+    "naive_balanced": 0.3333333333333333,
+    "naive_log_loss": 0.952535037687579,
+    "persistence_hit_rate": 0.8780487804878049,
+    "persistence_balanced": 0.8494234210453621,
+    "n": 328
+  },
+  "policies": [
+    {
+      "name": "baseline",
+      "total_return": -0.43225831459528463,
+      "sharpe": -1.0178582075565494,
+      "max_drawdown": -0.5587242612948725,
+      "num_trades": 10,
+      "total_cost": 0.08000000000000002
+    },
+    {
+      "name": "buy_hold",
+      "total_return": -0.604474130841253,
+      "sharpe": -0.8650823019537249,
+      "max_drawdown": -0.7488672078698905,
+      "num_trades": 1,
+      "total_cost": 0.008
+    }
+  ],
+  "train_best_score": 0.8072410109048039,
+  "data_hash": "cc34aceb60be385814bf370a7c39d979d65c9fdbfce4034ef15b8df74ecbb295",
+  "warnings": [
+    "Markov model barely beats persistence ('tomorrow = today'): balanced-acc 84.9% vs persistence 84.9%. The transition matrix is adding little beyond regime autocorrelation \u2014 high accuracy here is mostly persistence, not skill."
+  ]
+}

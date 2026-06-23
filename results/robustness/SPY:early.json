@@ -1,0 +1,46 @@
+{
+  "symbol": "SPY:early",
+  "chosen_window": 30,
+  "chosen_k": 0.35,
+  "train_size": 201,
+  "test_size": 112,
+  "regime_mix": {
+    "sideways": 0.9017857142857143,
+    "bull": 0.09821428571428571
+  },
+  "accuracy": {
+    "hit_rate": 0.9642857142857143,
+    "balanced_accuracy": 0.8991899189918993,
+    "log_loss": 0.13912396220632714,
+    "naive_hit_rate": 0.9017857142857143,
+    "naive_balanced": 0.5,
+    "naive_log_loss": 0.3233967373110035,
+    "persistence_hit_rate": 0.9642857142857143,
+    "persistence_balanced": 0.8991899189918993,
+    "n": 112
+  },
+  "policies": [
+    {
+      "name": "baseline",
+      "total_return": 0.08891417015625724,
+      "sharpe": 1.4528070827350028,
+      "max_drawdown": -0.08405600526835331,
+      "num_trades": 1,
+      "total_cost": 0.008
+    },
+    {
+      "name": "buy_hold",
+      "total_return": 0.10842187492338473,
+      "sharpe": 1.7338180866067279,
+      "max_drawdown": -0.08405600526835326,
+      "num_trades": 1,
+      "total_cost": 0.008
+    }
+  ],
+  "train_best_score": 0.8901515151515151,
+  "data_hash": "ed8be9441a2a9f500b45049ec4bab0cab2a7feb587f8aacfaa5fed996bcfeab8",
+  "warnings": [
+    "Regime mix imbalanced: 'sideways' is 90% of test days (>80%).",
+    "Markov model barely beats persistence ('tomorrow = today'): balanced-acc 89.9% vs persistence 89.9%. The transition matrix is adding little beyond regime autocorrelation \u2014 high accuracy here is mostly persistence, not skill."
+  ]
+}

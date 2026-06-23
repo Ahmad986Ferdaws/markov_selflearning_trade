@@ -1,0 +1,48 @@
+{
+  "symbol": "BTC-USD:early",
+  "chosen_window": 30,
+  "chosen_k": 0.35,
+  "train_size": 322,
+  "test_size": 164,
+  "regime_mix": {
+    "sideways": 0.8963414634146342,
+    "bull": 0.09146341463414634,
+    "bear": 0.012195121951219513
+  },
+  "accuracy": {
+    "hit_rate": 0.9451219512195121,
+    "balanced_accuracy": 0.5909297052154195,
+    "log_loss": 0.48443232674383274,
+    "naive_hit_rate": 0.8963414634146342,
+    "naive_balanced": 0.3333333333333333,
+    "naive_log_loss": 0.6518834259387664,
+    "persistence_hit_rate": 0.9512195121951219,
+    "persistence_balanced": 0.7575963718820861,
+    "n": 164
+  },
+  "policies": [
+    {
+      "name": "baseline",
+      "total_return": 0.23263734135976266,
+      "sharpe": 1.7710832578827438,
+      "max_drawdown": -0.07083342638845404,
+      "num_trades": 1,
+      "total_cost": 0.008
+    },
+    {
+      "name": "buy_hold",
+      "total_return": 0.603573557969117,
+      "sharpe": 1.8697680203997356,
+      "max_drawdown": -0.20961001406586996,
+      "num_trades": 1,
+      "total_cost": 0.008
+    }
+  ],
+  "train_best_score": 0.922463768115942,
+  "data_hash": "7fccbbbd8b08fc31f5cda191bce1889289c6cc1763ac88ea089fec8913462df4",
+  "warnings": [
+    "Regime mix imbalanced: 'sideways' is 90% of test days (>80%).",
+    "Markov model barely beats persistence ('tomorrow = today'): balanced-acc 59.1% vs persistence 75.8%. The transition matrix is adding little beyond regime autocorrelation \u2014 high accuracy here is mostly persistence, not skill.",
+    "Possible overfit: train balanced-acc 92.2% vs test 59.1% (gap > 10pp)."
+  ]
+}

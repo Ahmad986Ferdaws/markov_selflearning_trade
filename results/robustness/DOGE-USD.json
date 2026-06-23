@@ -1,0 +1,47 @@
+{
+  "symbol": "DOGE-USD",
+  "chosen_window": 30,
+  "chosen_k": 0.2,
+  "train_size": 706,
+  "test_size": 328,
+  "regime_mix": {
+    "sideways": 0.8079268292682927,
+    "bull": 0.10060975609756098,
+    "bear": 0.09146341463414634
+  },
+  "accuracy": {
+    "hit_rate": 0.9115853658536586,
+    "balanced_accuracy": 0.8242913000977516,
+    "log_loss": 0.3081423996164831,
+    "naive_hit_rate": 0.8048780487804879,
+    "naive_balanced": 0.3333333333333333,
+    "naive_log_loss": 0.6654583467743,
+    "persistence_hit_rate": 0.9115853658536586,
+    "persistence_balanced": 0.8242913000977516,
+    "n": 328
+  },
+  "policies": [
+    {
+      "name": "baseline",
+      "total_return": -0.2783560789013598,
+      "sharpe": -0.30547729271664426,
+      "max_drawdown": -0.4524035922700096,
+      "num_trades": 4,
+      "total_cost": 0.032
+    },
+    {
+      "name": "buy_hold",
+      "total_return": -0.5776539311227208,
+      "sharpe": -0.6478694377681814,
+      "max_drawdown": -0.7189287846964829,
+      "num_trades": 1,
+      "total_cost": 0.008
+    }
+  ],
+  "train_best_score": 0.8625847066843096,
+  "data_hash": "5443f83b8033f22dbc442577de468139df7b2980c21cebe1585437a18ed37807",
+  "warnings": [
+    "Regime mix imbalanced: 'sideways' is 81% of test days (>80%).",
+    "Markov model barely beats persistence ('tomorrow = today'): balanced-acc 82.4% vs persistence 82.4%. The transition matrix is adding little beyond regime autocorrelation \u2014 high accuracy here is mostly persistence, not skill."
+  ]
+}

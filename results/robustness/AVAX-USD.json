@@ -1,0 +1,46 @@
+{
+  "symbol": "AVAX-USD",
+  "chosen_window": 30,
+  "chosen_k": 0.2,
+  "train_size": 706,
+  "test_size": 328,
+  "regime_mix": {
+    "sideways": 0.7103658536585366,
+    "bear": 0.19207317073170732,
+    "bull": 0.0975609756097561
+  },
+  "accuracy": {
+    "hit_rate": 0.9115853658536586,
+    "balanced_accuracy": 0.8705100574712644,
+    "log_loss": 0.32467600500128746,
+    "naive_hit_rate": 0.7073170731707317,
+    "naive_balanced": 0.3333333333333333,
+    "naive_log_loss": 0.8124109424216406,
+    "persistence_hit_rate": 0.9115853658536586,
+    "persistence_balanced": 0.8705100574712644,
+    "n": 328
+  },
+  "policies": [
+    {
+      "name": "baseline",
+      "total_return": -0.3968792924913084,
+      "sharpe": -0.6083991191674472,
+      "max_drawdown": -0.5882118302666546,
+      "num_trades": 4,
+      "total_cost": 0.032
+    },
+    {
+      "name": "buy_hold",
+      "total_return": -0.7091773829778183,
+      "sharpe": -1.0848182775761388,
+      "max_drawdown": -0.8126706389671406,
+      "num_trades": 1,
+      "total_cost": 0.008
+    }
+  ],
+  "train_best_score": 0.878742756720813,
+  "data_hash": "88460eb0b4f281dc643b99aac56d0363044aeb58ca32520ece559ee55b6c6e4d",
+  "warnings": [
+    "Markov model barely beats persistence ('tomorrow = today'): balanced-acc 87.1% vs persistence 87.1%. The transition matrix is adding little beyond regime autocorrelation \u2014 high accuracy here is mostly persistence, not skill."
+  ]
+}

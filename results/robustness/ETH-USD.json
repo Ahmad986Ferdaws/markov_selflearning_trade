@@ -1,0 +1,46 @@
+{
+  "symbol": "ETH-USD",
+  "chosen_window": 20,
+  "chosen_k": 0.2,
+  "train_size": 706,
+  "test_size": 328,
+  "regime_mix": {
+    "sideways": 0.6432926829268293,
+    "bear": 0.18902439024390244,
+    "bull": 0.1676829268292683
+  },
+  "accuracy": {
+    "hit_rate": 0.8719512195121951,
+    "balanced_accuracy": 0.8451315228566413,
+    "log_loss": 0.434913297756097,
+    "naive_hit_rate": 0.6432926829268293,
+    "naive_balanced": 0.3333333333333333,
+    "naive_log_loss": 0.9208091872347768,
+    "persistence_hit_rate": 0.8719512195121951,
+    "persistence_balanced": 0.8451315228566413,
+    "n": 328
+  },
+  "policies": [
+    {
+      "name": "baseline",
+      "total_return": -0.16952961301260938,
+      "sharpe": -0.13173154369305584,
+      "max_drawdown": -0.5014307721891074,
+      "num_trades": 8,
+      "total_cost": 0.064
+    },
+    {
+      "name": "buy_hold",
+      "total_return": -0.47490701422566317,
+      "sharpe": -0.5843480420685044,
+      "max_drawdown": -0.6752940391134474,
+      "num_trades": 1,
+      "total_cost": 0.008
+    }
+  ],
+  "train_best_score": 0.8212443645173778,
+  "data_hash": "c23788c2862d4c06910f1c507b6fed2f368b7302efe75f3e68195d0d9dea1a77",
+  "warnings": [
+    "Markov model barely beats persistence ('tomorrow = today'): balanced-acc 84.5% vs persistence 84.5%. The transition matrix is adding little beyond regime autocorrelation \u2014 high accuracy here is mostly persistence, not skill."
+  ]
+}

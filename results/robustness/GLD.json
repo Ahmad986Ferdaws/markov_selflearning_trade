@@ -1,0 +1,47 @@
+{
+  "symbol": "GLD",
+  "chosen_window": 20,
+  "chosen_k": 0.35,
+  "train_size": 465,
+  "test_size": 224,
+  "regime_mix": {
+    "sideways": 0.7857142857142857,
+    "bull": 0.19642857142857142,
+    "bear": 0.017857142857142856
+  },
+  "accuracy": {
+    "hit_rate": 0.9464285714285714,
+    "balanced_accuracy": 0.7159090909090908,
+    "log_loss": 0.21912340715603015,
+    "naive_hit_rate": 0.7857142857142857,
+    "naive_balanced": 0.3333333333333333,
+    "naive_log_loss": 0.5869718571882457,
+    "persistence_hit_rate": 0.9464285714285714,
+    "persistence_balanced": 0.7159090909090908,
+    "n": 224
+  },
+  "policies": [
+    {
+      "name": "baseline",
+      "total_return": 0.18748558433799722,
+      "sharpe": 0.9100837166017587,
+      "max_drawdown": -0.19175702075078424,
+      "num_trades": 2,
+      "total_cost": 0.016
+    },
+    {
+      "name": "buy_hold",
+      "total_return": 0.2812512711833124,
+      "sharpe": 1.1346985322693528,
+      "max_drawdown": -0.20096794694236755,
+      "num_trades": 1,
+      "total_cost": 0.008
+    }
+  ],
+  "train_best_score": 0.8863017096107849,
+  "data_hash": "2efeda6b4693f9d225524d405e74de37edafa2b8d6270de934afff2f50d8fd0d",
+  "warnings": [
+    "Markov model barely beats persistence ('tomorrow = today'): balanced-acc 71.6% vs persistence 71.6%. The transition matrix is adding little beyond regime autocorrelation \u2014 high accuracy here is mostly persistence, not skill.",
+    "Possible overfit: train balanced-acc 88.6% vs test 71.6% (gap > 10pp)."
+  ]
+}
