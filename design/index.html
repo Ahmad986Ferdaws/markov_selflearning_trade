@@ -4,6 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>REGIME — the model has no edge</title>
+<meta name="description" content="A Markov regime model tested honestly against finance's dumbest baseline. Across 20 markets, net of costs, the edge is exactly zero. This page is the receipt.">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<meta name="theme-color" content="#FAFAF7">
+<!-- Social cards. Set og:url and absolute image URLs at deploy time — Twitter/Slack/iMessage need absolute URLs to render the card. -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="REGIME — the model has no edge">
+<meta property="og:description" content="Tested honestly against finance's dumbest baseline, across 20 markets, the edge is exactly zero. This page is the receipt.">
+<meta property="og:image" content="../media/02-verdict.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="REGIME — the model has no edge">
+<meta name="twitter:description" content="Tested honestly against finance's dumbest baseline, across 20 markets, the edge is exactly zero. This page is the receipt.">
+<meta name="twitter:image" content="../media/02-verdict.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -12,7 +24,7 @@
     /* Black, white, neutrals — one neon pop. Data keeps green/red. */
     --bg:#FAFAF7; --bg2:#FFFFFF; --bg3:#F0EFE9;
     --line:#E5E4DE; --line2:#D2D1C9;
-    --text:#0E0F0C; --soft:#3F4039; --muted:#6F7068; --faint:#A5A69E; --silver:#9CA3AF;
+    --text:#0E0F0C; --soft:#3F4039; --muted:#63645C; --faint:#A5A69E; --silver:#9CA3AF; --hold:#6F7068;
     --black:#0B0B0A; --black2:#141412; --wline:#262622;
     --neon:#CCFF00;
     --gain:#00C805; --loss:#FF5000; --loss-text:#C23B00;
@@ -23,34 +35,48 @@
   }
   *{margin:0;padding:0;box-sizing:border-box}
   ::selection{background:var(--neon);color:#0B0B0A}
-  html{scroll-behavior:smooth}
+  html{scroll-behavior:smooth;scroll-padding-top:74px}
   body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.55;
     -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overflow-x:hidden}
   .mono{font-family:var(--mono);font-variant-numeric:tabular-nums slashed-zero;font-feature-settings:"tnum" 1,"zero" 1}
   td,.num,.big,.eqv,.stat{font-variant-numeric:tabular-nums slashed-zero;font-feature-settings:"tnum" 1,"zero" 1}
   a{color:inherit;text-decoration:none}
   .wrap{max-width:1160px;margin:0 auto;padding:0 48px}
-  h1,h2,h3{font-family:var(--serif);font-weight:400;letter-spacing:-.015em;color:inherit}
+  h1,h2,h3{font-family:var(--serif);font-weight:400;letter-spacing:-.015em;color:inherit;text-wrap:balance}
+  .hsub,.vlede,.steps .step p,.cav .c p,.disc,.quote p{text-wrap:pretty}
+  section[id]{scroll-margin-top:74px}
   .eyebrow{font-family:var(--sans);font-weight:500;font-size:13px;letter-spacing:.01em;color:var(--muted)}
+  /* screen-reader-only utility — clipped, not display:none */
+  .vh{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  main:focus{outline:none}
+  /* keyboard skip-link — hidden until focused */
+  .skip{position:fixed;left:14px;top:-64px;z-index:100;background:var(--text);color:#fff;
+    font-family:var(--sans);font-weight:600;font-size:13px;padding:11px 18px;border-radius:10px;
+    transition:top .22s var(--e)}
+  .skip:focus{top:14px;outline:2px solid var(--text);outline-offset:3px}
 
   /* ---- nav ---- */
-  nav{position:fixed;top:0;left:0;right:0;z-index:80;background:rgba(250,250,247,0);
+  #nav{position:fixed;top:0;left:0;right:0;z-index:80;background:rgba(250,250,247,0);
     border-bottom:1px solid transparent;transition:background .3s,border-color .3s;backdrop-filter:blur(8px)}
-  nav.solid{background:rgba(250,250,247,.88);border-bottom:1px solid var(--line)}
+  #nav.solid{background:rgba(250,250,247,.88);border-bottom:1px solid var(--line)}
   .nbar{max-width:1160px;margin:0 auto;padding:16px 48px;display:flex;align-items:center;justify-content:space-between}
   .mark{font-family:var(--serif);font-weight:500;font-size:19px;letter-spacing:0;display:flex;align-items:center;gap:8px}
   .mark .feather{width:10px;height:10px;background:var(--neon);border:1.5px solid var(--text);border-radius:50% 50% 50% 0;transform:rotate(45deg)}
   .nlinks{display:flex;gap:28px;align-items:center}
-  .nlinks a:not(.pill){font-family:var(--sans);font-weight:500;font-size:14px;color:var(--soft);transition:color .2s;padding:10px 0}
+  .nsec{display:flex;gap:28px;align-items:center;min-width:0}
+  .nlinks a:not(.pill){position:relative;font-family:var(--sans);font-weight:500;font-size:14px;color:var(--soft);transition:color .2s;padding:12px 2px}
   .nlinks a:not(.pill):hover{color:var(--text)}
+  .nlinks a:not(.pill)[aria-current]{color:var(--text);font-weight:600}
+  .nlinks a:not(.pill)[aria-current]::after{content:"";position:absolute;left:2px;right:2px;bottom:6px;height:2px;background:var(--text);border-radius:1px}
   .nlinks a.pill{color:#fff}
   .nlinks a.pill:hover{color:var(--text)}
   a:focus-visible,.pill:focus-visible{outline:2px solid var(--text);outline-offset:3px}
   .dark a:focus-visible,footer a:focus-visible{outline-color:var(--neon)}
   .pill{display:inline-flex;align-items:center;gap:8px;font-family:var(--sans);font-weight:600;font-size:14px;
-    padding:10px 20px;border-radius:999px;border:1.5px solid var(--text);background:var(--text);color:#fff;
+    min-height:44px;padding:11px 22px;border-radius:999px;border:1.5px solid var(--text);background:var(--text);color:#fff;
     transition:background .2s,color .2s,transform .2s}
-  .pill:hover{background:transparent;color:var(--text)}
+  .pill:hover{background:transparent;color:var(--text);transform:translateY(-1px)}
+  .pill:active{transform:translateY(0)}
   .pill.neon{background:var(--neon);border-color:var(--neon);color:var(--black)}
   .pill.neon:hover{background:transparent;border-color:var(--text);color:var(--text)}
   .pill.ghost{background:transparent;color:var(--text)}
@@ -61,7 +87,7 @@
   #heroline{position:absolute;inset:0;width:100%;height:100%;z-index:0;opacity:.55}
   .hero .wrap{position:relative;z-index:2;width:100%}
   .hero .eyebrow{display:block;margin-bottom:28px}
-  .hl{font-family:var(--serif);font-weight:400;font-size:clamp(52px,8.6vw,124px);line-height:.96;letter-spacing:-.02em;margin-bottom:34px;color:var(--text)}
+  .hl{font-family:var(--serif);font-weight:400;font-size:clamp(52px,8.6vw,124px);line-height:.96;letter-spacing:-.02em;margin-bottom:32px;color:var(--text)}
   .hl .ln{display:block;overflow:hidden;padding-bottom:.06em;margin-bottom:-.06em}
   .hl .ln > span{display:inline-block}
   .hl .em{font-style:italic;font-weight:400}
@@ -70,7 +96,7 @@
   .hsub{max-width:46ch;font-size:clamp(17px,1.5vw,20px);color:var(--soft);line-height:1.6;font-weight:400}
   .hsub b{color:var(--text);font-weight:600}
   .hcta{margin-top:36px;display:flex;gap:14px;flex-wrap:wrap;align-items:center}
-  .hmeta{margin-top:54px;display:flex;gap:0;flex-wrap:wrap;border-top:1px solid var(--line)}
+  .hmeta{margin-top:56px;display:flex;gap:0;flex-wrap:wrap;border-top:1px solid var(--line)}
   .hmeta .cell{padding:18px 40px 0 0;margin-right:40px}
   .hmeta .cell .k{font-family:var(--sans);font-weight:500;font-size:12px;letter-spacing:.01em;color:var(--muted);margin-bottom:6px}
   .hmeta .cell .v{font-family:var(--mono);font-size:22px;color:var(--text)}
@@ -89,10 +115,10 @@
   .rv.in{opacity:1;transform:none}
 
   section{position:relative}
-  .band{padding:140px 0}
+  .band{padding:144px 0}
   .seclabel{display:flex;align-items:center;gap:16px;margin-bottom:48px}
   .seclabel .n{font-family:var(--mono);font-size:12px;color:var(--text);letter-spacing:.1em}
-  .seclabel .t{font-family:var(--sans);font-weight:500;font-size:13px;color:var(--muted);letter-spacing:.01em}
+  .seclabel .t{font-family:var(--sans);font-weight:500;font-size:13px;color:var(--muted);letter-spacing:.01em;margin:0}
   .seclabel .rule{flex:1;height:1px;background:var(--line)}
 
   /* ---- dark sections ---- */
@@ -103,13 +129,13 @@
   .dark .eyebrow{color:#8B8C84}
 
   /* ---- verdict (dark) ---- */
-  .verdict h2{font-size:clamp(34px,4.4vw,60px);font-weight:400;line-height:1.08;letter-spacing:-.02em;max-width:21ch;margin-bottom:10px}
-  .verdict h2 em{font-style:italic;color:var(--neon)}
+  .verdict .vhead{font-family:var(--serif);font-size:clamp(34px,4.4vw,60px);font-weight:400;line-height:1.08;letter-spacing:-.02em;max-width:21ch;margin-bottom:10px;text-wrap:balance}
+  .verdict .vhead em{font-style:italic;color:var(--neon)}
   .vlede{color:#8B8C84;max-width:54ch;font-size:17px;margin-bottom:72px}
-  .race{display:grid;gap:34px;max-width:920px}
-  .lane{display:grid;grid-template-columns:170px 1fr 96px;align-items:center;gap:26px}
+  .race{display:grid;gap:32px;max-width:920px}
+  .lane{display:grid;grid-template-columns:170px 1fr 96px;align-items:center;gap:24px}
   .lane .name{font-family:var(--sans);font-weight:600;font-size:14px;color:#F4F4F0}
-  .lane .name small{display:block;font-family:var(--mono);font-weight:400;color:#8B8C84;font-size:11px;margin-top:3px;letter-spacing:.04em}
+  .lane .name small{display:block;font-family:var(--mono);font-weight:400;color:#8B8C84;font-size:12px;margin-top:4px;letter-spacing:.04em}
   .lane .meter{position:relative;height:12px;background:var(--black2);border:1px solid var(--wline);border-radius:999px;overflow:hidden}
   .lane .meter .fill{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:999px}
   .lane.m .fill{background:var(--neon)}
@@ -117,15 +143,15 @@
   .lane.n .fill{background:#4A4B45}
   .lane .val{font-family:var(--mono);font-size:21px;text-align:right;color:#F4F4F0}
   .lane.n .name,.lane.n .val{color:#8B8C84}
-  .tieband{margin-top:64px;display:flex;align-items:baseline;justify-content:center;gap:32px;
-    padding:44px 0;border-top:1px solid var(--wline);border-bottom:1px solid var(--wline)}
-  .tieband .big{font-family:var(--serif);font-weight:300;font-size:clamp(52px,7.5vw,96px);letter-spacing:-.03em;color:#F4F4F0}
+  .tieband{margin-top:64px;display:flex;align-items:baseline;justify-content:center;gap:clamp(16px,3.5vw,32px);
+    padding:48px 0;border-top:1px solid var(--wline);border-bottom:1px solid var(--wline)}
+  .tieband .big{font-family:var(--serif);font-weight:300;font-size:clamp(40px,10vw,96px);letter-spacing:-.03em;color:#F4F4F0}
   .tieband .eqv{font-family:var(--mono);font-size:clamp(30px,4vw,48px);color:var(--neon)}
-  .stamp{margin-top:34px;text-align:center}
+  .stamp{margin-top:32px;text-align:center}
   .stamp svg{width:min(430px,70%);height:16px;display:block;margin:0 auto}
   .stamp svg path{stroke:#6E6F67;stroke-width:1;fill:none}
-  .stamp .lab{margin-top:14px;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8B8C84}
-  .stamp .sub{margin-top:18px;font-family:var(--sans);font-size:14px;letter-spacing:.01em;color:#8B8C84;max-width:62ch;margin-left:auto;margin-right:auto}
+  .stamp .lab{margin-top:16px;font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#8B8C84}
+  .stamp .sub{margin-top:16px;font-family:var(--sans);font-size:14px;letter-spacing:.01em;color:#8B8C84;max-width:62ch;margin-left:auto;margin-right:auto}
   .stamp .sub b{color:#F4F4F0;font-weight:600}
 
   /* ---- sticky story ---- */
@@ -135,90 +161,105 @@
     opacity:0;transform:scale(.985);transition:opacity .6s var(--e),transform .6s var(--e);pointer-events:none}
   .scene.on{opacity:1;transform:none;pointer-events:auto}
   .scene canvas{display:block;width:min(520px,86vw);height:auto;aspect-ratio:1/1}
-  .steps .step{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:0 0 0 76px}
+  .steps .step{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:0 0 0 80px}
   .steps .step .si{font-family:var(--sans);font-weight:600;font-size:13px;letter-spacing:.02em;color:var(--muted);margin-bottom:24px}
   .steps .step h3{font-size:clamp(32px,3.6vw,50px);font-weight:400;letter-spacing:-.02em;margin-bottom:22px}
   .steps .step p{color:var(--soft);max-width:42ch;font-size:17px;line-height:1.65}
   .steps .step p b{color:var(--text);font-weight:600}
-  .steps .step .tag{margin-top:28px;display:inline-flex;gap:10px;font-family:var(--mono);font-size:11px;
-    color:var(--muted);letter-spacing:.06em;border:1px solid var(--line2);padding:9px 16px;border-radius:999px}
+  .steps .step .tag{margin-top:28px;display:inline-flex;gap:10px;font-family:var(--mono);font-size:12px;
+    color:var(--muted);letter-spacing:.06em;border:1px solid var(--line2);padding:8px 16px;border-radius:999px}
   .steps .step{opacity:.3;transition:opacity .5s var(--e)}
   .steps .step.active{opacity:1}
   .m3d{position:relative;width:min(540px,80vw);aspect-ratio:1/1}
   .m3d canvas{width:100%!important;height:100%!important;display:block}
   .m3d-labels{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .6s var(--e)}
   .m3d-labels.show{opacity:1}
-  .m3d-label{position:absolute;top:0;left:0;text-align:center;font-family:var(--mono);font-size:11px;line-height:1.3;letter-spacing:.04em;white-space:nowrap}
+  .m3d-label{position:absolute;top:0;left:0;text-align:center;font-family:var(--mono);font-size:12px;line-height:1.3;letter-spacing:.04em;white-space:nowrap}
   .m3d-label b{display:block;font-weight:500}
   .m3d-label i{font-style:normal;color:var(--muted)}
 
   /* ---- results ---- */
-  .chartwrap{position:relative;border:1px solid var(--line);background:var(--bg2);border-radius:14px;padding:30px 30px 20px}
+  .chartwrap{position:relative;border:1px solid var(--line);background:var(--bg2);border-radius:14px;padding:32px 32px 20px}
   .chartwrap .top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:14px}
-  .legend{display:flex;gap:26px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .legend{display:flex;gap:24px;font-family:var(--mono);font-size:12px;color:var(--muted);flex-wrap:wrap;row-gap:8px}
   .legend i{display:inline-block;width:16px;height:0;border-top:2px solid;vertical-align:middle;margin-right:9px;border-radius:2px}
-  .legend .b i{border-color:var(--gain)} .legend .h i{border-color:var(--silver)}
+  .legend .b i{border-color:var(--gain)} .legend .h i{border-color:var(--hold)}
   .legend b{color:var(--text);font-weight:500}
   #equity{width:100%;height:auto;aspect-ratio:1000/380;display:block;cursor:crosshair;touch-action:pan-y}
+  #equity:focus-visible{outline:2px solid var(--text);outline-offset:4px;border-radius:4px}
   #equity .grid{stroke:var(--line);stroke-width:1}
   #equity .zero{stroke:var(--line2);stroke-width:1;stroke-dasharray:2 5}
-  #equity .ax{font-family:var(--mono);font-size:10.5px;fill:var(--muted)}
+  #equity .ax{font-family:var(--mono);font-size:12px;fill:var(--muted)}
   #equity .ln{fill:none;stroke-width:1.8;stroke-linejoin:round}
-  #equity .ln.b{stroke:var(--gain)} #equity .ln.h{stroke:var(--silver)}
-  .scrub{font-family:var(--mono);font-size:11px;color:var(--muted)}
+  #equity .ln.b{stroke:var(--gain)} #equity .ln.h{stroke:var(--hold)}
+  .scrub{font-family:var(--mono);font-size:12px;color:var(--muted)}
   .scrub b{color:var(--text)}
   .tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tscroll:focus-visible{outline:2px solid var(--text);outline-offset:4px;border-radius:4px}
   .rtable{width:100%;min-width:560px;border-collapse:collapse;margin-top:10px}
   .rtable th{font-family:var(--sans);font-weight:500;font-size:12px;letter-spacing:.01em;
     color:var(--muted);text-align:right;padding:0 0 14px;border-bottom:1.5px solid var(--text)}
   .rtable th:first-child{text-align:left}
-  .rtable td{font-family:var(--mono);font-size:15px;text-align:right;padding:19px 0;border-bottom:1px solid var(--line);color:var(--soft)}
+  .rtable td{font-family:var(--mono);font-size:15px;text-align:right;padding:20px 0;border-bottom:1px solid var(--line);color:var(--soft)}
   .rtable td:first-child{text-align:left;font-family:var(--sans);font-weight:600;font-size:15px;color:var(--text)}
   .rtable tr:last-child td{border-bottom:none}
+  .rtable tbody tr{transition:background .15s var(--e)}
+  .rtable tbody tr:hover td{background:rgba(11,11,10,.025)}
   .rtable .neg{color:var(--loss-text)}
   .rtable .pend td{color:var(--muted)}
   .rtable .pend td:first-child{color:var(--muted)}
-  .rtable .pend .badge{font-family:var(--mono);font-weight:500;font-size:10px;color:var(--black);background:var(--neon);
-    padding:3px 9px;margin-left:10px;letter-spacing:.08em;border-radius:999px}
+  .rtable .pend .badge{font-family:var(--mono);font-weight:500;font-size:11px;color:var(--black);background:var(--neon);
+    padding:3px 10px;margin-left:10px;letter-spacing:.08em;border-radius:999px;text-transform:uppercase;white-space:nowrap}
 
   /* ---- quote (dark) ---- */
   .quote{max-width:78ch;margin:0 auto;text-align:center}
   .quote p{font-family:var(--serif);font-weight:300;font-size:clamp(24px,3vw,40px);line-height:1.35;letter-spacing:-.015em;color:#F4F4F0}
   .quote p .mk{color:var(--neon);font-style:italic}
-  .quote cite{display:block;margin-top:34px;font-family:var(--mono);font-size:12px;color:#8B8C84;font-style:normal;letter-spacing:.04em}
+  .quote cite{display:block;margin-top:32px;font-family:var(--mono);font-size:12px;color:#8B8C84;font-style:normal;letter-spacing:.04em}
 
   /* ---- disclosures ---- */
   .cav{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden}
-  .cav .c{background:var(--bg2);padding:36px 32px}
+  .cav .c{background:var(--bg2);padding:32px;transition:background .2s var(--e)}
+  .cav .c:hover{background:var(--bg)}
   .cav .c .n{font-family:var(--mono);font-size:12px;color:var(--text);margin-bottom:16px}
   .cav .c p{font-size:14.5px;color:var(--soft);line-height:1.62}
   .cav .c p b{color:var(--text);font-weight:600}
 
   /* ---- footer (dark, dense) ---- */
-  footer{background:var(--black);color:#F4F4F0;padding:84px 0 56px}
+  footer{background:var(--black);color:#F4F4F0;padding:88px 0 56px}
   .fcols{display:flex;justify-content:space-between;align-items:flex-start;gap:40px;flex-wrap:wrap;padding-bottom:56px;border-bottom:1px solid var(--wline)}
-  .fcols .links{display:flex;gap:36px;font-family:var(--sans);font-weight:500;font-size:14px;color:#8B8C84}
+  .fcols .links{display:flex;gap:16px;font-family:var(--sans);font-weight:500;font-size:14px;color:#8B8C84;flex-wrap:wrap}
+  .fcols .links a{padding:12px 10px;transition:color .2s}
   .fcols .links a:hover{color:var(--neon)}
-  .fcols p{margin-top:18px;max-width:36ch;color:#8B8C84;font-size:14.5px;line-height:1.6}
-  .disc{margin-top:36px;font-family:var(--sans);font-size:12.5px;line-height:1.7;color:#8B8C84;max-width:100ch}
+  .fcols p{margin-top:16px;max-width:36ch;color:#8B8C84;font-size:14.5px;line-height:1.6}
+  .disc{margin-top:36px;font-family:var(--sans);font-size:13px;line-height:1.7;color:#8B8C84;max-width:100ch}
   .disc b{color:#F4F4F0}
   .dchips{margin-top:28px;display:flex;gap:10px;flex-wrap:wrap}
-  .dchips span{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:#8B8C84;border:1px solid var(--wline);
+  .dchips span{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:#8B8C84;border:1px solid var(--wline);
     padding:6px 12px;border-radius:999px}
+  .fcopy{margin-top:32px;font-family:var(--mono);font-size:12px;color:#8B8C84}
 
   @media(max-width:920px){
     .story .grid{grid-template-columns:1fr}
     .stage{position:relative;height:64vh;border-right:none;border-bottom:1px solid var(--line)}
     .steps .step{min-height:auto;padding:64px 0}
     .cav{grid-template-columns:1fr}
-    .nlinks a:not(.pill){display:none}
+    .nlinks{flex:1;justify-content:flex-end;min-width:0}
+    .nsec{gap:18px;min-width:0;overflow-x:auto;scrollbar-width:none}
+    .nsec::-webkit-scrollbar{display:none}
+    .nlinks a:not(.pill){font-size:13px;padding:8px 0;white-space:nowrap}
+    .pill{flex:0 0 auto}
     .hmeta .cell{padding-right:24px;margin-right:24px}
   }
-  @media(max-width:560px){.wrap{padding:0 26px}.nbar{padding:14px 26px}.lane{grid-template-columns:104px 1fr 72px;gap:14px}
-    .hl{font-size:clamp(42px,13vw,52px)}}
+  @media(max-width:560px){.wrap{padding:0 24px}.nbar{padding:12px 24px;gap:14px}.nsec{gap:16px}.lane{grid-template-columns:104px 1fr 72px;gap:16px}
+    .hl{font-size:clamp(42px,13vw,52px)}
+    .tieband{gap:12px}
+    .chartwrap{padding:20px 16px 12px}
+    .cav .c{padding:28px 24px}}
   @media (prefers-reduced-motion:reduce){
     html{scroll-behavior:auto}
     *{animation-duration:.001s!important;transition-duration:.001s!important}
+    .tape .track{animation:none!important}
     .rv{opacity:1!important;transform:none!important}
     .hi{background-size:100% 34%!important}
   }
@@ -236,17 +277,21 @@
 </style>
 </head>
 <body>
-<nav id="nav"><div class="nbar">
-  <span class="mark"><span class="feather"></span>Regime</span>
+<a class="skip" href="#main">Skip to main content</a>
+<nav id="nav" aria-label="Site"><div class="nbar">
+  <a class="mark" href="#main" aria-label="Regime — back to top"><span class="feather" aria-hidden="true"></span>Regime</a>
   <div class="nlinks">
-    <a href="#verdict">Verdict</a>
-    <a href="#method">Method</a>
-    <a href="#results">Results</a>
-    <a href="#disclosures">Disclosures</a>
+    <div class="nsec" id="nsec">
+      <a href="#verdict">Verdict</a>
+      <a href="#method">Method</a>
+      <a href="#results">Results</a>
+      <a href="#disclosures">Disclosures</a>
+    </div>
     <a class="pill" href="#verdict">See the data</a>
   </div>
 </div></nav>
 
+<main id="main" tabindex="-1">
 <!-- ============ HERO ============ -->
 <section class="hero">
   <canvas id="heroline" aria-hidden="true"></canvas>
@@ -259,7 +304,7 @@
     <p class="hsub">We built a Markov regime model, gave it honest rules — daily bars, real costs, data it had never seen — and asked it to beat the dumbest benchmarks in finance. <b>It couldn't. This site is the receipt.</b></p>
     <div class="hcta">
       <a class="pill" href="#verdict">See the verdict</a>
-      <a class="pill ghost" href="#method">How it works</a>
+      <a class="pill ghost" href="#method">Read the method</a>
     </div>
     <div class="hmeta">
       <div class="cell"><div class="k">Held-out test</div><div class="v">328&nbsp;<small>days</small></div></div>
@@ -274,9 +319,9 @@
 <!-- ============ VERDICT (dark) ============ -->
 <section class="dark band" id="verdict">
   <div class="wrap">
-    <div class="seclabel rv"><span class="n">01</span><span class="t">The verdict</span><span class="rule"></span></div>
+    <div class="seclabel rv"><span class="n" aria-hidden="true">01</span><h2 class="t">The verdict</h2><span class="rule" aria-hidden="true"></span></div>
     <div class="verdict">
-      <h2 class="rv">It predicts tomorrow’s regime <em>90.9%</em> of the time. So does guessing “same as today.”</h2>
+      <p class="vhead rv">It predicts tomorrow’s regime <em>90.9%</em> of the time. So does guessing “same as today.”</p>
       <p class="vlede rv">Three predictors, one held-out window. The bars grow to the score each one earned. Watch the top two finish in exactly the same place.</p>
       <div class="race" id="race">
         <div class="lane m" data-w="90.9">
@@ -312,7 +357,7 @@
 <!-- ============ STICKY STORY ============ -->
 <section class="story" id="method">
   <div class="wrap">
-    <div class="seclabel rv" style="padding-top:120px"><span class="n">02</span><span class="t">How it works · sense → reason → act</span><span class="rule"></span></div>
+    <div class="seclabel rv" style="padding-top:120px"><span class="n" aria-hidden="true">02</span><h2 class="t">How it works · sense → reason → act</h2><span class="rule" aria-hidden="true"></span></div>
   </div>
   <div class="wrap">
     <div class="grid">
@@ -348,24 +393,25 @@
 <!-- ============ RESULTS ============ -->
 <section class="band" id="results" style="background:var(--bg3)">
   <div class="wrap">
-    <div class="seclabel rv"><span class="n">03</span><span class="t">Held-out equity · net of costs</span><span class="rule"></span></div>
+    <div class="seclabel rv"><span class="n" aria-hidden="true">03</span><h2 class="t">Held-out equity · net of costs</h2><span class="rule" aria-hidden="true"></span></div>
     <div class="chartwrap rv">
       <div class="top">
         <div class="legend">
           <span class="b"><i></i>Regime baseline <b>−41.1%</b></span>
           <span class="h"><i></i>Buy &amp; hold <b>−47.7%</b></span>
         </div>
-        <div class="scrub" id="scrub">drag across · <b>—</b></div>
+        <div class="scrub" id="scrub">hover, drag, or press ← → · <b>—</b></div>
       </div>
-      <svg id="equity" viewBox="0 0 1000 380" role="img" aria-label="Held-out equity curves: regime baseline −41.1%, buy &amp; hold −47.7% over 328 days"></svg>
+      <svg id="equity" viewBox="0 0 1000 380" role="img" tabindex="0" aria-label="Held-out equity curves: regime baseline −41.1%, buy &amp; hold −47.7% over 328 days. Use left and right arrow keys to read values along the curves."></svg>
     </div>
-    <div class="tscroll">
+    <div class="tscroll" role="region" aria-label="Policy results table" tabindex="0">
     <table class="rtable rv">
-      <thead><tr><th>Policy</th><th>Return</th><th>Sharpe</th><th>Max DD</th><th>Trades</th><th>Cost</th></tr></thead>
+      <caption class="vh">Held-out performance by policy, net of costs</caption>
+      <thead><tr><th scope="col">Policy</th><th scope="col">Return</th><th scope="col">Sharpe</th><th scope="col">Max DD</th><th scope="col">Trades</th><th scope="col">Cost</th></tr></thead>
       <tbody>
         <tr><td>Regime baseline</td><td class="neg">−41.1%</td><td class="neg">−1.87</td><td class="neg">−42.9%</td><td>6</td><td>4.8%</td></tr>
         <tr><td>Buy &amp; hold</td><td class="neg">−47.7%</td><td class="neg">−1.17</td><td class="neg">−51.2%</td><td>1</td><td>0.8%</td></tr>
-        <tr class="pend"><td>LLM agent <span class="badge">PHASE C</span></td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+        <tr class="pend"><td>LLM agent <span class="badge">Phase&nbsp;C</span></td><td><span aria-hidden="true">—</span><span class="vh">not yet run</span></td><td aria-hidden="true">—</td><td aria-hidden="true">—</td><td aria-hidden="true">—</td><td aria-hidden="true">—</td></tr>
       </tbody>
     </table>
     </div>
@@ -375,17 +421,17 @@
 <!-- ============ QUOTE (dark) ============ -->
 <section class="dark band">
   <div class="wrap">
-    <div class="quote rv">
+    <blockquote class="quote rv">
       <p>“The transition matrix is adding little beyond regime autocorrelation. High accuracy here is mostly <span class="mk">persistence</span>, not skill.”</p>
       <cite>— the instrument, flagging itself · warnings[0] · results/BTC-USD_4a150b23.json</cite>
-    </div>
+    </blockquote>
   </div>
 </section>
 
 <!-- ============ DISCLOSURES ============ -->
 <section class="band" id="disclosures">
   <div class="wrap">
-    <div class="seclabel rv"><span class="n">04</span><span class="t">Disclosures · read before you believe it</span><span class="rule"></span></div>
+    <div class="seclabel rv"><span class="n" aria-hidden="true">04</span><h2 class="t">Disclosures · read before you believe it</h2><span class="rule" aria-hidden="true"></span></div>
     <div class="cav">
       <div class="c"><div class="n">01</div><p>Reproduced across <b>20 markets + sub-periods</b> — the zero-edge result holds on every one (0 / 20). Remaining limit: one ~3-year window per asset; a longer multi-cycle history is the next test.</p></div>
       <div class="c"><div class="n">02</div><p>Regimes come from overlapping rolling windows, so consecutive days are highly correlated — which is precisely why persistence is so hard to beat.</p></div>
@@ -393,6 +439,7 @@
     </div>
   </div>
 </section>
+</main>
 
 <footer>
   <div class="wrap">
@@ -401,14 +448,15 @@
         <span class="mark" style="color:#F4F4F0"><span class="feather"></span>Regime</span>
         <p>Built to find an edge. Found none. Published anyway.</p>
       </div>
-      <div class="links">
-        <a href="#verdict">Verdict</a><a href="#method">Method</a><a href="#results">Results</a><a href="#disclosures">Disclosures</a><a href="#">Source</a>
-      </div>
+      <nav class="links" aria-label="Footer">
+        <a href="#verdict">Verdict</a><a href="#method">Method</a><a href="#results">Results</a><a href="#disclosures">Disclosures</a><a href="../results/BTC-USD_4a150b23.json">Results JSON</a>
+      </nav>
     </div>
     <p class="disc"><b>Simulation only.</b> REGIME is a research and educational artifact. It executes no real trades, connects to no exchange, holds no wallets or keys, and manages no real funds. Nothing on this page is investment advice or a recommendation of any security or strategy. All figures are from a paper-trading simulation on historical data (BTC-USD primary, n = 328 held-out days, net of 0.3% fee + 0.5% slippage per fill) and are reported precisely because they show <b>no</b> edge. Past simulated performance — especially the absence of it — does not guarantee future results.</p>
     <div class="dchips">
       <span>NO REAL FUNDS</span><span>NO WALLETS · NO KEYS</span><span>BTC-USD · n=328</span><span>20 MARKETS · 0/20 EDGE</span><span>DATA 4a150b23</span>
     </div>
+    <p class="fcopy">© <span id="yr">2026</span> Regime — a research &amp; educational artifact.</p>
   </div>
 </footer>
 
@@ -429,7 +477,7 @@ const CSSV=n=>_cs.getPropertyValue(n).trim();
 function rgba(hex,a){let h=hex.replace('#','');if(h.length===3)h=h.split('').map(c=>c+c).join('');
   const n=parseInt(h,16);return 'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+','+a+')';}
 const PAL={bg:CSSV('--bg'),bg2:CSSV('--bg2'),text:CSSV('--text'),soft:CSSV('--soft'),
-  muted:CSSV('--muted'),faint:CSSV('--faint'),silver:CSSV('--silver'),
+  muted:CSSV('--muted'),faint:CSSV('--faint'),silver:CSSV('--silver'),hold:CSSV('--hold'),
   neon:CSSV('--neon'),gain:CSSV('--gain'),loss:CSSV('--loss')};
 
 const HAS_GSAP = !!(window.gsap && window.ScrollTrigger);
@@ -470,9 +518,15 @@ addEventListener('scroll',()=>{ nav.classList.toggle('solid',document.documentEl
     ctx.stroke();
     ctx.fillStyle=rgba(PAL.text,0.45);
     ctx.beginPath(); ctx.arc(W*0.5, mid-((buf[Math.floor(t*0.4)%N]-60)/22)*amp,2.4,0,7); ctx.fill();
-    requestAnimationFrame(frame);
+    raf = active() ? requestAnimationFrame(frame) : null;
   }
-  if(!RM) requestAnimationFrame(frame); else size();
+  // perf budget: only animate while the hero is on-screen AND the tab is visible
+  let raf=null, inView=true, visible=!document.hidden;
+  const active=()=>!RM && inView && visible;
+  const kick=()=>{ if(active() && raf==null) raf=requestAnimationFrame(frame); };
+  new IntersectionObserver(e=>{ inView=e[0].isIntersecting; kick(); },{threshold:0.01}).observe(cv);
+  document.addEventListener('visibilitychange',()=>{ visible=!document.hidden; kick(); });
+  if(!RM) kick(); else size();
 })();
 
 /* ---------- sticky story: shared refs ---------- */
@@ -696,17 +750,49 @@ function setActive(i){
       .to(pb,{strokeDashoffset:0,duration:1.6,ease:'power1.inOut'},0.4);
   }
   const guide=E('line',{class:'grid',x1:0,x2:0,y1:T,y2:H-B,style:'opacity:0;stroke:'+rgba(PAL.text,0.3)}); svg.appendChild(guide);
-  const dotB=E('circle',{r:3.6,fill:PAL.gain,style:'opacity:0'}); const dotH=E('circle',{r:3.6,fill:PAL.silver,style:'opacity:0'});
+  const dotB=E('circle',{r:3.6,fill:PAL.gain,style:'opacity:0'}); const dotH=E('circle',{r:3.6,fill:PAL.hold,style:'opacity:0'});
   svg.appendChild(dotB);svg.appendChild(dotH);
   const scrub=$('#scrub');
+  const IDLE='hover, drag, or press ← → · <b>—</b>';
+  let cur=-1;
+  function showAt(i){
+    cur=Math.max(0,Math.min(N-1,i));
+    const gx=x(cur); guide.setAttribute('x1',gx);guide.setAttribute('x2',gx);guide.style.opacity=.9;
+    dotB.setAttribute('cx',gx);dotB.setAttribute('cy',y(base[cur]));dotB.style.opacity=1;
+    dotH.setAttribute('cx',gx);dotH.setAttribute('cy',y(hold[cur]));dotH.style.opacity=1;
+    scrub.innerHTML='baseline <b>'+(base[cur]-100).toFixed(1)+'%</b> · hold <b>'+(hold[cur]-100).toFixed(1)+'%</b>';
+  }
+  function clear(){cur=-1;guide.style.opacity=0;dotB.style.opacity=0;dotH.style.opacity=0;scrub.innerHTML=IDLE;}
   svg.addEventListener('pointermove',ev=>{ const r=svg.getBoundingClientRect();
-    const px=(ev.clientX-r.left)/r.width*W; let i=Math.round((px-L)/(W-L-R)*(N-1)); i=Math.max(0,Math.min(N-1,i));
-    const gx=x(i); guide.setAttribute('x1',gx);guide.setAttribute('x2',gx);guide.style.opacity=.9;
-    dotB.setAttribute('cx',gx);dotB.setAttribute('cy',y(base[i]));dotB.style.opacity=1;
-    dotH.setAttribute('cx',gx);dotH.setAttribute('cy',y(hold[i]));dotH.style.opacity=1;
-    scrub.innerHTML='baseline <b>'+(base[i]-100).toFixed(1)+'%</b> · hold <b>'+(hold[i]-100).toFixed(1)+'%</b>'; });
-  svg.addEventListener('pointerleave',()=>{guide.style.opacity=0;dotB.style.opacity=0;dotH.style.opacity=0;scrub.innerHTML='drag across · <b>—</b>';});
+    const px=(ev.clientX-r.left)/r.width*W; showAt(Math.round((px-L)/(W-L-R)*(N-1))); });
+  svg.addEventListener('pointerleave',clear);
+  /* keyboard scrub — arrow keys walk the series, Home/End jump */
+  svg.addEventListener('keydown',ev=>{
+    const step=ev.shiftKey?10:1;
+    if(ev.key==='ArrowRight'){showAt(cur<0?0:cur+step);ev.preventDefault();}
+    else if(ev.key==='ArrowLeft'){showAt(cur<0?N-1:cur-step);ev.preventDefault();}
+    else if(ev.key==='Home'){showAt(0);ev.preventDefault();}
+    else if(ev.key==='End'){showAt(N-1);ev.preventDefault();}
+    else if(ev.key==='Escape'){clear();}
+  });
+  svg.addEventListener('blur',clear);
 })();
+
+/* ---------- nav scroll-spy: aria-current tracks the section in view ---------- */
+(function(){
+  const links=$$('#nsec a'); if(!links.length||!('IntersectionObserver' in window))return;
+  const map=new Map();
+  links.forEach(a=>{ const t=$(a.getAttribute('href')); if(t) map.set(t,a); });
+  const spy=new IntersectionObserver(entries=>{
+    entries.forEach(en=>{ if(en.isIntersecting){
+      links.forEach(a=>a.removeAttribute('aria-current'));
+      const a=map.get(en.target); if(a)a.setAttribute('aria-current','true');
+    }});
+  },{rootMargin:'-40% 0px -55% 0px'});
+  map.forEach((_,t)=>spy.observe(t));
+})();
+
+document.getElementById('yr').textContent=new Date().getFullYear();
 
 /* ===================== ORCHESTRATION ===================== */
 if(!HAS_GSAP){ setActive(0); return; }
@@ -741,7 +827,7 @@ if(window.Lenis){
   gsap.ticker.add(t=>lenis.raf(t*1000));
   gsap.ticker.lagSmoothing(0);
   $$('a[href^="#"]').forEach(a=>a.addEventListener('click',e=>{ const id=a.getAttribute('href');
-    if(id.length>1){ const tgt=$(id); if(tgt){ e.preventDefault(); lenis.scrollTo(tgt,{offset:-8});
+    if(id.length>1){ const tgt=$(id); if(tgt){ e.preventDefault(); lenis.scrollTo(tgt,{offset:-70});
       tgt.setAttribute('tabindex','-1'); tgt.focus({preventScroll:true}); } } }));
 }
 
