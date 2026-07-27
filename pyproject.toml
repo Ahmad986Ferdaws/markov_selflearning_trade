@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "markov-selflearning-trade"
-version = "0.1.0"
+version = "0.2.0"
 description = "An honest, simulation-only daily evaluation harness — and the verified null result that the Markov regime model has no edge over persistence"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -33,6 +33,7 @@ dev = [
 regime-cli = "app.cli.regime:main"
 compare-cli = "app.cli.compare:main"
 evaluate-cli = "app.cli.evaluate:main"
+diagnose-cli = "app.cli.diagnose:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["app"]

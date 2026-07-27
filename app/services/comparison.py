@@ -303,3 +303,5 @@ def format_report(report: ComparisonReport) -> str:
         lines.append("⚠ VALIDATION WARNINGS:")
         lines.extend(f"  - {w}" for w in report.warnings)
     return "\n".join(lines)
+
+

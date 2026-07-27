@@ -5,6 +5,7 @@ Usage:
   evaluate-cli --refresh             # re-pull fresh data and re-pin
   evaluate-cli --provider ollama     # add the LLM agent as a third policy (local)
   evaluate-cli --provider anthropic  # add the LLM agent (hosted; needs ANTHROPIC_API_KEY)
+  evaluate-cli --provider X --cache-only  # replay the agent from its on-disk cache; NO live calls
 
 The provider can also be set once via LLM_PROVIDER in .env. The agent's responses
 are cached to data/agent_cache/, so a re-run is free and reproducible.
@@ -33,9 +34,10 @@ def _arg_value(flag: str) -> str | None:
     return None
 
 
-def _build_policies(settings):
+def _build_policies(settings, cache_only: bool = False):
     """Return (policies, agent_fn_or_None). Adds the LLM agent iff a provider is
-    configured AND reachable — so results never contain a silently-flat agent."""
+    configured AND reachable — so results never contain a silently-flat agent.
+    In cache-only (replay) mode no live call is ever made, so no health check."""
     from app.services.agent_policy import CACHE_DIR, ResponseCache, build_agent_policy, make_provider
 
     policies = dict(DEFAULT_POLICIES)
@@ -43,15 +45,24 @@ def _build_policies(settings):
     if provider is None:
         return policies, None
 
-    print(f"[agent] provider={provider.id} model={provider.model} — health check...", flush=True)
-    if not provider.health():
-        print(f"[agent] provider '{provider.id}' unreachable; running WITHOUT the agent "
-              f"(baseline + buy-and-hold only).")
-        return policies, None
+    cache_only = cache_only or bool(getattr(settings, "agent_cache_only", False))
+    if cache_only:
+        print(f"[agent] provider={provider.id} model={provider.model} — CACHE-ONLY replay "
+              f"(no live calls will be made)", flush=True)
+    else:
+        print(f"[agent] provider={provider.id} model={provider.model} — health check...", flush=True)
+        if not provider.health():
+            print(f"[agent] provider '{provider.id}' unreachable; running WITHOUT the agent "
+                  f"(baseline + buy-and-hold only).")
+            return policies, None
 
     safe_model = provider.model.replace(":", "-").replace("/", "-") or "model"
     cache = ResponseCache(CACHE_DIR / f"{provider.id}_{safe_model}.json")
-    agent = build_agent_policy(provider, cache)
+    agent = build_agent_policy(
+        provider, cache,
+        max_unique_calls=int(getattr(settings, "agent_max_calls", 64)),
+        cache_only=cache_only,
+    )
     policies["agent"] = agent
     print(f"[agent] enabled (cache: {len(cache._d)} prior responses)")
     return policies, agent
@@ -67,7 +78,7 @@ def main() -> None:
     history, source = load_or_fetch(s.regime_symbol, years=3, refresh=refresh)
     print(f"[data] {source}")
 
-    policies, agent = _build_policies(s)
+    policies, agent = _build_policies(s, cache_only="--cache-only" in sys.argv)
 
     report = evaluate(
         history,
@@ -97,7 +108,13 @@ def main() -> None:
                   f"salvaged-labeled {st.salvaged_labeled}  "
                   f"salvaged-number {st.salvaged_single_number}  "
                   f"held(unparseable) {st.unparseable_hold}  "
-                  f"held(error) {st.errors}   [{clean:.0%} clean]")
+                  f"held(error) {st.errors}  "
+                  f"held(budget) {st.budget_holds}  "
+                  f"held(cache-only) {st.cache_only_holds}   [{clean:.0%} clean]")
+        if st.budget_holds:
+            print("[agent] WARNING: the unique-call budget was exhausted mid-run; "
+                  "later decisions held the prior position. Raise AGENT_MAX_CALLS "
+                  "only if the call count (and cost) is intended.")
         if st.errors:
             print("[agent] WARNING: some calls failed mid-run and held the prior position; "
                   "treat the agent row with caution.")

@@ -15,3 +15,16 @@ A visual movement for instruments that measure markets without lying about them.
 **Composition and motion.** Charts draw themselves like a plotter pen laying down ink — lines that animate into being rather than appearing all at once, numbers that count up to their truth, a glow that pulses once and settles. Motion is slow, eased, and purposeful: nothing bounces, nothing flashes. The eye is led from the headline finding, down through the equity curves, across the regime timeline, to the honest warning panel — a deliberate path composed with the care of a master craftsman.
 
 **The discipline of honesty.** Above all, this instrument is built to tell the truth even when the truth is unimpressive. When the model has no edge, the design says so plainly, in calm amber, without shame. That intellectual honesty is itself the aesthetic — a refusal to dress a null result as a triumph. The result must look meticulously crafted, labored over for countless hours by someone at the absolute top of their field: every alignment intentional, every glow calibrated, every digit set with reverence for what it measures.
+
+## Refinement pass — July 2026 (component best-practices audit)
+
+A design-refinement pass audited `index.html` against a component best-practices reference (ui-design-brain) without changing the brand language, fonts, palette, motion stack, or the real held-out data. What changed:
+
+- **Semantics & structure.** Added a `<main>` landmark; the skip link now targets it ("Skip to main content"). Section labels became real `h2` headings so the outline runs strictly h1 → h2 → h3 (the big verdict statement is now a styled paragraph, keeping one heading per level). The pull-quote is a proper `<blockquote>` with `<cite>`. The nav wordmark is a link back to top.
+- **Navigation.** A scroll-spy sets `aria-current` on the section link in view, rendered as an underline + weight shift (clear active state). Footer links moved into a labeled `<nav>`; the fixed-position rule was scoped to `#nav` so it can't leak onto other nav elements. The dead `#` "Source" link now points at the real results JSON.
+- **Table & chart.** The results table gained a visually-hidden caption, `scope="col"` headers, and a keyboard-focusable scroll region; the pending LLM-agent row announces "not yet run" to screen readers. The equity chart is now keyboard-operable (arrow keys scrub, Shift for 10-step, Home/End, Escape clears) with a visible focus ring; the hint text says so.
+- **Interaction & touch.** Buttons meet 44 px height; nav and footer links got padding to reach comfortable targets. Verb-first CTA labels throughout ("Read the method").
+- **Type & contrast.** Muted ink darkened one step for AA at small sizes; sub-12 px micro-labels (axis, scrub, tags, chips, badge) raised to 12 px; the disclosure paragraph raised to 13 px.
+- **Rhythm & responsive.** Odd spacing values snapped to the 4/8 px grid; the 90.9 ≡ 90.9 tie-band re-clamped so it no longer overflows at 375 px; a dynamic copyright line completes the footer. Reduced-motion now also halts the ticker marquee.
+
+Deliberately untouched: the fonts, neon `#CCFF00` accent, GSAP/Lenis/Three.js choreography, `.nogsap` fallback, SRI-pinned CDN tags, and every real data point.

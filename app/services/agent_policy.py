@@ -172,6 +172,9 @@ class ResponseCache:
             except Exception:  # noqa: BLE001 - corrupt cache shouldn't kill a run
                 self._d = {}
 
+    def contains(self, key: str) -> bool:
+        return key in self._d
+
     def get_or_call(self, key: str, fn) -> str:
         if key in self._d:
             self.hits += 1
@@ -276,6 +279,8 @@ class AgentStats:
     salvaged_labeled: int = 0        # labeled value recovered from prose
     salvaged_single_number: int = 0  # lone in-range number recovered
     unparseable_hold: int = 0        # nothing usable -> held prev position
+    budget_holds: int = 0            # call-budget ceiling reached -> held (fail closed)
+    cache_only_holds: int = 0        # cache-only mode, key absent -> held (no live call)
 
     def tally(self, tier: str) -> None:
         if hasattr(self, tier):
@@ -283,17 +288,29 @@ class AgentStats:
 
     @property
     def decisions(self) -> int:
-        """Total agent decisions observed (every parse tier + held-on-error)."""
+        """Total agent decisions observed (every parse tier + every hold path)."""
         return (self.strict_json + self.salvaged_labeled
-                + self.salvaged_single_number + self.unparseable_hold + self.errors)
+                + self.salvaged_single_number + self.unparseable_hold + self.errors
+                + self.budget_holds + self.cache_only_holds)
 
 
 def build_agent_policy(provider: LLMProvider, cache: ResponseCache | None = None,
-                       system: str = SYSTEM_PROMPT):
+                       system: str = SYSTEM_PROMPT, max_unique_calls: int | None = None,
+                       cache_only: bool = False):
     """Return a `fn(PolicyContext) -> float` that asks `provider` for a target
     exposure. Identical (bucketed) contexts are served from `cache`. Any provider
     error or unparseable reply falls back to holding the previous position, so a
-    single bad call never corrupts the whole walk-forward."""
+    single bad call never corrupts the whole walk-forward.
+
+    Two fail-closed guards on live calls:
+
+      * `max_unique_calls` — hard ceiling on billed provider calls per run. The
+        bucketing normally collapses a window to <10 unique calls; if an asset's
+        distribution defeats it, we HOLD rather than fan out on the user's key.
+      * `cache_only` — replay mode: serve only what is already in `cache`, never
+        call the provider. Any public-facing surface must use this; combined
+        with the CLI-only import rule it makes the agent untriggerable.
+    """
     cache = cache if cache is not None else ResponseCache()
     stats = AgentStats()
 
@@ -302,6 +319,18 @@ def build_agent_policy(provider: LLMProvider, cache: ResponseCache | None = None
         key = hashlib.sha256(
             f"{provider.id}|{provider.model}|{system}|{user}".encode()
         ).hexdigest()
+        if not cache.contains(key):
+            if cache_only:
+                stats.cache_only_holds += 1
+                return float(ctx.prev_pos)
+            if max_unique_calls is not None and cache.misses >= max_unique_calls:
+                if stats.budget_holds == 0:
+                    logger.warning(
+                        "agent call budget (%d unique calls) exhausted -> holding from here on",
+                        max_unique_calls,
+                    )
+                stats.budget_holds += 1
+                return float(ctx.prev_pos)
         try:
             raw = cache.get_or_call(key, lambda: provider.complete(system, user))
         except Exception as e:  # noqa: BLE001

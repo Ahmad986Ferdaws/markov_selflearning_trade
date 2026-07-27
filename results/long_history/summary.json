@@ -1,0 +1,221 @@
+{
+  "aggregate": {
+    "n_assets": 8,
+    "n_failed": 0,
+    "assets_with_nonzero_hit_edge": 0,
+    "total_predictions": 11348,
+    "total_divergences": 0,
+    "max_abs_edge_bal": 0.0,
+    "assets_baseline_beats_hold": 1
+  },
+  "assets": [
+    {
+      "symbol": "BTC-USD",
+      "years_requested": 12,
+      "span": "2014-09-17 -> 2026-07-27",
+      "n_days": 4332,
+      "n_test": 1299,
+      "chosen_window": 30,
+      "chosen_k": 0.2,
+      "model_hit": 0.9230177059276367,
+      "model_bal": 0.8908190226840113,
+      "persist_hit": 0.9230177059276367,
+      "persist_bal": 0.8908190226840113,
+      "edge_vs_persist_bal": 0.0,
+      "edge_vs_persist_hit": 0.0,
+      "identity_check": {
+        "n_predictions": 1299,
+        "divergences": 0
+      },
+      "baseline_return": 1.8637033746785088,
+      "buyhold_return": 2.8235064420801783,
+      "baseline_trades": 14,
+      "data_hash": "56a511237a4c",
+      "warnings": [
+        "Markov model barely beats persistence ('tomorrow = today'): balanced-acc 89.1% vs persistence 89.1%. The transition matrix is adding little beyond regime autocorrelation \u2014 high accuracy here is mostly persistence, not skill."
+      ]
+    },
+    {
+      "symbol": "ETH-USD",
+      "years_requested": 10,
+      "span": "2017-11-09 -> 2026-07-27",
+      "n_days": 3183,
+      "n_test": 954,
+      "chosen_window": 30,
+      "chosen_k": 0.2,
+      "model_hit": 0.910901467505241,
+      "model_bal": 0.8641993906160796,
+      "persist_hit": 0.910901467505241,
+      "persist_bal": 0.8641993906160796,
+      "edge_vs_persist_bal": 0.0,
+      "edge_vs_persist_hit": 0.0,
+      "identity_check": {
+        "n_predictions": 954,
+        "divergences": 0
+      },
+      "baseline_return": 0.2954001403271298,
+      "buyhold_return": -0.13432880652896118,
+      "baseline_trades": 13,
+      "data_hash": "fe5db71e8701",
+      "warnings": [
+        "Markov model barely beats persistence ('tomorrow = today'): balanced-acc 86.4% vs persistence 86.4%. The transition matrix is adding little beyond regime autocorrelation \u2014 high accuracy here is mostly persistence, not skill."
+      ]
+    },
+    {
+      "symbol": "SPY",
+      "years_requested": 20,
+      "span": "2006-07-28 -> 2026-07-27",
+      "n_days": 5029,
+      "n_test": 1508,
+      "chosen_window": 30,
+      "chosen_k": 0.2,
+      "model_hit": 0.896551724137931,
+      "model_bal": 0.8516849308020785,
+      "persist_hit": 0.896551724137931,
+      "persist_bal": 0.8516849308020785,
+      "edge_vs_persist_bal": 0.0,
+      "edge_vs_persist_hit": 0.0,
+      "identity_check": {
+        "n_predictions": 1508,
+        "divergences": 0
+      },
+      "baseline_return": 0.897668112420404,
+      "buyhold_return": 1.465009361813712,
+      "baseline_trades": 11,
+      "data_hash": "66357a90269d",
+      "warnings": [
+        "Markov model barely beats persistence ('tomorrow = today'): balanced-acc 85.2% vs persistence 85.2%. The transition matrix is adding little beyond regime autocorrelation \u2014 high accuracy here is mostly persistence, not skill."
+      ]
+    },
+    {
+      "symbol": "QQQ",
+      "years_requested": 20,
+      "span": "2006-07-28 -> 2026-07-27",
+      "n_days": 5029,
+      "n_test": 1508,
+      "chosen_window": 30,
+      "chosen_k": 0.2,
+      "model_hit": 0.8872679045092838,
+      "model_bal": 0.8158776831591587,
+      "persist_hit": 0.8872679045092838,
+      "persist_bal": 0.8158776831591587,
+      "edge_vs_persist_bal": 0.0,
+      "edge_vs_persist_hit": 0.0,
+      "identity_check": {
+        "n_predictions": 1508,
+        "divergences": 0
+      },
+      "baseline_return": 0.4384387668591516,
+      "buyhold_return": 1.713624112570007,
+      "baseline_trades": 17,
+      "data_hash": "cafd9c901e8f",
+      "warnings": [
+        "Markov model barely beats persistence ('tomorrow = today'): balanced-acc 81.6% vs persistence 81.6%. The transition matrix is adding little beyond regime autocorrelation \u2014 high accuracy here is mostly persistence, not skill."
+      ]
+    },
+    {
+      "symbol": "AAPL",
+      "years_requested": 20,
+      "span": "2006-07-28 -> 2026-07-27",
+      "n_days": 5029,
+      "n_test": 1508,
+      "chosen_window": 30,
+      "chosen_k": 0.2,
+      "model_hit": 0.9078249336870027,
+      "model_bal": 0.8469694317662461,
+      "persist_hit": 0.9078249336870027,
+      "persist_bal": 0.8469694317662461,
+      "edge_vs_persist_bal": 0.0,
+      "edge_vs_persist_hit": 0.0,
+      "identity_check": {
+        "n_predictions": 1508,
+        "divergences": 0
+      },
+      "baseline_return": 1.484411856941203,
+      "buyhold_return": 2.7177550313162975,
+      "baseline_trades": 17,
+      "data_hash": "43009cf55adf",
+      "warnings": [
+        "Markov model barely beats persistence ('tomorrow = today'): balanced-acc 84.7% vs persistence 84.7%. The transition matrix is adding little beyond regime autocorrelation \u2014 high accuracy here is mostly persistence, not skill."
+      ]
+    },
+    {
+      "symbol": "GLD",
+      "years_requested": 20,
+      "span": "2006-07-28 -> 2026-07-27",
+      "n_days": 5029,
+      "n_test": 1508,
+      "chosen_window": 30,
+      "chosen_k": 0.2,
+      "model_hit": 0.9118037135278515,
+      "model_bal": 0.8402424587308932,
+      "persist_hit": 0.9118037135278515,
+      "persist_bal": 0.8402424587308932,
+      "edge_vs_persist_bal": 0.0,
+      "edge_vs_persist_hit": 0.0,
+      "identity_check": {
+        "n_predictions": 1508,
+        "divergences": 0
+      },
+      "baseline_return": 0.9264118198251194,
+      "buyhold_return": 1.09763219736768,
+      "baseline_trades": 12,
+      "data_hash": "fa133f125736",
+      "warnings": [
+        "Markov model barely beats persistence ('tomorrow = today'): balanced-acc 84.0% vs persistence 84.0%. The transition matrix is adding little beyond regime autocorrelation \u2014 high accuracy here is mostly persistence, not skill."
+      ]
+    },
+    {
+      "symbol": "TLT",
+      "years_requested": 20,
+      "span": "2006-07-28 -> 2026-07-27",
+      "n_days": 5029,
+      "n_test": 1508,
+      "chosen_window": 30,
+      "chosen_k": 0.2,
+      "model_hit": 0.9091511936339522,
+      "model_bal": 0.8444750466720031,
+      "persist_hit": 0.9091511936339522,
+      "persist_bal": 0.8444750466720031,
+      "edge_vs_persist_bal": 0.0,
+      "edge_vs_persist_hit": 0.0,
+      "identity_check": {
+        "n_predictions": 1508,
+        "divergences": 0
+      },
+      "baseline_return": -0.42628198954272745,
+      "buyhold_return": -0.41090116498434914,
+      "baseline_trades": 21,
+      "data_hash": "c49997cdb500",
+      "warnings": [
+        "Markov model barely beats persistence ('tomorrow = today'): balanced-acc 84.4% vs persistence 84.4%. The transition matrix is adding little beyond regime autocorrelation \u2014 high accuracy here is mostly persistence, not skill."
+      ]
+    },
+    {
+      "symbol": "EURUSD=X",
+      "years_requested": 20,
+      "span": "2006-07-27 -> 2026-07-27",
+      "n_days": 5186,
+      "n_test": 1555,
+      "chosen_window": 30,
+      "chosen_k": 0.2,
+      "model_hit": 0.8842443729903537,
+      "model_bal": 0.8401570833197761,
+      "persist_hit": 0.8842443729903537,
+      "persist_bal": 0.8401570833197761,
+      "edge_vs_persist_bal": 0.0,
+      "edge_vs_persist_hit": 0.0,
+      "identity_check": {
+        "n_predictions": 1555,
+        "divergences": 0
+      },
+      "baseline_return": -0.1319310017384796,
+      "buyhold_return": -0.042609500034468395,
+      "baseline_trades": 20,
+      "data_hash": "b8efb1955968",
+      "warnings": [
+        "Markov model barely beats persistence ('tomorrow = today'): balanced-acc 84.0% vs persistence 84.0%. The transition matrix is adding little beyond regime autocorrelation \u2014 high accuracy here is mostly persistence, not skill."
+      ]
+    }
+  ]
+}

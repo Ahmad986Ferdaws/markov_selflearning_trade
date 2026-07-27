@@ -1,0 +1,74 @@
+{
+  "summary": {
+    "symbol": "EURUSD=X",
+    "years_requested": 20,
+    "span": "2006-07-27 -> 2026-07-27",
+    "n_days": 5186,
+    "n_test": 1555,
+    "chosen_window": 30,
+    "chosen_k": 0.2,
+    "model_hit": 0.8842443729903537,
+    "model_bal": 0.8401570833197761,
+    "persist_hit": 0.8842443729903537,
+    "persist_bal": 0.8401570833197761,
+    "edge_vs_persist_bal": 0.0,
+    "edge_vs_persist_hit": 0.0,
+    "identity_check": {
+      "n_predictions": 1555,
+      "divergences": 0
+    },
+    "baseline_return": -0.1319310017384796,
+    "buyhold_return": -0.042609500034468395,
+    "baseline_trades": 20,
+    "data_hash": "b8efb1955968",
+    "warnings": [
+      "Markov model barely beats persistence ('tomorrow = today'): balanced-acc 84.0% vs persistence 84.0%. The transition matrix is adding little beyond regime autocorrelation \u2014 high accuracy here is mostly persistence, not skill."
+    ]
+  },
+  "report": {
+    "symbol": "EURUSD=X",
+    "chosen_window": 30,
+    "chosen_k": 0.2,
+    "train_size": 3569,
+    "test_size": 1555,
+    "regime_mix": {
+      "sideways": 0.7099678456591639,
+      "bear": 0.14983922829581994,
+      "bull": 0.14019292604501607
+    },
+    "accuracy": {
+      "hit_rate": 0.8842443729903537,
+      "balanced_accuracy": 0.8401570833197761,
+      "log_loss": 0.391969618905092,
+      "naive_hit_rate": 0.7099678456591639,
+      "naive_balanced": 0.3333333333333333,
+      "naive_log_loss": 0.80714761263829,
+      "persistence_hit_rate": 0.8842443729903537,
+      "persistence_balanced": 0.8401570833197761,
+      "n": 1555
+    },
+    "policies": [
+      {
+        "name": "baseline",
+        "total_return": -0.1319310017384796,
+        "sharpe": -0.4298947336047803,
+        "max_drawdown": -0.1778022009739579,
+        "num_trades": 20,
+        "total_cost": 0.1600000000000001
+      },
+      {
+        "name": "buy_hold",
+        "total_return": -0.042609500034468395,
+        "sharpe": -0.06016820938063371,
+        "max_drawdown": -0.2224205967424955,
+        "num_trades": 1,
+        "total_cost": 0.008
+      }
+    ],
+    "train_best_score": 0.8787759040655653,
+    "data_hash": "b8efb195596841bdd3908ea26c0e1efc8c0f0a2c2d9b72edbd540f82572271d7",
+    "warnings": [
+      "Markov model barely beats persistence ('tomorrow = today'): balanced-acc 84.0% vs persistence 84.0%. The transition matrix is adding little beyond regime autocorrelation \u2014 high accuracy here is mostly persistence, not skill."
+    ]
+  }
+}

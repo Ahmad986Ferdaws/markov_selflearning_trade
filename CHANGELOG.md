@@ -4,6 +4,29 @@ All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/); the project is a portfolio /
 research artifact rather than a released package, so versions are snapshots.
 
+## [0.2.0] — 2026-07-27 — the null survives 20 years
+
+### The finding, extended
+- **Long-history study** (`scripts/long_history_study.py`, [docs/18](docs/18-long-history.md)):
+  same protocol on the max Yahoo span per asset (up to 20 years — through 2008, COVID, 2022).
+  Edge vs persistence **+0.0000 on 8/8 assets**, **0 divergences in 11,348 predictions**
+  (combined identity receipt now **0 / 16,773**). Retires the "one ~3-year window" limitation.
+  Confirms the "beats buy-hold" caveat: on uptrending long windows the baseline loses to
+  buy-and-hold on 7/8 assets.
+
+### Added
+- **Fail-closed agent guards:** hard call-budget ceiling (`AGENT_MAX_CALLS`, default 64) and
+  cache-only replay mode (`--cache-only` / `AGENT_CACHE_ONLY`) — a run can never fan out
+  unbounded billed calls, and a public surface can never trigger a live one.
+- **`diagnose-cli`:** offline narration of any run record (edge vs the persistence bar, policy
+  outcomes net of costs, every honesty-gate warning). Reads only the computed JSON.
+- **CI** (`.github/workflows/ci.yml`): full suite + a determinism grep asserting the
+  90.9% ≡ 90.9% tie reproduces from the pinned snapshot on every push.
+- **Website refinement pass:** semantic landmarks + strict heading outline, scroll-spy nav,
+  keyboard-operable equity chart, AA contrast, ≥44px touch targets, 375px fixes; disclosure
+  card and footer updated with the 20-year receipt and the repo Source link.
+- Tests: **58 passing**.
+
 ## [0.1.0] — 2026-06-23 — portfolio snapshot
 
 The honest evaluation harness and its verified null result.

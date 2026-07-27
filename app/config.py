@@ -37,6 +37,14 @@ class Settings(BaseSettings):
     ollama_host: str = "http://localhost:11434"
     ollama_model: str = "qwen2.5:7b"
     agent_temperature: float = 0.0
+    # Hard ceiling on unique (billed) LLM calls per evaluation run. Bucketing
+    # normally collapses a full window to <10 unique calls; if an asset's
+    # distribution defeats the bucketing, we fail CLOSED (hold) rather than fan
+    # out unbounded network calls on the user's key.
+    agent_max_calls: int = 64
+    # Replay-only mode: serve ONLY the persisted response cache, never call a
+    # live provider. This is what any public-facing surface must use.
+    agent_cache_only: bool = False
 
 
 @lru_cache
