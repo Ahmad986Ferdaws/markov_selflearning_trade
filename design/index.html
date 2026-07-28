@@ -154,6 +154,27 @@
   .stamp .sub{margin-top:16px;font-family:var(--sans);font-size:14px;letter-spacing:.01em;color:#8B8C84;max-width:62ch;margin-left:auto;margin-right:auto}
   .stamp .sub b{color:#F4F4F0;font-weight:600}
 
+  /* ---- anatomy of the 90.9% (inside the dark verdict band) ---- */
+  .anat{margin-top:96px;padding-top:56px;border-top:1px solid var(--wline)}
+  .anat-h{font-family:var(--serif);font-weight:400;font-size:clamp(26px,3.2vw,42px);letter-spacing:-.02em;color:#F4F4F0;margin-bottom:16px}
+  .anat-lede{color:#8B8C84;max-width:60ch;font-size:16px;margin-bottom:44px}
+  .anat-lede em{font-style:italic;color:#F4F4F0}
+  .anat-rows{display:grid;gap:24px;max-width:920px}
+  .arow{display:grid;grid-template-columns:150px 1fr 150px;align-items:center;gap:24px}
+  .arow .ak{font-family:var(--sans);font-weight:600;font-size:14px;color:#F4F4F0}
+  .arow .ak small,.arow .av small{display:block;font-family:var(--mono);font-weight:400;font-size:11px;color:#8B8C84;margin-top:3px;letter-spacing:.04em}
+  .abar{position:relative;height:34px;background:var(--black2);border:1px solid var(--wline);border-radius:6px;overflow:hidden}
+  .afill{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:5px}
+  .afill.stay{background:#F4F4F0}
+  .afill.move{background:var(--neon)}
+  .arow .av{font-family:var(--mono);font-size:15px;color:#8B8C84;text-align:right}
+  .arow .av b{font-family:var(--mono);font-size:22px;color:#F4F4F0}
+  .arow .av.miss b{color:var(--loss)}
+  .anat-kicker{margin-top:40px;max-width:74ch;font-size:16px;color:#F4F4F0;line-height:1.6}
+  .anat-note{display:block;margin-top:14px;color:#8B8C84;font-size:15px}
+  .anat-note b{color:#F4F4F0}
+  @media(max-width:640px){.arow{grid-template-columns:110px 1fr 96px;gap:14px}}
+
   /* ---- sticky story ---- */
   .story .grid{display:grid;grid-template-columns:1fr 1fr;gap:0;align-items:start}
   .stage{position:sticky;top:0;height:100vh;display:flex;align-items:center;justify-content:center;border-right:1px solid var(--line)}
@@ -274,6 +295,7 @@
   .nogsap .hl .ln > span{transform:none!important}
   .nogsap .hi{background-size:100% 34%!important}
   .nogsap .lane.m .fill{width:90.9%}.nogsap .lane.p .fill{width:90.9%}.nogsap .lane.n .fill{width:72%}
+  .nogsap .arow[data-w="90.9"] .afill{width:90.9%}.nogsap .arow[data-w="9.1"] .afill{width:9.1%}
 </style>
 </head>
 <body>
@@ -348,7 +370,26 @@
       <div class="stamp">
         <svg viewBox="0 0 430 16" preserveAspectRatio="none" aria-hidden="true"><path d="M1 1 V15 M1 15 H429 M429 15 V1"/></svg>
         <div class="lab">No skill added</div>
-        <div class="sub">And not just Bitcoin — re-tested across <b>20 markets</b> (crypto, equities, gold, bonds, oil, FX), the edge is <b>0.000 on every one</b>. Verified pointwise: 0 divergences in 5,425 predictions.</div>
+        <div class="sub">And not just Bitcoin — re-tested across <b>20 markets</b> and <b>up to 20 years</b> of history, the edge is <b>0.000 on every one</b>. Verified pointwise: <b>0 divergences in 16,773 predictions</b>.</div>
+      </div>
+
+      <!-- anatomy of the 90.9% -->
+      <div class="anat rv">
+        <h3 class="anat-h">So where does 90.9% come from?</h3>
+        <p class="anat-lede">Split the held-out year into the days the regime <em>stayed</em> and the days it actually <em>moved</em>. Persistence scores zero on the movers by definition — so they are the only days where skill could exist.</p>
+        <div class="anat-rows">
+          <div class="arow" data-w="90.9">
+            <div class="ak">Stay days<small>regime unchanged</small></div>
+            <div class="abar"><span class="afill stay"></span></div>
+            <div class="av"><b>298</b> / 298<small>model correct</small></div>
+          </div>
+          <div class="arow" data-w="9.1">
+            <div class="ak">Switch days<small>regime moved</small></div>
+            <div class="abar"><span class="afill move"></span></div>
+            <div class="av miss"><b>0</b> / 30<small>model correct</small></div>
+          </div>
+        </div>
+        <p class="anat-kicker">The model never once predicted a change. Every point of its accuracy is stay-day credit — which is exactly what persistence is. <span class="anat-note">It isn't useless, though: its probability estimates beat a sticky baseline on log-loss in <b>28 of 28</b> runs. It knows something. It just never changes the answer.</span></p>
       </div>
     </div>
   </div>
@@ -490,7 +531,7 @@ addEventListener('scroll',()=>{ nav.classList.toggle('solid',document.documentEl
 (function(){
   const items=[
     ['BTC','—','—'],['TEST','n=328',''],['HIT','90.9%','up'],['PERSIST','90.9%','up'],
-    ['EDGE','0.0pp','nn'],['BASELINE','−41.1%','dn'],['HOLD','−47.7%','dn'],['SHARPE','−1.87','dn'],
+    ['EDGE','0.0pp','nn'],['SWITCH·DAYS','0/30','dn'],['BASELINE','−41.1%','dn'],['HOLD','−47.7%','dn'],['SHARPE','−1.87','dn'],
     ['MAX·DD','−42.9%','dn'],['FEE','0.30%',''],['SLIP','0.50%',''],
     ['ROBUSTNESS','20·MARKETS','nn'],['EDGE·ALL','0/20','nn'],['VERDICT','NO·EDGE','nn']
   ];
@@ -813,6 +854,7 @@ if(RM){
   gsap.set('.rv',{autoAlpha:1,y:0});
   $$('#race .lane').forEach(lane=>{ $('.fill',lane).style.width=lane.dataset.w+'%';
     const v=$('.val',lane); v.textContent=(+v.dataset.to).toFixed(1)+v.dataset.suf; });
+  $$('.arow').forEach(r=>{ $('.afill',r).style.width=r.dataset.w+'%'; });
   sceneTriggers();
   ScrollTrigger.refresh();
   return;
@@ -845,6 +887,17 @@ intro.from('.hl .ln>span',{yPercent:118,duration:1.15,stagger:.13},0.1)
 /* scroll reveals */
 $$('.rv').forEach(el=>gsap.fromTo(el,{autoAlpha:0,y:26},
   {autoAlpha:1,y:0,duration:.9,ease:'power3.out',scrollTrigger:{trigger:el,start:'top 86%'}}));
+
+/* anatomy bars: the stay bar sweeps out first, then the tiny switch bar —
+   the visual point is the size difference, so they must not race together */
+(function(){
+  const el=$('.anat'); if(!el) return;
+  ScrollTrigger.create({trigger:el,start:'top 75%',once:true,onEnter:()=>{
+    gsap.timeline()
+      .to('.arow[data-w="90.9"] .afill',{width:'90.9%',duration:1.2,ease:'expo.out'})
+      .to('.arow[data-w="9.1"] .afill',{width:'9.1%',duration:.9,ease:'expo.out'},'>-0.35');
+  }});
+})();
 
 /* disclosures: cards step in, not one undifferentiated block */
 gsap.from('.cav .c',{y:24,autoAlpha:0,duration:.7,ease:'power3.out',stagger:.12,
