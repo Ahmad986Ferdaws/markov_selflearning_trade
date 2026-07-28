@@ -23,3 +23,5 @@ jobs:
           python -m app.cli.evaluate | tee /tmp/eval.out
           grep -q "Model        hit-rate: 90.9%" /tmp/eval.out
           grep -q "Persistence  hit-rate: 90.9%" /tmp/eval.out
+      - name: Independent re-derivation — zero app imports, from the raw snapshot
+        run: python scripts/independent_rederivation.py

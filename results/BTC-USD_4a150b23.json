@@ -18,7 +18,10 @@
     "naive_log_loss": 0.8703939621524217,
     "persistence_hit_rate": 0.9085365853658537,
     "persistence_balanced": 0.8708590138674884,
-    "n": 328
+    "n": 328,
+    "n_switch": 30,
+    "switch_recall": 0.0,
+    "switch_attempts": 0
   },
   "policies": [
     {
@@ -41,6 +44,7 @@
   "train_best_score": 0.8733650883481104,
   "data_hash": "4a150b23b35efd8182d83afdd50817f5a7476155332b549f568e8b3620e7aaa8",
   "warnings": [
-    "Markov model barely beats persistence ('tomorrow = today'): balanced-acc 87.1% vs persistence 87.1%. The transition matrix is adding little beyond regime autocorrelation \u2014 high accuracy here is mostly persistence, not skill."
+    "Markov model barely beats persistence ('tomorrow = today'): balanced-acc 87.1% vs persistence 87.1%. The transition matrix is adding little beyond regime autocorrelation \u2014 high accuracy here is mostly persistence, not skill.",
+    "The model never predicted a regime change (0 switch attempts over 328 days): its accuracy is entirely stay-day credit, and it scored 0/30 on the days the regime actually moved. A hit-rate earned only on stay days is persistence, restated."
   ]
 }

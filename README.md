@@ -32,6 +32,14 @@ COVID, and the 2022 bear — the edge is still **+0.000 on 8/8**. The identity i
 of realistic costs (0.3% fee + 0.5% slippage), both trading policies lose on the headline window:
 regime baseline **−41.1%**, buy-and-hold **−47.7%**.
 
+The zero is dissected, not just observed ([docs/19](docs/19-anatomy-of-zero.md)): the harness
+detects *planted* switch structure when it exists (positive controls in CI), the 90.9% decomposes
+as 298/298 stay days + **0/30 on the days the regime actually moved**, the causal row used at every
+one of the 16,773 decisions had self-probability ≥ 0.600 (the argmax literally cannot leave home),
+and the obvious fixes — duration hazards, second-order memory — fire almost never and win nothing.
+What the model *does* carry is calibration (better log-loss than a sticky baseline, 28/28 runs) —
+information that never once crosses the decision threshold.
+
 ![The verdict — 90.9% ≡ 90.9%](media/02-verdict.png)
 ![Held-out equity, net of costs](media/04-results.png)
 
@@ -79,7 +87,8 @@ make eval                     # the headline: daily walk-forward on BTC-USD (use
 make robust                   # reproduce the 20-asset / +0.000 result
 python scripts/long_history_study.py   # reproduce the 20-year / +0.000 result
 diagnose-cli                  # narrate the latest run record (offline, no model)
-make test                     # 58 tests
+python scripts/independent_rederivation.py   # re-derive the headline with ZERO app imports
+make test                     # 64 tests
 make site                     # serve the website at http://localhost:8000
 ```
 
@@ -124,6 +133,7 @@ Current (post-reframe):
 - [docs/16 — robustness study](docs/16-robustness-study.md) — the +0.000 receipt, 20 assets
 - [docs/17 — review + landscape](docs/17-review-and-landscape.md) — deep review, positioning
 - [docs/18 — long-history study](docs/18-long-history.md) — the null across 20 years, 0/11,348 divergences
+- [docs/19 — the anatomy of zero](docs/19-anatomy-of-zero.md) — positive controls, the dominance theorem, switch-day decomposition, duration/memory-2 tests, probabilistic skill
 - [docs/12 — architecture review](docs/12-architecture-review.md) — headline-integrity fixes
 - [docs/STATUS.md](docs/STATUS.md) — living status / session handoff
 

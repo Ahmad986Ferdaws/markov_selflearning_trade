@@ -1,0 +1,3021 @@
+{
+  "aggregate": {
+    "n_runs": 28,
+    "all_visited_rows_dominant": true,
+    "global_min_visited_diagonal": 0.5806,
+    "runs_with_unvisited_state": 1,
+    "global_max_hazard_with_support": 0.6316,
+    "runs_where_duration_model_fired": 5,
+    "total_duration_attempts": 23,
+    "runs_with_nonzero_duration_edge": 5,
+    "worst_duration_edge": -0.018293,
+    "best_duration_edge": 0.006098
+  },
+  "runs": [
+    {
+      "symbol": "AAPL",
+      "years": 3,
+      "window": 20,
+      "k": 0.2,
+      "matrix_diag": [
+        0.8768,
+        0.8148,
+        0.895
+      ],
+      "occupancy": {
+        "bull": 203,
+        "bear": 108,
+        "sideways": 420
+      },
+      "unvisited_states": [],
+      "min_diag_visited": 0.8148,
+      "diag_dominant_visited": true,
+      "hazard_at_duration": {
+        "bull": {
+          "1": {
+            "h": 0.438,
+            "n": 16
+          },
+          "2": {
+            "h": 0.111,
+            "n": 9
+          },
+          "3": {
+            "h": 0.25,
+            "n": 8
+          },
+          "5": {
+            "h": 0.25,
+            "n": 4
+          },
+          "10": {
+            "h": 0.0,
+            "n": 3
+          },
+          "20": {
+            "h": 0.0,
+            "n": 3
+          }
+        },
+        "bear": {
+          "1": {
+            "h": 0.353,
+            "n": 17
+          },
+          "2": {
+            "h": 0.091,
+            "n": 11
+          },
+          "3": {
+            "h": 0.2,
+            "n": 10
+          },
+          "5": {
+            "h": 0.286,
+            "n": 7
+          },
+          "10": {
+            "h": 0.333,
+            "n": 3
+          }
+        },
+        "sideways": {
+          "1": {
+            "h": 0.156,
+            "n": 32
+          },
+          "2": {
+            "h": 0.296,
+            "n": 27
+          },
+          "3": {
+            "h": 0.053,
+            "n": 19
+          },
+          "5": {
+            "h": 0.0,
+            "n": 16
+          },
+          "10": {
+            "h": 0.143,
+            "n": 14
+          },
+          "20": {
+            "h": 0.0,
+            "n": 6
+          }
+        }
+      },
+      "max_hazard_with_support": 0.4375,
+      "duration_model": {
+        "n": 224,
+        "dur_hits": 199,
+        "per_hits": 199,
+        "attempts": 0,
+        "switch_days": 25,
+        "dur_switch_hits": 0,
+        "dur_hit_rate": 0.888393,
+        "per_hit_rate": 0.888393,
+        "edge": 0.0
+      }
+    },
+    {
+      "symbol": "ADA-USD",
+      "years": 3,
+      "window": 30,
+      "k": 0.2,
+      "matrix_diag": [
+        0.9588,
+        0.7748,
+        0.9435
+      ],
+      "occupancy": {
+        "bull": 170,
+        "bear": 152,
+        "sideways": 744
+      },
+      "unvisited_states": [],
+      "min_diag_visited": 0.7748,
+      "diag_dominant_visited": true,
+      "hazard_at_duration": {
+        "bull": {
+          "1": {
+            "h": 0.0,
+            "n": 5
+          },
+          "2": {
+            "h": 0.0,
+            "n": 5
+          },
+          "3": {
+            "h": 0.0,
+            "n": 5
+          },
+          "5": {
+            "h": 0.0,
+            "n": 5
+          },
+          "10": {
+            "h": 0.0,
+            "n": 3
+          },
+          "20": {
+            "h": 0.0,
+            "n": 3
+          }
+        },
+        "bear": {
+          "1": {
+            "h": 0.357,
+            "n": 28
+          },
+          "2": {
+            "h": 0.278,
+            "n": 18
+          },
+          "3": {
+            "h": 0.154,
+            "n": 13
+          },
+          "5": {
+            "h": 0.1,
+            "n": 10
+          },
+          "10": {
+            "h": 0.0,
+            "n": 2
+          }
+        },
+        "sideways": {
+          "1": {
+            "h": 0.265,
+            "n": 34
+          },
+          "2": {
+            "h": 0.16,
+            "n": 25
+          },
+          "3": {
+            "h": 0.095,
+            "n": 21
+          },
+          "5": {
+            "h": 0.125,
+            "n": 16
+          },
+          "10": {
+            "h": 0.0,
+            "n": 14
+          },
+          "20": {
+            "h": 0.0,
+            "n": 11
+          }
+        }
+      },
+      "max_hazard_with_support": 0.3571,
+      "duration_model": {
+        "n": 328,
+        "dur_hits": 311,
+        "per_hits": 311,
+        "attempts": 0,
+        "switch_days": 17,
+        "dur_switch_hits": 0,
+        "dur_hit_rate": 0.948171,
+        "per_hit_rate": 0.948171,
+        "edge": 0.0
+      }
+    },
+    {
+      "symbol": "AMZN",
+      "years": 3,
+      "window": 10,
+      "k": 0.2,
+      "matrix_diag": [
+        0.8015,
+        0.7862,
+        0.7337
+      ],
+      "occupancy": {
+        "bull": 272,
+        "bear": 146,
+        "sideways": 323
+      },
+      "unvisited_states": [],
+      "min_diag_visited": 0.7337,
+      "diag_dominant_visited": true,
+      "hazard_at_duration": {
+        "bull": {
+          "1": {
+            "h": 0.2,
+            "n": 40
+          },
+          "2": {
+            "h": 0.281,
+            "n": 32
+          },
+          "3": {
+            "h": 0.087,
+            "n": 23
+          },
+          "5": {
+            "h": 0.158,
+            "n": 19
+          },
+          "10": {
+            "h": 0.25,
+            "n": 4
+          }
+        },
+        "bear": {
+          "1": {
+            "h": 0.286,
+            "n": 21
+          },
+          "2": {
+            "h": 0.2,
+            "n": 15
+          },
+          "3": {
+            "h": 0.25,
+            "n": 12
+          },
+          "5": {
+            "h": 0.286,
+            "n": 7
+          },
+          "10": {
+            "h": 0.5,
+            "n": 4
+          },
+          "20": {
+            "h": 0.0,
+            "n": 1
+          }
+        },
+        "sideways": {
+          "1": {
+            "h": 0.23,
+            "n": 61
+          },
+          "2": {
+            "h": 0.298,
+            "n": 47
+          },
+          "3": {
+            "h": 0.182,
+            "n": 33
+          },
+          "5": {
+            "h": 0.5,
+            "n": 18
+          },
+          "10": {
+            "h": 0.333,
+            "n": 3
+          }
+        }
+      },
+      "max_hazard_with_support": 0.5,
+      "duration_model": {
+        "n": 224,
+        "dur_hits": 175,
+        "per_hits": 175,
+        "attempts": 0,
+        "switch_days": 49,
+        "dur_switch_hits": 0,
+        "dur_hit_rate": 0.78125,
+        "per_hit_rate": 0.78125,
+        "edge": 0.0
+      }
+    },
+    {
+      "symbol": "AVAX-USD",
+      "years": 3,
+      "window": 30,
+      "k": 0.2,
+      "matrix_diag": [
+        0.8418,
+        0.8696,
+        0.9308
+      ],
+      "occupancy": {
+        "bull": 158,
+        "bear": 185,
+        "sideways": 723
+      },
+      "unvisited_states": [],
+      "min_diag_visited": 0.8418,
+      "diag_dominant_visited": true,
+      "hazard_at_duration": {
+        "bull": {
+          "1": {
+            "h": 0.368,
+            "n": 19
+          },
+          "2": {
+            "h": 0.25,
+            "n": 12
+          },
+          "3": {
+            "h": 0.111,
+            "n": 9
+          },
+          "5": {
+            "h": 0.0,
+            "n": 4
+          },
+          "10": {
+            "h": 0.0,
+            "n": 2
+          },
+          "20": {
+            "h": 0.0,
+            "n": 1
+          }
+        },
+        "bear": {
+          "1": {
+            "h": 0.188,
+            "n": 16
+          },
+          "2": {
+            "h": 0.077,
+            "n": 13
+          },
+          "3": {
+            "h": 0.333,
+            "n": 12
+          },
+          "5": {
+            "h": 0.0,
+            "n": 6
+          },
+          "10": {
+            "h": 0.2,
+            "n": 5
+          },
+          "20": {
+            "h": 0.0,
+            "n": 1
+          }
+        },
+        "sideways": {
+          "1": {
+            "h": 0.278,
+            "n": 36
+          },
+          "2": {
+            "h": 0.154,
+            "n": 26
+          },
+          "3": {
+            "h": 0.045,
+            "n": 22
+          },
+          "5": {
+            "h": 0.053,
+            "n": 19
+          },
+          "10": {
+            "h": 0.0,
+            "n": 16
+          },
+          "20": {
+            "h": 0.0,
+            "n": 10
+          }
+        }
+      },
+      "max_hazard_with_support": 0.3684,
+      "duration_model": {
+        "n": 328,
+        "dur_hits": 299,
+        "per_hits": 299,
+        "attempts": 0,
+        "switch_days": 29,
+        "dur_switch_hits": 0,
+        "dur_hit_rate": 0.911585,
+        "per_hit_rate": 0.911585,
+        "edge": 0.0
+      }
+    },
+    {
+      "symbol": "BTC-USD",
+      "years": 3,
+      "window": 30,
+      "k": 0.2,
+      "matrix_diag": [
+        0.8811,
+        0.8235,
+        0.9442
+      ],
+      "occupancy": {
+        "bull": 227,
+        "bear": 86,
+        "sideways": 753
+      },
+      "unvisited_states": [],
+      "min_diag_visited": 0.8235,
+      "diag_dominant_visited": true,
+      "hazard_at_duration": {
+        "bull": {
+          "1": {
+            "h": 0.333,
+            "n": 21
+          },
+          "2": {
+            "h": 0.077,
+            "n": 13
+          },
+          "3": {
+            "h": 0.167,
+            "n": 12
+          },
+          "5": {
+            "h": 0.0,
+            "n": 7
+          },
+          "10": {
+            "h": 0.0,
+            "n": 5
+          },
+          "20": {
+            "h": 0.0,
+            "n": 4
+          }
+        },
+        "bear": {
+          "1": {
+            "h": 0.429,
+            "n": 7
+          },
+          "2": {
+            "h": 0.0,
+            "n": 4
+          },
+          "3": {
+            "h": 0.0,
+            "n": 4
+          },
+          "5": {
+            "h": 0.0,
+            "n": 4
+          },
+          "10": {
+            "h": 0.5,
+            "n": 2
+          }
+        },
+        "sideways": {
+          "1": {
+            "h": 0.185,
+            "n": 27
+          },
+          "2": {
+            "h": 0.045,
+            "n": 22
+          },
+          "3": {
+            "h": 0.286,
+            "n": 21
+          },
+          "5": {
+            "h": 0.0,
+            "n": 13
+          },
+          "10": {
+            "h": 0.0,
+            "n": 12
+          },
+          "20": {
+            "h": 0.0,
+            "n": 7
+          }
+        }
+      },
+      "max_hazard_with_support": 0.3333,
+      "duration_model": {
+        "n": 328,
+        "dur_hits": 298,
+        "per_hits": 298,
+        "attempts": 0,
+        "switch_days": 30,
+        "dur_switch_hits": 0,
+        "dur_hit_rate": 0.908537,
+        "per_hit_rate": 0.908537,
+        "edge": 0.0
+      }
+    },
+    {
+      "symbol": "DOGE-USD",
+      "years": 3,
+      "window": 30,
+      "k": 0.2,
+      "matrix_diag": [
+        0.8902,
+        0.7455,
+        0.9386
+      ],
+      "occupancy": {
+        "bull": 173,
+        "bear": 111,
+        "sideways": 782
+      },
+      "unvisited_states": [],
+      "min_diag_visited": 0.7455,
+      "diag_dominant_visited": true,
+      "hazard_at_duration": {
+        "bull": {
+          "1": {
+            "h": 0.286,
+            "n": 14
+          },
+          "2": {
+            "h": 0.2,
+            "n": 10
+          },
+          "3": {
+            "h": 0.25,
+            "n": 8
+          },
+          "5": {
+            "h": 0.0,
+            "n": 6
+          },
+          "10": {
+            "h": 0.0,
+            "n": 4
+          },
+          "20": {
+            "h": 0.0,
+            "n": 2
+          }
+        },
+        "bear": {
+          "1": {
+            "h": 0.632,
+            "n": 19
+          },
+          "2": {
+            "h": 0.0,
+            "n": 7
+          },
+          "3": {
+            "h": 0.286,
+            "n": 7
+          },
+          "5": {
+            "h": 0.2,
+            "n": 5
+          },
+          "10": {
+            "h": 0.0,
+            "n": 3
+          },
+          "20": {
+            "h": 0.0,
+            "n": 1
+          }
+        },
+        "sideways": {
+          "1": {
+            "h": 0.118,
+            "n": 34
+          },
+          "2": {
+            "h": 0.167,
+            "n": 30
+          },
+          "3": {
+            "h": 0.04,
+            "n": 25
+          },
+          "5": {
+            "h": 0.043,
+            "n": 23
+          },
+          "10": {
+            "h": 0.0,
+            "n": 16
+          },
+          "20": {
+            "h": 0.091,
+            "n": 11
+          }
+        }
+      },
+      "max_hazard_with_support": 0.6316,
+      "duration_model": {
+        "n": 328,
+        "dur_hits": 301,
+        "per_hits": 299,
+        "attempts": 10,
+        "switch_days": 29,
+        "dur_switch_hits": 6,
+        "dur_hit_rate": 0.917683,
+        "per_hit_rate": 0.911585,
+        "edge": 0.006098
+      }
+    },
+    {
+      "symbol": "ETH-USD",
+      "years": 3,
+      "window": 20,
+      "k": 0.2,
+      "matrix_diag": [
+        0.8438,
+        0.7702,
+        0.8942
+      ],
+      "occupancy": {
+        "bull": 224,
+        "bear": 162,
+        "sideways": 690
+      },
+      "unvisited_states": [],
+      "min_diag_visited": 0.7702,
+      "diag_dominant_visited": true,
+      "hazard_at_duration": {
+        "bull": {
+          "1": {
+            "h": 0.435,
+            "n": 23
+          },
+          "2": {
+            "h": 0.154,
+            "n": 13
+          },
+          "3": {
+            "h": 0.0,
+            "n": 11
+          },
+          "5": {
+            "h": 0.125,
+            "n": 8
+          },
+          "10": {
+            "h": 0.0,
+            "n": 5
+          },
+          "20": {
+            "h": 0.333,
+            "n": 3
+          }
+        },
+        "bear": {
+          "1": {
+            "h": 0.448,
+            "n": 29
+          },
+          "2": {
+            "h": 0.312,
+            "n": 16
+          },
+          "3": {
+            "h": 0.182,
+            "n": 11
+          },
+          "5": {
+            "h": 0.0,
+            "n": 7
+          },
+          "10": {
+            "h": 0.0,
+            "n": 2
+          }
+        },
+        "sideways": {
+          "1": {
+            "h": 0.25,
+            "n": 52
+          },
+          "2": {
+            "h": 0.128,
+            "n": 39
+          },
+          "3": {
+            "h": 0.029,
+            "n": 34
+          },
+          "5": {
+            "h": 0.125,
+            "n": 32
+          },
+          "10": {
+            "h": 0.056,
+            "n": 18
+          },
+          "20": {
+            "h": 0.111,
+            "n": 9
+          }
+        }
+      },
+      "max_hazard_with_support": 0.4483,
+      "duration_model": {
+        "n": 328,
+        "dur_hits": 286,
+        "per_hits": 286,
+        "attempts": 0,
+        "switch_days": 42,
+        "dur_switch_hits": 0,
+        "dur_hit_rate": 0.871951,
+        "per_hit_rate": 0.871951,
+        "edge": 0.0
+      }
+    },
+    {
+      "symbol": "EURUSD=X",
+      "years": 3,
+      "window": 30,
+      "k": 0.2,
+      "matrix_diag": [
+        0.7692,
+        0.8316,
+        0.9288
+      ],
+      "occupancy": {
+        "bull": 104,
+        "bear": 95,
+        "sideways": 549
+      },
+      "unvisited_states": [],
+      "min_diag_visited": 0.7692,
+      "diag_dominant_visited": true,
+      "hazard_at_duration": {
+        "bull": {
+          "1": {
+            "h": 0.211,
+            "n": 19
+          },
+          "2": {
+            "h": 0.267,
+            "n": 15
+          },
+          "3": {
+            "h": 0.364,
+            "n": 11
+          },
+          "5": {
+            "h": 0.429,
+            "n": 7
+          },
+          "10": {
+            "h": 0.0,
+            "n": 3
+          }
+        },
+        "bear": {
+          "1": {
+            "h": 0.2,
+            "n": 10
+          },
+          "2": {
+            "h": 0.125,
+            "n": 8
+          },
+          "3": {
+            "h": 0.286,
+            "n": 7
+          },
+          "5": {
+            "h": 0.0,
+            "n": 5
+          },
+          "10": {
+            "h": 0.0,
+            "n": 3
+          },
+          "20": {
+            "h": 0.0,
+            "n": 1
+          }
+        },
+        "sideways": {
+          "1": {
+            "h": 0.107,
+            "n": 28
+          },
+          "2": {
+            "h": 0.12,
+            "n": 25
+          },
+          "3": {
+            "h": 0.091,
+            "n": 22
+          },
+          "5": {
+            "h": 0.0,
+            "n": 13
+          },
+          "10": {
+            "h": 0.167,
+            "n": 12
+          },
+          "20": {
+            "h": 0.0,
+            "n": 8
+          }
+        }
+      },
+      "max_hazard_with_support": 0.35,
+      "duration_model": {
+        "n": 233,
+        "dur_hits": 211,
+        "per_hits": 211,
+        "attempts": 0,
+        "switch_days": 22,
+        "dur_switch_hits": 0,
+        "dur_hit_rate": 0.905579,
+        "per_hit_rate": 0.905579,
+        "edge": 0.0
+      }
+    },
+    {
+      "symbol": "GLD",
+      "years": 3,
+      "window": 20,
+      "k": 0.35,
+      "matrix_diag": [
+        0.8718,
+        0.6429,
+        0.9666
+      ],
+      "occupancy": {
+        "bull": 117,
+        "bear": 14,
+        "sideways": 600
+      },
+      "unvisited_states": [],
+      "min_diag_visited": 0.6429,
+      "diag_dominant_visited": true,
+      "hazard_at_duration": {
+        "bull": {
+          "1": {
+            "h": 0.5,
+            "n": 12
+          },
+          "2": {
+            "h": 0.333,
+            "n": 6
+          },
+          "3": {
+            "h": 0.0,
+            "n": 4
+          },
+          "5": {
+            "h": 0.0,
+            "n": 4
+          },
+          "10": {
+            "h": 0.0,
+            "n": 2
+          },
+          "20": {
+            "h": 0.0,
+            "n": 1
+          }
+        },
+        "bear": {
+          "1": {
+            "h": 0.0,
+            "n": 2
+          },
+          "2": {
+            "h": 0.0,
+            "n": 2
+          },
+          "3": {
+            "h": 0.5,
+            "n": 2
+          },
+          "5": {
+            "h": 0.0,
+            "n": 1
+          }
+        },
+        "sideways": {
+          "1": {
+            "h": 0.133,
+            "n": 15
+          },
+          "2": {
+            "h": 0.077,
+            "n": 13
+          },
+          "3": {
+            "h": 0.083,
+            "n": 12
+          },
+          "5": {
+            "h": 0.0,
+            "n": 11
+          },
+          "10": {
+            "h": 0.182,
+            "n": 11
+          },
+          "20": {
+            "h": 0.0,
+            "n": 7
+          }
+        }
+      },
+      "max_hazard_with_support": 0.1333,
+      "duration_model": {
+        "n": 224,
+        "dur_hits": 212,
+        "per_hits": 212,
+        "attempts": 0,
+        "switch_days": 12,
+        "dur_switch_hits": 0,
+        "dur_hit_rate": 0.946429,
+        "per_hit_rate": 0.946429,
+        "edge": 0.0
+      }
+    },
+    {
+      "symbol": "LINK-USD",
+      "years": 3,
+      "window": 30,
+      "k": 0.2,
+      "matrix_diag": [
+        0.8557,
+        0.7966,
+        0.9296
+      ],
+      "occupancy": {
+        "bull": 194,
+        "bear": 119,
+        "sideways": 753
+      },
+      "unvisited_states": [],
+      "min_diag_visited": 0.7966,
+      "diag_dominant_visited": true,
+      "hazard_at_duration": {
+        "bull": {
+          "1": {
+            "h": 0.263,
+            "n": 19
+          },
+          "2": {
+            "h": 0.143,
+            "n": 14
+          },
+          "3": {
+            "h": 0.083,
+            "n": 12
+          },
+          "5": {
+            "h": 0.2,
+            "n": 10
+          },
+          "10": {
+            "h": 0.0,
+            "n": 5
+          },
+          "20": {
+            "h": 0.0,
+            "n": 2
+          }
+        },
+        "bear": {
+          "1": {
+            "h": 0.368,
+            "n": 19
+          },
+          "2": {
+            "h": 0.167,
+            "n": 12
+          },
+          "3": {
+            "h": 0.3,
+            "n": 10
+          },
+          "5": {
+            "h": 0.0,
+            "n": 5
+          },
+          "10": {
+            "h": 0.333,
+            "n": 3
+          }
+        },
+        "sideways": {
+          "1": {
+            "h": 0.359,
+            "n": 39
+          },
+          "2": {
+            "h": 0.08,
+            "n": 25
+          },
+          "3": {
+            "h": 0.13,
+            "n": 23
+          },
+          "5": {
+            "h": 0.1,
+            "n": 20
+          },
+          "10": {
+            "h": 0.0,
+            "n": 13
+          },
+          "20": {
+            "h": 0.167,
+            "n": 12
+          }
+        }
+      },
+      "max_hazard_with_support": 0.3684,
+      "duration_model": {
+        "n": 328,
+        "dur_hits": 299,
+        "per_hits": 299,
+        "attempts": 0,
+        "switch_days": 29,
+        "dur_switch_hits": 0,
+        "dur_hit_rate": 0.911585,
+        "per_hit_rate": 0.911585,
+        "edge": 0.0
+      }
+    },
+    {
+      "symbol": "LTC-USD",
+      "years": 3,
+      "window": 30,
+      "k": 0.2,
+      "matrix_diag": [
+        0.84,
+        0.8095,
+        0.957
+      ],
+      "occupancy": {
+        "bull": 100,
+        "bear": 106,
+        "sideways": 860
+      },
+      "unvisited_states": [],
+      "min_diag_visited": 0.8095,
+      "diag_dominant_visited": true,
+      "hazard_at_duration": {
+        "bull": {
+          "1": {
+            "h": 0.538,
+            "n": 13
+          },
+          "2": {
+            "h": 0.167,
+            "n": 6
+          },
+          "3": {
+            "h": 0.0,
+            "n": 5
+          },
+          "5": {
+            "h": 0.0,
+            "n": 5
+          },
+          "10": {
+            "h": 0.25,
+            "n": 4
+          }
+        },
+        "bear": {
+          "1": {
+            "h": 0.385,
+            "n": 13
+          },
+          "2": {
+            "h": 0.25,
+            "n": 8
+          },
+          "3": {
+            "h": 0.0,
+            "n": 6
+          },
+          "5": {
+            "h": 0.0,
+            "n": 3
+          },
+          "10": {
+            "h": 0.0,
+            "n": 2
+          },
+          "20": {
+            "h": 0.0,
+            "n": 1
+          }
+        },
+        "sideways": {
+          "1": {
+            "h": 0.296,
+            "n": 27
+          },
+          "2": {
+            "h": 0.105,
+            "n": 19
+          },
+          "3": {
+            "h": 0.0,
+            "n": 17
+          },
+          "5": {
+            "h": 0.188,
+            "n": 16
+          },
+          "10": {
+            "h": 0.0,
+            "n": 13
+          },
+          "20": {
+            "h": 0.0,
+            "n": 12
+          }
+        }
+      },
+      "max_hazard_with_support": 0.2963,
+      "duration_model": {
+        "n": 328,
+        "dur_hits": 306,
+        "per_hits": 307,
+        "attempts": 1,
+        "switch_days": 21,
+        "dur_switch_hits": 0,
+        "dur_hit_rate": 0.932927,
+        "per_hit_rate": 0.935976,
+        "edge": -0.003049
+      }
+    },
+    {
+      "symbol": "MSFT",
+      "years": 3,
+      "window": 30,
+      "k": 0.2,
+      "matrix_diag": [
+        0.9295,
+        0.7857,
+        0.9547
+      ],
+      "occupancy": {
+        "bull": 156,
+        "bear": 56,
+        "sideways": 509
+      },
+      "unvisited_states": [],
+      "min_diag_visited": 0.7857,
+      "diag_dominant_visited": true,
+      "hazard_at_duration": {
+        "bull": {
+          "1": {
+            "h": 0.0,
+            "n": 8
+          },
+          "2": {
+            "h": 0.0,
+            "n": 8
+          },
+          "3": {
+            "h": 0.25,
+            "n": 8
+          },
+          "5": {
+            "h": 0.167,
+            "n": 6
+          },
+          "10": {
+            "h": 0.0,
+            "n": 4
+          },
+          "20": {
+            "h": 0.0,
+            "n": 3
+          }
+        },
+        "bear": {
+          "1": {
+            "h": 0.167,
+            "n": 6
+          },
+          "2": {
+            "h": 0.4,
+            "n": 5
+          },
+          "3": {
+            "h": 0.0,
+            "n": 3
+          },
+          "5": {
+            "h": 0.0,
+            "n": 2
+          }
+        },
+        "sideways": {
+          "1": {
+            "h": 0.286,
+            "n": 14
+          },
+          "2": {
+            "h": 0.1,
+            "n": 10
+          },
+          "3": {
+            "h": 0.0,
+            "n": 9
+          },
+          "5": {
+            "h": 0.0,
+            "n": 9
+          },
+          "10": {
+            "h": 0.0,
+            "n": 9
+          },
+          "20": {
+            "h": 0.0,
+            "n": 6
+          }
+        }
+      },
+      "max_hazard_with_support": 0.0,
+      "duration_model": {
+        "n": 224,
+        "dur_hits": 205,
+        "per_hits": 205,
+        "attempts": 0,
+        "switch_days": 19,
+        "dur_switch_hits": 0,
+        "dur_hit_rate": 0.915179,
+        "per_hit_rate": 0.915179,
+        "edge": 0.0
+      }
+    },
+    {
+      "symbol": "NVDA",
+      "years": 3,
+      "window": 30,
+      "k": 0.35,
+      "matrix_diag": [
+        0.8427,
+        0.3333,
+        0.9778
+      ],
+      "occupancy": {
+        "bull": 89,
+        "bear": 0,
+        "sideways": 632
+      },
+      "unvisited_states": [
+        "bear"
+      ],
+      "min_diag_visited": 0.8427,
+      "diag_dominant_visited": true,
+      "hazard_at_duration": {
+        "bull": {
+          "1": {
+            "h": 0.2,
+            "n": 10
+          },
+          "2": {
+            "h": 0.143,
+            "n": 7
+          },
+          "3": {
+            "h": 0.333,
+            "n": 6
+          },
+          "5": {
+            "h": 0.0,
+            "n": 3
+          },
+          "10": {
+            "h": 0.0,
+            "n": 3
+          },
+          "20": {
+            "h": 0.0,
+            "n": 1
+          }
+        },
+        "bear": {},
+        "sideways": {
+          "1": {
+            "h": 0.2,
+            "n": 10
+          },
+          "2": {
+            "h": 0.25,
+            "n": 8
+          },
+          "3": {
+            "h": 0.0,
+            "n": 6
+          },
+          "5": {
+            "h": 0.0,
+            "n": 6
+          },
+          "10": {
+            "h": 0.0,
+            "n": 5
+          },
+          "20": {
+            "h": 0.0,
+            "n": 4
+          }
+        }
+      },
+      "max_hazard_with_support": 0.0,
+      "duration_model": {
+        "n": 224,
+        "dur_hits": 215,
+        "per_hits": 215,
+        "attempts": 0,
+        "switch_days": 9,
+        "dur_switch_hits": 0,
+        "dur_hit_rate": 0.959821,
+        "per_hit_rate": 0.959821,
+        "edge": 0.0
+      }
+    },
+    {
+      "symbol": "QQQ",
+      "years": 3,
+      "window": 20,
+      "k": 0.2,
+      "matrix_diag": [
+        0.8708,
+        0.7333,
+        0.9056
+      ],
+      "occupancy": {
+        "bull": 240,
+        "bear": 45,
+        "sideways": 446
+      },
+      "unvisited_states": [],
+      "min_diag_visited": 0.7333,
+      "diag_dominant_visited": true,
+      "hazard_at_duration": {
+        "bull": {
+          "1": {
+            "h": 0.25,
+            "n": 24
+          },
+          "2": {
+            "h": 0.389,
+            "n": 18
+          },
+          "3": {
+            "h": 0.182,
+            "n": 11
+          },
+          "5": {
+            "h": 0.0,
+            "n": 7
+          },
+          "10": {
+            "h": 0.0,
+            "n": 7
+          },
+          "20": {
+            "h": 0.0,
+            "n": 2
+          }
+        },
+        "bear": {
+          "1": {
+            "h": 0.3,
+            "n": 10
+          },
+          "2": {
+            "h": 0.143,
+            "n": 7
+          },
+          "3": {
+            "h": 0.167,
+            "n": 6
+          },
+          "5": {
+            "h": 0.333,
+            "n": 3
+          },
+          "10": {
+            "h": 0.0,
+            "n": 1
+          }
+        },
+        "sideways": {
+          "1": {
+            "h": 0.273,
+            "n": 33
+          },
+          "2": {
+            "h": 0.083,
+            "n": 24
+          },
+          "3": {
+            "h": 0.091,
+            "n": 22
+          },
+          "5": {
+            "h": 0.0,
+            "n": 18
+          },
+          "10": {
+            "h": 0.083,
+            "n": 12
+          },
+          "20": {
+            "h": 0.25,
+            "n": 4
+          }
+        }
+      },
+      "max_hazard_with_support": 0.3889,
+      "duration_model": {
+        "n": 224,
+        "dur_hits": 205,
+        "per_hits": 205,
+        "attempts": 0,
+        "switch_days": 19,
+        "dur_switch_hits": 0,
+        "dur_hit_rate": 0.915179,
+        "per_hit_rate": 0.915179,
+        "edge": 0.0
+      }
+    },
+    {
+      "symbol": "SOL-USD",
+      "years": 3,
+      "window": 20,
+      "k": 0.2,
+      "matrix_diag": [
+        0.877,
+        0.7438,
+        0.868
+      ],
+      "occupancy": {
+        "bull": 309,
+        "bear": 161,
+        "sideways": 606
+      },
+      "unvisited_states": [],
+      "min_diag_visited": 0.7438,
+      "diag_dominant_visited": true,
+      "hazard_at_duration": {
+        "bull": {
+          "1": {
+            "h": 0.367,
+            "n": 30
+          },
+          "2": {
+            "h": 0.0,
+            "n": 19
+          },
+          "3": {
+            "h": 0.053,
+            "n": 19
+          },
+          "5": {
+            "h": 0.118,
+            "n": 17
+          },
+          "10": {
+            "h": 0.125,
+            "n": 8
+          },
+          "20": {
+            "h": 0.0,
+            "n": 5
+          }
+        },
+        "bear": {
+          "1": {
+            "h": 0.467,
+            "n": 30
+          },
+          "2": {
+            "h": 0.375,
+            "n": 16
+          },
+          "3": {
+            "h": 0.1,
+            "n": 10
+          },
+          "5": {
+            "h": 0.167,
+            "n": 6
+          },
+          "10": {
+            "h": 0.5,
+            "n": 2
+          },
+          "20": {
+            "h": 0.0,
+            "n": 1
+          }
+        },
+        "sideways": {
+          "1": {
+            "h": 0.267,
+            "n": 60
+          },
+          "2": {
+            "h": 0.114,
+            "n": 44
+          },
+          "3": {
+            "h": 0.128,
+            "n": 39
+          },
+          "5": {
+            "h": 0.167,
+            "n": 30
+          },
+          "10": {
+            "h": 0.067,
+            "n": 15
+          },
+          "20": {
+            "h": 0.667,
+            "n": 3
+          }
+        }
+      },
+      "max_hazard_with_support": 0.4667,
+      "duration_model": {
+        "n": 328,
+        "dur_hits": 287,
+        "per_hits": 288,
+        "attempts": 1,
+        "switch_days": 40,
+        "dur_switch_hits": 0,
+        "dur_hit_rate": 0.875,
+        "per_hit_rate": 0.878049,
+        "edge": -0.003049
+      }
+    },
+    {
+      "symbol": "SPY",
+      "years": 3,
+      "window": 30,
+      "k": 0.2,
+      "matrix_diag": [
+        0.8803,
+        0.7931,
+        0.9167
+      ],
+      "occupancy": {
+        "bull": 259,
+        "bear": 29,
+        "sideways": 433
+      },
+      "unvisited_states": [],
+      "min_diag_visited": 0.7931,
+      "diag_dominant_visited": true,
+      "hazard_at_duration": {
+        "bull": {
+          "1": {
+            "h": 0.0,
+            "n": 22
+          },
+          "2": {
+            "h": 0.227,
+            "n": 22
+          },
+          "3": {
+            "h": 0.235,
+            "n": 17
+          },
+          "5": {
+            "h": 0.083,
+            "n": 12
+          },
+          "10": {
+            "h": 0.0,
+            "n": 4
+          },
+          "20": {
+            "h": 0.0,
+            "n": 4
+          }
+        },
+        "bear": {
+          "1": {
+            "h": 0.2,
+            "n": 5
+          },
+          "2": {
+            "h": 0.25,
+            "n": 4
+          },
+          "3": {
+            "h": 0.0,
+            "n": 3
+          },
+          "5": {
+            "h": 0.333,
+            "n": 3
+          }
+        },
+        "sideways": {
+          "1": {
+            "h": 0.346,
+            "n": 26
+          },
+          "2": {
+            "h": 0.118,
+            "n": 17
+          },
+          "3": {
+            "h": 0.133,
+            "n": 15
+          },
+          "5": {
+            "h": 0.0,
+            "n": 10
+          },
+          "10": {
+            "h": 0.0,
+            "n": 7
+          },
+          "20": {
+            "h": 0.0,
+            "n": 5
+          }
+        }
+      },
+      "max_hazard_with_support": 0.3462,
+      "duration_model": {
+        "n": 224,
+        "dur_hits": 203,
+        "per_hits": 203,
+        "attempts": 0,
+        "switch_days": 21,
+        "dur_switch_hits": 0,
+        "dur_hit_rate": 0.90625,
+        "per_hit_rate": 0.90625,
+        "edge": 0.0
+      }
+    },
+    {
+      "symbol": "TLT",
+      "years": 3,
+      "window": 30,
+      "k": 0.2,
+      "matrix_diag": [
+        0.7429,
+        0.7816,
+        0.9343
+      ],
+      "occupancy": {
+        "bull": 70,
+        "bear": 87,
+        "sideways": 564
+      },
+      "unvisited_states": [],
+      "min_diag_visited": 0.7429,
+      "diag_dominant_visited": true,
+      "hazard_at_duration": {
+        "bull": {
+          "1": {
+            "h": 0.2,
+            "n": 10
+          },
+          "2": {
+            "h": 0.25,
+            "n": 8
+          },
+          "3": {
+            "h": 0.5,
+            "n": 6
+          },
+          "5": {
+            "h": 0.0,
+            "n": 3
+          },
+          "10": {
+            "h": 0.0,
+            "n": 1
+          },
+          "20": {
+            "h": 0.0,
+            "n": 1
+          }
+        },
+        "bear": {
+          "1": {
+            "h": 0.412,
+            "n": 17
+          },
+          "2": {
+            "h": 0.3,
+            "n": 10
+          },
+          "3": {
+            "h": 0.286,
+            "n": 7
+          },
+          "5": {
+            "h": 0.0,
+            "n": 4
+          },
+          "10": {
+            "h": 0.0,
+            "n": 3
+          },
+          "20": {
+            "h": 0.0,
+            "n": 1
+          }
+        },
+        "sideways": {
+          "1": {
+            "h": 0.25,
+            "n": 28
+          },
+          "2": {
+            "h": 0.238,
+            "n": 21
+          },
+          "3": {
+            "h": 0.062,
+            "n": 16
+          },
+          "5": {
+            "h": 0.0,
+            "n": 14
+          },
+          "10": {
+            "h": 0.083,
+            "n": 12
+          },
+          "20": {
+            "h": 0.0,
+            "n": 8
+          }
+        }
+      },
+      "max_hazard_with_support": 0.4118,
+      "duration_model": {
+        "n": 224,
+        "dur_hits": 204,
+        "per_hits": 204,
+        "attempts": 0,
+        "switch_days": 20,
+        "dur_switch_hits": 0,
+        "dur_hit_rate": 0.910714,
+        "per_hit_rate": 0.910714,
+        "edge": 0.0
+      }
+    },
+    {
+      "symbol": "TSLA",
+      "years": 3,
+      "window": 30,
+      "k": 0.2,
+      "matrix_diag": [
+        0.8739,
+        0.8333,
+        0.9514
+      ],
+      "occupancy": {
+        "bull": 119,
+        "bear": 66,
+        "sideways": 536
+      },
+      "unvisited_states": [],
+      "min_diag_visited": 0.8333,
+      "diag_dominant_visited": true,
+      "hazard_at_duration": {
+        "bull": {
+          "1": {
+            "h": 0.455,
+            "n": 11
+          },
+          "2": {
+            "h": 0.0,
+            "n": 6
+          },
+          "3": {
+            "h": 0.167,
+            "n": 6
+          },
+          "5": {
+            "h": 0.0,
+            "n": 4
+          },
+          "10": {
+            "h": 0.0,
+            "n": 3
+          },
+          "20": {
+            "h": 0.0,
+            "n": 1
+          }
+        },
+        "bear": {
+          "1": {
+            "h": 0.25,
+            "n": 8
+          },
+          "2": {
+            "h": 0.0,
+            "n": 6
+          },
+          "3": {
+            "h": 0.333,
+            "n": 6
+          },
+          "5": {
+            "h": 0.0,
+            "n": 3
+          },
+          "10": {
+            "h": 0.0,
+            "n": 2
+          }
+        },
+        "sideways": {
+          "1": {
+            "h": 0.25,
+            "n": 20
+          },
+          "2": {
+            "h": 0.067,
+            "n": 15
+          },
+          "3": {
+            "h": 0.143,
+            "n": 14
+          },
+          "5": {
+            "h": 0.0,
+            "n": 12
+          },
+          "10": {
+            "h": 0.0,
+            "n": 11
+          },
+          "20": {
+            "h": 0.0,
+            "n": 9
+          }
+        }
+      },
+      "max_hazard_with_support": 0.25,
+      "duration_model": {
+        "n": 224,
+        "dur_hits": 210,
+        "per_hits": 210,
+        "attempts": 0,
+        "switch_days": 14,
+        "dur_switch_hits": 0,
+        "dur_hit_rate": 0.9375,
+        "per_hit_rate": 0.9375,
+        "edge": 0.0
+      }
+    },
+    {
+      "symbol": "USO",
+      "years": 3,
+      "window": 30,
+      "k": 0.2,
+      "matrix_diag": [
+        0.8662,
+        0.5806,
+        0.9433
+      ],
+      "occupancy": {
+        "bull": 142,
+        "bear": 31,
+        "sideways": 548
+      },
+      "unvisited_states": [],
+      "min_diag_visited": 0.5806,
+      "diag_dominant_visited": true,
+      "hazard_at_duration": {
+        "bull": {
+          "1": {
+            "h": 0.308,
+            "n": 13
+          },
+          "2": {
+            "h": 0.111,
+            "n": 9
+          },
+          "3": {
+            "h": 0.125,
+            "n": 8
+          },
+          "5": {
+            "h": 0.167,
+            "n": 6
+          },
+          "10": {
+            "h": 0.25,
+            "n": 4
+          },
+          "20": {
+            "h": 0.5,
+            "n": 2
+          }
+        },
+        "bear": {
+          "1": {
+            "h": 0.5,
+            "n": 10
+          },
+          "2": {
+            "h": 0.2,
+            "n": 5
+          },
+          "3": {
+            "h": 0.5,
+            "n": 4
+          },
+          "5": {
+            "h": 0.0,
+            "n": 2
+          }
+        },
+        "sideways": {
+          "1": {
+            "h": 0.174,
+            "n": 23
+          },
+          "2": {
+            "h": 0.105,
+            "n": 19
+          },
+          "3": {
+            "h": 0.118,
+            "n": 17
+          },
+          "5": {
+            "h": 0.077,
+            "n": 13
+          },
+          "10": {
+            "h": 0.0,
+            "n": 12
+          },
+          "20": {
+            "h": 0.143,
+            "n": 7
+          }
+        }
+      },
+      "max_hazard_with_support": 0.1739,
+      "duration_model": {
+        "n": 224,
+        "dur_hits": 206,
+        "per_hits": 206,
+        "attempts": 0,
+        "switch_days": 18,
+        "dur_switch_hits": 0,
+        "dur_hit_rate": 0.919643,
+        "per_hit_rate": 0.919643,
+        "edge": 0.0
+      }
+    },
+    {
+      "symbol": "XRP-USD",
+      "years": 3,
+      "window": 20,
+      "k": 0.2,
+      "matrix_diag": [
+        0.8512,
+        0.7124,
+        0.9085
+      ],
+      "occupancy": {
+        "bull": 168,
+        "bear": 154,
+        "sideways": 754
+      },
+      "unvisited_states": [],
+      "min_diag_visited": 0.7124,
+      "diag_dominant_visited": true,
+      "hazard_at_duration": {
+        "bull": {
+          "1": {
+            "h": 0.278,
+            "n": 18
+          },
+          "2": {
+            "h": 0.077,
+            "n": 13
+          },
+          "3": {
+            "h": 0.083,
+            "n": 12
+          },
+          "5": {
+            "h": 0.0,
+            "n": 8
+          },
+          "10": {
+            "h": 0.2,
+            "n": 5
+          },
+          "20": {
+            "h": 0.0,
+            "n": 1
+          }
+        },
+        "bear": {
+          "1": {
+            "h": 0.586,
+            "n": 29
+          },
+          "2": {
+            "h": 0.167,
+            "n": 12
+          },
+          "3": {
+            "h": 0.3,
+            "n": 10
+          },
+          "5": {
+            "h": 0.167,
+            "n": 6
+          },
+          "10": {
+            "h": 0.5,
+            "n": 2
+          },
+          "20": {
+            "h": 0.0,
+            "n": 1
+          }
+        },
+        "sideways": {
+          "1": {
+            "h": 0.217,
+            "n": 46
+          },
+          "2": {
+            "h": 0.083,
+            "n": 36
+          },
+          "3": {
+            "h": 0.0,
+            "n": 33
+          },
+          "5": {
+            "h": 0.0,
+            "n": 28
+          },
+          "10": {
+            "h": 0.143,
+            "n": 21
+          },
+          "20": {
+            "h": 0.0,
+            "n": 7
+          }
+        }
+      },
+      "max_hazard_with_support": 0.5862,
+      "duration_model": {
+        "n": 328,
+        "dur_hits": 276,
+        "per_hits": 282,
+        "attempts": 10,
+        "switch_days": 46,
+        "dur_switch_hits": 2,
+        "dur_hit_rate": 0.841463,
+        "per_hit_rate": 0.859756,
+        "edge": -0.018293
+      }
+    },
+    {
+      "symbol": "AAPL",
+      "years": 20,
+      "window": 30,
+      "k": 0.2,
+      "matrix_diag": [
+        0.898,
+        0.8077,
+        0.9329
+      ],
+      "occupancy": {
+        "bull": 1580,
+        "bear": 260,
+        "sideways": 3159
+      },
+      "unvisited_states": [],
+      "min_diag_visited": 0.8077,
+      "diag_dominant_visited": true,
+      "hazard_at_duration": {
+        "bull": {
+          "1": {
+            "h": 0.27,
+            "n": 115
+          },
+          "2": {
+            "h": 0.202,
+            "n": 84
+          },
+          "3": {
+            "h": 0.134,
+            "n": 67
+          },
+          "5": {
+            "h": 0.118,
+            "n": 51
+          },
+          "10": {
+            "h": 0.032,
+            "n": 31
+          },
+          "20": {
+            "h": 0.053,
+            "n": 19
+          }
+        },
+        "bear": {
+          "1": {
+            "h": 0.259,
+            "n": 27
+          },
+          "2": {
+            "h": 0.35,
+            "n": 20
+          },
+          "3": {
+            "h": 0.231,
+            "n": 13
+          },
+          "5": {
+            "h": 0.0,
+            "n": 8
+          },
+          "10": {
+            "h": 0.0,
+            "n": 6
+          },
+          "20": {
+            "h": 0.0,
+            "n": 2
+          }
+        },
+        "sideways": {
+          "1": {
+            "h": 0.275,
+            "n": 142
+          },
+          "2": {
+            "h": 0.117,
+            "n": 103
+          },
+          "3": {
+            "h": 0.088,
+            "n": 91
+          },
+          "5": {
+            "h": 0.026,
+            "n": 77
+          },
+          "10": {
+            "h": 0.062,
+            "n": 64
+          },
+          "20": {
+            "h": 0.049,
+            "n": 41
+          }
+        }
+      },
+      "max_hazard_with_support": 0.35,
+      "duration_model": {
+        "n": 1508,
+        "dur_hits": 1369,
+        "per_hits": 1369,
+        "attempts": 0,
+        "switch_days": 139,
+        "dur_switch_hits": 0,
+        "dur_hit_rate": 0.907825,
+        "per_hit_rate": 0.907825,
+        "edge": 0.0
+      }
+    },
+    {
+      "symbol": "BTC-USD",
+      "years": 12,
+      "window": 30,
+      "k": 0.2,
+      "matrix_diag": [
+        0.8916,
+        0.8333,
+        0.9354
+      ],
+      "occupancy": {
+        "bull": 1061,
+        "bear": 408,
+        "sideways": 2833
+      },
+      "unvisited_states": [],
+      "min_diag_visited": 0.8333,
+      "diag_dominant_visited": true,
+      "hazard_at_duration": {
+        "bull": {
+          "1": {
+            "h": 0.293,
+            "n": 82
+          },
+          "2": {
+            "h": 0.276,
+            "n": 58
+          },
+          "3": {
+            "h": 0.071,
+            "n": 42
+          },
+          "5": {
+            "h": 0.088,
+            "n": 34
+          },
+          "10": {
+            "h": 0.115,
+            "n": 26
+          },
+          "20": {
+            "h": 0.118,
+            "n": 17
+          }
+        },
+        "bear": {
+          "1": {
+            "h": 0.392,
+            "n": 51
+          },
+          "2": {
+            "h": 0.258,
+            "n": 31
+          },
+          "3": {
+            "h": 0.087,
+            "n": 23
+          },
+          "5": {
+            "h": 0.105,
+            "n": 19
+          },
+          "10": {
+            "h": 0.182,
+            "n": 11
+          },
+          "20": {
+            "h": 0.0,
+            "n": 4
+          }
+        },
+        "sideways": {
+          "1": {
+            "h": 0.216,
+            "n": 134
+          },
+          "2": {
+            "h": 0.105,
+            "n": 105
+          },
+          "3": {
+            "h": 0.117,
+            "n": 94
+          },
+          "5": {
+            "h": 0.07,
+            "n": 71
+          },
+          "10": {
+            "h": 0.019,
+            "n": 54
+          },
+          "20": {
+            "h": 0.053,
+            "n": 38
+          }
+        }
+      },
+      "max_hazard_with_support": 0.3922,
+      "duration_model": {
+        "n": 1299,
+        "dur_hits": 1199,
+        "per_hits": 1199,
+        "attempts": 0,
+        "switch_days": 100,
+        "dur_switch_hits": 0,
+        "dur_hit_rate": 0.923018,
+        "per_hit_rate": 0.923018,
+        "edge": 0.0
+      }
+    },
+    {
+      "symbol": "ETH-USD",
+      "years": 10,
+      "window": 30,
+      "k": 0.2,
+      "matrix_diag": [
+        0.8767,
+        0.8297,
+        0.9308
+      ],
+      "occupancy": {
+        "bull": 674,
+        "bear": 370,
+        "sideways": 2109
+      },
+      "unvisited_states": [],
+      "min_diag_visited": 0.8297,
+      "diag_dominant_visited": true,
+      "hazard_at_duration": {
+        "bull": {
+          "1": {
+            "h": 0.377,
+            "n": 69
+          },
+          "2": {
+            "h": 0.14,
+            "n": 43
+          },
+          "3": {
+            "h": 0.162,
+            "n": 37
+          },
+          "5": {
+            "h": 0.148,
+            "n": 27
+          },
+          "10": {
+            "h": 0.0,
+            "n": 16
+          },
+          "20": {
+            "h": 0.0,
+            "n": 12
+          }
+        },
+        "bear": {
+          "1": {
+            "h": 0.286,
+            "n": 35
+          },
+          "2": {
+            "h": 0.28,
+            "n": 25
+          },
+          "3": {
+            "h": 0.167,
+            "n": 18
+          },
+          "5": {
+            "h": 0.143,
+            "n": 14
+          },
+          "10": {
+            "h": 0.0,
+            "n": 7
+          },
+          "20": {
+            "h": 0.0,
+            "n": 5
+          }
+        },
+        "sideways": {
+          "1": {
+            "h": 0.311,
+            "n": 103
+          },
+          "2": {
+            "h": 0.127,
+            "n": 71
+          },
+          "3": {
+            "h": 0.065,
+            "n": 62
+          },
+          "5": {
+            "h": 0.167,
+            "n": 54
+          },
+          "10": {
+            "h": 0.026,
+            "n": 39
+          },
+          "20": {
+            "h": 0.043,
+            "n": 23
+          }
+        }
+      },
+      "max_hazard_with_support": 0.3768,
+      "duration_model": {
+        "n": 954,
+        "dur_hits": 869,
+        "per_hits": 869,
+        "attempts": 0,
+        "switch_days": 85,
+        "dur_switch_hits": 0,
+        "dur_hit_rate": 0.910901,
+        "per_hit_rate": 0.910901,
+        "edge": 0.0
+      }
+    },
+    {
+      "symbol": "EURUSD=X",
+      "years": 20,
+      "window": 30,
+      "k": 0.2,
+      "matrix_diag": [
+        0.8234,
+        0.8356,
+        0.9379
+      ],
+      "occupancy": {
+        "bull": 702,
+        "bear": 670,
+        "sideways": 3784
+      },
+      "unvisited_states": [],
+      "min_diag_visited": 0.8234,
+      "diag_dominant_visited": true,
+      "hazard_at_duration": {
+        "bull": {
+          "1": {
+            "h": 0.345,
+            "n": 84
+          },
+          "2": {
+            "h": 0.236,
+            "n": 55
+          },
+          "3": {
+            "h": 0.19,
+            "n": 42
+          },
+          "5": {
+            "h": 0.148,
+            "n": 27
+          },
+          "10": {
+            "h": 0.059,
+            "n": 17
+          },
+          "20": {
+            "h": 0.143,
+            "n": 7
+          }
+        },
+        "bear": {
+          "1": {
+            "h": 0.311,
+            "n": 61
+          },
+          "2": {
+            "h": 0.19,
+            "n": 42
+          },
+          "3": {
+            "h": 0.088,
+            "n": 34
+          },
+          "5": {
+            "h": 0.071,
+            "n": 28
+          },
+          "10": {
+            "h": 0.0,
+            "n": 13
+          },
+          "20": {
+            "h": 0.2,
+            "n": 5
+          }
+        },
+        "sideways": {
+          "1": {
+            "h": 0.214,
+            "n": 145
+          },
+          "2": {
+            "h": 0.132,
+            "n": 114
+          },
+          "3": {
+            "h": 0.061,
+            "n": 99
+          },
+          "5": {
+            "h": 0.071,
+            "n": 85
+          },
+          "10": {
+            "h": 0.062,
+            "n": 64
+          },
+          "20": {
+            "h": 0.02,
+            "n": 51
+          }
+        }
+      },
+      "max_hazard_with_support": 0.3452,
+      "duration_model": {
+        "n": 1555,
+        "dur_hits": 1375,
+        "per_hits": 1375,
+        "attempts": 0,
+        "switch_days": 180,
+        "dur_switch_hits": 0,
+        "dur_hit_rate": 0.884244,
+        "per_hit_rate": 0.884244,
+        "edge": 0.0
+      }
+    },
+    {
+      "symbol": "GLD",
+      "years": 20,
+      "window": 30,
+      "k": 0.2,
+      "matrix_diag": [
+        0.8752,
+        0.7633,
+        0.9338
+      ],
+      "occupancy": {
+        "bull": 1050,
+        "bear": 431,
+        "sideways": 3518
+      },
+      "unvisited_states": [],
+      "min_diag_visited": 0.7633,
+      "diag_dominant_visited": true,
+      "hazard_at_duration": {
+        "bull": {
+          "1": {
+            "h": 0.368,
+            "n": 95
+          },
+          "2": {
+            "h": 0.2,
+            "n": 60
+          },
+          "3": {
+            "h": 0.167,
+            "n": 48
+          },
+          "5": {
+            "h": 0.154,
+            "n": 39
+          },
+          "10": {
+            "h": 0.0,
+            "n": 23
+          },
+          "20": {
+            "h": 0.083,
+            "n": 12
+          }
+        },
+        "bear": {
+          "1": {
+            "h": 0.361,
+            "n": 72
+          },
+          "2": {
+            "h": 0.304,
+            "n": 46
+          },
+          "3": {
+            "h": 0.219,
+            "n": 32
+          },
+          "5": {
+            "h": 0.111,
+            "n": 18
+          },
+          "10": {
+            "h": 0.222,
+            "n": 9
+          },
+          "20": {
+            "h": 0.167,
+            "n": 6
+          }
+        },
+        "sideways": {
+          "1": {
+            "h": 0.275,
+            "n": 167
+          },
+          "2": {
+            "h": 0.107,
+            "n": 121
+          },
+          "3": {
+            "h": 0.167,
+            "n": 108
+          },
+          "5": {
+            "h": 0.093,
+            "n": 86
+          },
+          "10": {
+            "h": 0.014,
+            "n": 69
+          },
+          "20": {
+            "h": 0.102,
+            "n": 49
+          }
+        }
+      },
+      "max_hazard_with_support": 0.3684,
+      "duration_model": {
+        "n": 1508,
+        "dur_hits": 1375,
+        "per_hits": 1375,
+        "attempts": 0,
+        "switch_days": 133,
+        "dur_switch_hits": 0,
+        "dur_hit_rate": 0.911804,
+        "per_hit_rate": 0.911804,
+        "edge": 0.0
+      }
+    },
+    {
+      "symbol": "QQQ",
+      "years": 20,
+      "window": 30,
+      "k": 0.2,
+      "matrix_diag": [
+        0.8703,
+        0.7225,
+        0.9259
+      ],
+      "occupancy": {
+        "bull": 1488,
+        "bear": 191,
+        "sideways": 3320
+      },
+      "unvisited_states": [],
+      "min_diag_visited": 0.7225,
+      "diag_dominant_visited": true,
+      "hazard_at_duration": {
+        "bull": {
+          "1": {
+            "h": 0.297,
+            "n": 128
+          },
+          "2": {
+            "h": 0.156,
+            "n": 90
+          },
+          "3": {
+            "h": 0.145,
+            "n": 76
+          },
+          "5": {
+            "h": 0.07,
+            "n": 57
+          },
+          "10": {
+            "h": 0.128,
+            "n": 39
+          },
+          "20": {
+            "h": 0.125,
+            "n": 16
+          }
+        },
+        "bear": {
+          "1": {
+            "h": 0.424,
+            "n": 33
+          },
+          "2": {
+            "h": 0.316,
+            "n": 19
+          },
+          "3": {
+            "h": 0.154,
+            "n": 13
+          },
+          "5": {
+            "h": 0.222,
+            "n": 9
+          },
+          "10": {
+            "h": 0.333,
+            "n": 3
+          },
+          "20": {
+            "h": 1.0,
+            "n": 1
+          }
+        },
+        "sideways": {
+          "1": {
+            "h": 0.247,
+            "n": 162
+          },
+          "2": {
+            "h": 0.19,
+            "n": 121
+          },
+          "3": {
+            "h": 0.102,
+            "n": 98
+          },
+          "5": {
+            "h": 0.086,
+            "n": 81
+          },
+          "10": {
+            "h": 0.031,
+            "n": 64
+          },
+          "20": {
+            "h": 0.047,
+            "n": 43
+          }
+        }
+      },
+      "max_hazard_with_support": 0.4242,
+      "duration_model": {
+        "n": 1508,
+        "dur_hits": 1338,
+        "per_hits": 1338,
+        "attempts": 0,
+        "switch_days": 170,
+        "dur_switch_hits": 0,
+        "dur_hit_rate": 0.887268,
+        "per_hit_rate": 0.887268,
+        "edge": 0.0
+      }
+    },
+    {
+      "symbol": "SPY",
+      "years": 20,
+      "window": 30,
+      "k": 0.2,
+      "matrix_diag": [
+        0.8612,
+        0.7,
+        0.9262
+      ],
+      "occupancy": {
+        "bull": 1383,
+        "bear": 200,
+        "sideways": 3416
+      },
+      "unvisited_states": [],
+      "min_diag_visited": 0.7,
+      "diag_dominant_visited": true,
+      "hazard_at_duration": {
+        "bull": {
+          "1": {
+            "h": 0.344,
+            "n": 128
+          },
+          "2": {
+            "h": 0.226,
+            "n": 84
+          },
+          "3": {
+            "h": 0.123,
+            "n": 65
+          },
+          "5": {
+            "h": 0.12,
+            "n": 50
+          },
+          "10": {
+            "h": 0.194,
+            "n": 31
+          },
+          "20": {
+            "h": 0.062,
+            "n": 16
+          }
+        },
+        "bear": {
+          "1": {
+            "h": 0.435,
+            "n": 46
+          },
+          "2": {
+            "h": 0.269,
+            "n": 26
+          },
+          "3": {
+            "h": 0.316,
+            "n": 19
+          },
+          "5": {
+            "h": 0.636,
+            "n": 11
+          },
+          "10": {
+            "h": 0.5,
+            "n": 2
+          }
+        },
+        "sideways": {
+          "1": {
+            "h": 0.24,
+            "n": 175
+          },
+          "2": {
+            "h": 0.113,
+            "n": 133
+          },
+          "3": {
+            "h": 0.085,
+            "n": 118
+          },
+          "5": {
+            "h": 0.113,
+            "n": 97
+          },
+          "10": {
+            "h": 0.03,
+            "n": 66
+          },
+          "20": {
+            "h": 0.022,
+            "n": 46
+          }
+        }
+      },
+      "max_hazard_with_support": 0.4348,
+      "duration_model": {
+        "n": 1508,
+        "dur_hits": 1351,
+        "per_hits": 1352,
+        "attempts": 1,
+        "switch_days": 156,
+        "dur_switch_hits": 0,
+        "dur_hit_rate": 0.895889,
+        "per_hit_rate": 0.896552,
+        "edge": -0.000663
+      }
+    },
+    {
+      "symbol": "TLT",
+      "years": 20,
+      "window": 30,
+      "k": 0.2,
+      "matrix_diag": [
+        0.8104,
+        0.8013,
+        0.9388
+      ],
+      "occupancy": {
+        "bull": 728,
+        "bear": 478,
+        "sideways": 3793
+      },
+      "unvisited_states": [],
+      "min_diag_visited": 0.8013,
+      "diag_dominant_visited": true,
+      "hazard_at_duration": {
+        "bull": {
+          "1": {
+            "h": 0.349,
+            "n": 109
+          },
+          "2": {
+            "h": 0.169,
+            "n": 71
+          },
+          "3": {
+            "h": 0.237,
+            "n": 59
+          },
+          "5": {
+            "h": 0.167,
+            "n": 36
+          },
+          "10": {
+            "h": 0.053,
+            "n": 19
+          },
+          "20": {
+            "h": 0.0,
+            "n": 6
+          }
+        },
+        "bear": {
+          "1": {
+            "h": 0.446,
+            "n": 56
+          },
+          "2": {
+            "h": 0.097,
+            "n": 31
+          },
+          "3": {
+            "h": 0.214,
+            "n": 28
+          },
+          "5": {
+            "h": 0.067,
+            "n": 15
+          },
+          "10": {
+            "h": 0.455,
+            "n": 11
+          },
+          "20": {
+            "h": 0.0,
+            "n": 1
+          }
+        },
+        "sideways": {
+          "1": {
+            "h": 0.299,
+            "n": 164
+          },
+          "2": {
+            "h": 0.148,
+            "n": 115
+          },
+          "3": {
+            "h": 0.102,
+            "n": 98
+          },
+          "5": {
+            "h": 0.013,
+            "n": 79
+          },
+          "10": {
+            "h": 0.016,
+            "n": 64
+          },
+          "20": {
+            "h": 0.04,
+            "n": 50
+          }
+        }
+      },
+      "max_hazard_with_support": 0.4464,
+      "duration_model": {
+        "n": 1508,
+        "dur_hits": 1371,
+        "per_hits": 1371,
+        "attempts": 0,
+        "switch_days": 137,
+        "dur_switch_hits": 0,
+        "dur_hit_rate": 0.909151,
+        "per_hit_rate": 0.909151,
+        "edge": 0.0
+      }
+    }
+  ]
+}

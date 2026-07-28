@@ -48,6 +48,12 @@ class AccuracyMetrics:
     persistence_hit_rate: float  # "tomorrow's regime = today's" — the honest bar
     persistence_balanced: float
     n: int
+    # Switch-day anatomy: the ONLY days a predictor can beat persistence are the
+    # days the regime actually changes (persistence scores 0 on them by
+    # construction). These three numbers say where the accuracy really lives.
+    n_switch: int = 0        # held-out days where tomorrow != today
+    switch_recall: float = 0.0   # model accuracy restricted to those days
+    switch_attempts: int = 0     # days the model predicted ANY change at all
 
 
 @dataclass
@@ -192,6 +198,9 @@ def _accuracy(pred_probs, actual_idx, train_freq, cur_idx=None) -> AccuracyMetri
     per_correct = np.zeros(n_states)
     persist_correct = np.zeros(n_states)
     persist_hits = 0
+    n_switch = 0
+    switch_hits = 0
+    switch_attempts = 0
     for dist, actual, cur in zip(pred_probs, actual_idx, cur_idx):
         pred = int(np.argmax(dist))
         per_total[actual] += 1
@@ -205,6 +214,13 @@ def _accuracy(pred_probs, actual_idx, train_freq, cur_idx=None) -> AccuracyMetri
         if cur is not None and cur == actual:  # persistence: predict today's state
             persist_hits += 1
             persist_correct[actual] += 1
+        if cur is not None:
+            if actual != cur:               # a real regime change — the contested days
+                n_switch += 1
+                if pred == actual:
+                    switch_hits += 1
+            if pred != cur:                 # the model dared to predict a change
+                switch_attempts += 1
     n = len(actual_idx)
     # balanced accuracy = mean per-class recall over classes that actually occur.
     # Predicting only the majority class scores ~1/n_states here, so this metric
@@ -226,6 +242,9 @@ def _accuracy(pred_probs, actual_idx, train_freq, cur_idx=None) -> AccuracyMetri
         persistence_hit_rate=persist_hits / n,
         persistence_balanced=persist_balanced,
         n=n,
+        n_switch=n_switch,
+        switch_recall=(switch_hits / n_switch) if n_switch else 0.0,
+        switch_attempts=switch_attempts,
     )
 
 
@@ -392,6 +411,26 @@ def evaluate(
     if len({s for s in traded}) <= 1:
         warnings.append("Constant-regime test window: comparison not meaningful.")
 
+    # Gate 7 — all accuracy is stay-day credit. The only days any predictor can
+    # beat persistence are the days the regime actually changes; a model whose
+    # switch recall is zero has, by construction, no skill over persistence no
+    # matter how high its hit-rate reads — whether it never tried, or tried and
+    # missed every time. Say so in plain language.
+    if accuracy.n_switch > 0 and accuracy.switch_recall == 0.0:
+        if accuracy.switch_attempts == 0:
+            warnings.append(
+                f"The model never predicted a regime change (0 switch attempts over "
+                f"{accuracy.n} days): its accuracy is entirely stay-day credit, and it scored "
+                f"0/{accuracy.n_switch} on the days the regime actually moved. A hit-rate "
+                "earned only on stay days is persistence, restated."
+            )
+        else:
+            warnings.append(
+                f"The model predicted a change on {accuracy.switch_attempts} day(s) and got "
+                f"0 of {accuracy.n_switch} actual changes right: all its accuracy is "
+                "stay-day credit. A hit-rate earned only on stay days is persistence, restated."
+            )
+
     # Gate 6 — the agent (if present) acted on low-confidence forecasts.
     # p_next is handed to every policy precisely so a confidence-aware agent
     # could flag uncertainty; the rule-based policies ignore it. When the
@@ -441,6 +480,13 @@ def format_daily_report(r: DailyReport) -> str:
         f"  Naive(major) hit-rate: {r.accuracy.naive_hit_rate:.1%}   balanced-acc: {r.accuracy.naive_balanced:.1%}   log-loss: {r.accuracy.naive_log_loss:.3f}",
         f"  Persistence  hit-rate: {r.accuracy.persistence_hit_rate:.1%}   balanced-acc: {r.accuracy.persistence_balanced:.1%}   (tomorrow = today)",
         f"  (n={r.accuracy.n}, train best balanced-acc={r.train_best_score:.1%})",
+        "",
+        "--- Switch days (the only days skill could exist) ---",
+        f"  regime changes: {r.accuracy.n_switch}/{r.accuracy.n} days   "
+        f"model recall on them: "
+        + (f"{r.accuracy.switch_recall:.1%}" if r.accuracy.n_switch else "n/a")
+        + f"   model switch attempts: {r.accuracy.switch_attempts}   "
+        f"(persistence scores 0% here by construction)",
         "",
         "--- Trading (test, net of costs) ---",
         f"  {'Policy':<12} {'Return':>10} {'Sharpe':>8} {'MaxDD':>8} {'Trades':>7} {'Cost':>8}",

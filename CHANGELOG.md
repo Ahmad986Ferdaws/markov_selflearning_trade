@@ -4,6 +4,29 @@ All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/); the project is a portfolio /
 research artifact rather than a released package, so versions are snapshots.
 
+## [0.3.0] — 2026-07-27 — the anatomy of zero
+
+### The finding, dissected ([docs/19](docs/19-anatomy-of-zero.md))
+- **Positive controls (in CI):** the engine detects planted first-order switch structure
+  (alternation +90pp, cycles, noisy alternation) and reproduces the exact zero-edge identity
+  on sticky synthetic chains — the market zeros are measurements, not malfunctions.
+- **Switch-day anatomy + Gate 7:** new engine metrics (`n_switch`, `switch_recall`,
+  `switch_attempts`); BTC's 90.9% = 298/298 stay days + **0/30 regime-change days**; a
+  seventh honesty gate states it in every report.
+- **Per-step dominance:** the causal transition row used at every one of **16,773** held-out
+  decisions had self-probability ≥ **0.600** — the argmax is forced to persistence at each
+  step; with 0 divergences the 95% bound on the true divergence rate is **< 0.018%**.
+- **The obvious fixes fail:** a causal duration-hazard predictor fires 23 times in 16,773
+  days; a second-order-memory predictor fires 20 times; edges uninformative both ways.
+- **An honest positive:** the transition matrix beats persistence-equivalent probabilistic
+  baselines on log-loss **28/28 runs** (+0.029 nats/day vs the stronger baseline) —
+  calibration skill that never once crosses the decision threshold.
+- **Independent re-derivation** (`scripts/independent_rederivation.py`, zero app imports,
+  in CI): reproduces 328 predictions / 30 switches / 0 attempts / 298 hits from the raw
+  snapshot alone.
+- All claims adversarially verified (statistician + hostile code review + replication);
+  9 wording overclaims and 8 code findings caught and applied. Tests: **64 passing**.
+
 ## [0.2.0] — 2026-07-27 — the null survives 20 years
 
 ### The finding, extended
