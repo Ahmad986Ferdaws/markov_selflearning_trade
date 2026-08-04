@@ -88,7 +88,8 @@ make robust                   # reproduce the 20-asset / +0.000 result
 python scripts/long_history_study.py   # reproduce the 20-year / +0.000 result
 diagnose-cli                  # narrate the latest run record (offline, no model)
 python scripts/independent_rederivation.py   # re-derive the headline with ZERO app imports
-make test                     # 64 tests
+kalman-cli walkforward        # Kalman pairs walk-forward on SPY/QQQ (docs/20)
+make test                     # 90 tests
 make site                     # serve the website at http://localhost:8000
 ```
 
@@ -134,6 +135,7 @@ Current (post-reframe):
 - [docs/17 — review + landscape](docs/17-review-and-landscape.md) — deep review, positioning
 - [docs/18 — long-history study](docs/18-long-history.md) — the null across 20 years, 0/11,348 divergences
 - [docs/19 — the anatomy of zero](docs/19-anatomy-of-zero.md) — positive controls, the dominance theorem, switch-day decomposition, duration/memory-2 tests, probabilistic skill
+- [docs/20 — Kalman pairs framework](docs/20-kalman-pairs.md) — dynamic-hedge Kalman research harness (`kalman/`): Joseph-form filter, two-leg ledger, walk-forward vs 5 baselines; verdict on SPY/QQQ: no edge after costs
 - [docs/12 — architecture review](docs/12-architecture-review.md) — headline-integrity fixes
 - [docs/STATUS.md](docs/STATUS.md) — living status / session handoff
 

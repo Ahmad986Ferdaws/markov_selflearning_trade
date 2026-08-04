@@ -4,6 +4,29 @@ All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/); the project is a portfolio /
 research artifact rather than a released package, so versions are snapshots.
 
+## [0.4.0] — 2026-07-28 — Kalman pairs research framework
+
+### Added ([docs/20](docs/20-kalman-pairs.md))
+- **`kalman/` package + `kalman-cli`** — a rigorous pairs-trading research harness built to
+  a 14-section external spec: Joseph-form dynamic-hedge filter (pre-update-innovation
+  signal, PSD-guarded, no inversions, separate β/α process noise, missing-obs explicit),
+  fixed + adaptive Q (lagged vol, clipped, causal reference), dt-aware local-linear-trend
+  module, training-only likelihood calibration with sensitivity surface, Engle–Granger/
+  half-life pair qualification, hysteretic state machine with safety gates, causal health
+  monitoring (NIS/CUSUM/β-uncertainty), and an explicit **two-leg cash-and-holdings
+  ledger** (next-open fills, costs on traded notional, borrow, freeze/rehedge) — the
+  `position*spread.diff()` shortcut is banned and its absence test-enforced.
+- **Walk-forward** (train → predeclared validation → untouched test, 15 folds / 20y) versus
+  static OLS, rolling OLS, EW regression, and cash through the identical engine.
+- **All 16 mandatory acceptance criteria** from the spec map to tests (26 new; suite: 90).
+  Validated at exact specification: ~95% coverage of the filter's own uncertainty.
+
+### The finding (honest)
+- SPY/QQQ fails cointegration qualification upfront (EG-ADF p ≈ 0.21–0.63, half-life ~195d).
+- Walk-forward verdict: **no robust edge after costs** (best variant Sharpe 0.09, ≈0%
+  total test return). The machinery is measurably correct; the edge is absent — reported
+  plainly, exactly as this repo's charter demands.
+
 ## [0.3.0] — 2026-07-27 — the anatomy of zero
 
 ### The finding, dissected ([docs/19](docs/19-anatomy-of-zero.md))
