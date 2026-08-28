@@ -151,4 +151,4 @@ only (no intraday claim), Yahoo data only, and the LLM agent row is not yet meas
 
 ## License
 
-[MIT](LICENSE) © 2026 Ahmad Ferdaws Shafiq. Built with [Claude Code](https://claude.com/claude-code).
+[MIT](LICENSE) © 2026 Ahmad Ferdaws Shafiq.
