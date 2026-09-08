@@ -97,8 +97,12 @@ def _simulate_strategy(
     settings: Settings,
     use_agent: bool,
     regime_lookup: dict,
+    starting_cash: float | None = None,
 ) -> StrategyMetrics:
-    cash = settings.starting_cash
+    # the run's OWN capital base — never the current .env value, which may have
+    # changed since the run was created
+    starting_cash = settings.starting_cash if starting_cash is None else starting_cash
+    cash = starting_cash
     qty = 0.0
     avg_entry = 0.0
     realized = 0.0
@@ -117,7 +121,14 @@ def _simulate_strategy(
         metrics = _snapshot_metrics(snap_row)
         feat = regime_lookup[snap_row.created_at.date()]
         states_seen.add(feat.state)
-        if use_agent:
+        if use_agent and not getattr(settings, "allow_legacy_agent_api", False):
+            # FAIL CLOSED: this replay is reachable from an unauthenticated GET;
+            # a live per-snapshot Anthropic call here has no ceiling and no
+            # cache. Without the explicit opt-in the agent leg holds instead.
+            intent = TradeIntent(action="HOLD", percentage=0.0,
+                                 symbol=snap_row.symbol,
+                                 reasoning="legacy agent API disabled (fail-closed)")
+        elif use_agent:
             decision = agent_service.get_agent_decision_sync(
                 metrics, feat, snap_row.symbol, settings
             )
@@ -161,6 +172,12 @@ def _simulate_strategy(
             closes += 1
             if proceeds > sell_qty * avg_entry:
                 wins += 1
+            # flatten residual dust exactly like ledger.apply_trade does —
+            # without this, "SELL 50%" every bear snapshot decays the position
+            # exponentially forever and win_rate measures float residue
+            if qty <= 1e-12:
+                qty = 0.0
+                avg_entry = 0.0
 
         equity = cash + qty * price
         if prev_equity > 0:
@@ -171,7 +188,7 @@ def _simulate_strategy(
 
     ret_series = pd.Series(returns)
     eq = pd.Series(equities)
-    total_return = (eq.iloc[-1] / settings.starting_cash - 1) if len(eq) else 0.0
+    total_return = (eq.iloc[-1] / starting_cash - 1) if len(eq) else 0.0
     sharpe = (
         float(ret_series.mean() / ret_series.std() * ann_factor)
         if len(ret_series) > 1 and ret_series.std() > 0
@@ -216,8 +233,10 @@ def _snapshot_metrics(snapshot: Snapshot) -> dict:
 
 
 def _trade_snapshots_for_run(run: Run, snapshots: list[Snapshot]) -> list[Snapshot]:
-    matching = [snapshot for snapshot in snapshots if snapshot.symbol == run.trade_symbol]
-    return matching or snapshots
+    """Only snapshots of the run's own trade symbol. The old `or snapshots`
+    fallback silently MIXED every polled symbol into one equity curve when the
+    trade symbol had no snapshots, fabricating +/-95% per-row 'returns'."""
+    return [snapshot for snapshot in snapshots if snapshot.symbol == run.trade_symbol]
 
 
 def run_comparison(db: Session, run_id: int, settings: Settings) -> ComparisonReport:
@@ -238,10 +257,23 @@ def run_comparison(db: Session, run_id: int, settings: Settings) -> ComparisonRe
         )
 
     trade_snapshots = _trade_snapshots_for_run(run, snapshots)
+    if not trade_snapshots:
+        empty = StrategyMetrics("baseline", 0, 0, 0, 0, 0, 0, 0)
+        return ComparisonReport(
+            empty,
+            StrategyMetrics("agent", 0, 0, 0, 0, 0, 0, 0),
+            0.0,
+            0,
+            warnings=[f"No snapshots for trade symbol {run.trade_symbol!r}; "
+                      "refusing to compare across mixed symbols."],
+        )
     history = fetch_daily_history(settings.benchmark_symbol, years=3)
     regime_lookup = _build_regime_lookup(trade_snapshots, history, settings)
-    baseline = _simulate_strategy("baseline", trade_snapshots, settings, False, regime_lookup)
-    agent_m = _simulate_strategy("agent", trade_snapshots, settings, True, regime_lookup)
+    base_cash = getattr(run, "starting_cash", None) or settings.starting_cash
+    baseline = _simulate_strategy("baseline", trade_snapshots, settings, False,
+                                  regime_lookup, starting_cash=base_cash)
+    agent_m = _simulate_strategy("agent", trade_snapshots, settings, True,
+                                 regime_lookup, starting_cash=base_cash)
     periods_per_year, _ = _annualization_factor(settings)
     report = ComparisonReport(
         baseline=baseline,

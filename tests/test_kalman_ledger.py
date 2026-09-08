@@ -169,3 +169,66 @@ def test_variants_share_execution_engine():
         code_lines = [ln for ln in inspect.getsource(mod).splitlines()
                       if not ln.lstrip().startswith(("#", '"', "'"))]
         assert not any(".diff()" in ln and "spread" in ln for ln in code_lines)
+
+
+# review fix K1: the LOG model must use beta's MAGNITUDE, not just its sign
+def test_log_model_sizing_uses_beta_magnitude():
+    from kalman.ledger import LedgerConfig, PriceModel, _target_shares
+    from kalman.strategy import Position
+
+    cfg = LedgerConfig(gross_target=10_000.0, price_model=PriceModel.LOG)
+    s1_a, s2_a = _target_shares(Position.LONG_RESIDUAL, 0.5, 100.0, 50.0, cfg)
+    s1_b, s2_b = _target_shares(Position.LONG_RESIDUAL, 2.0, 100.0, 50.0, cfg)
+    assert (s1_a, s2_a) != (s1_b, s2_b)          # magnitude matters now
+    # elasticity hedge: |notional2| == |beta| * |notional1|, gross preserved
+    for beta, (s1, s2) in ((0.5, (s1_a, s2_a)), (2.0, (s1_b, s2_b))):
+        n1, n2 = abs(s1) * 100.0, abs(s2) * 50.0
+        assert n2 == pytest.approx(beta * n1)
+        assert n1 + n2 == pytest.approx(10_000.0)
+
+
+# review fix K7: a missed rehedge fill must NOT commit the new hedge reference
+def test_missed_rehedge_fill_retries_next_bar():
+    import numpy as np
+    import pandas as pd
+
+    from kalman.ledger import HedgeMode, LedgerConfig, PriceModel, run_ledger
+    from kalman.strategy import Position
+
+    n = 6
+    idx = pd.bdate_range("2020-01-01", periods=n)
+    o1 = np.array([100.0, 100.0, 100.0, np.nan, 100.0, 100.0])  # bar3 fill missed
+    c1 = np.full(n, 100.0)
+    o2 = np.full(n, 50.0); c2 = np.full(n, 50.0)
+    dec = _decisions([Position.LONG_RESIDUAL] * n)
+    betas = np.array([1.0, 1.0, 1.2, 1.2, 1.2, 1.2])   # drift trips rehedge at bar3
+    led = run_ledger(idx, o1, o2, c1, c2, dec, betas,
+                     LedgerConfig(hedge_mode=HedgeMode.REHEDGE,
+                                  rehedge_threshold=0.1,
+                                  price_model=PriceModel.LEVEL))
+    assert led.iloc[3]["turnover"] == 0.0        # missed
+    # the retry must happen at bar 4 (old bug: beta_entry was already
+    # overwritten at bar 3, so the drift measured as zero and no retry came)
+    assert led.iloc[4]["turnover"] > 0.0
+
+
+# review fix K8: a retried ENTRY still counts as one trade
+def test_trade_count_survives_missed_entry_fill():
+    import numpy as np
+    import pandas as pd
+
+    from kalman.ledger import LedgerConfig, run_ledger
+    from kalman.research import perf_metrics
+    from kalman.strategy import Position
+
+    n = 6
+    idx = pd.bdate_range("2020-01-01", periods=n)
+    o1 = np.array([100.0, np.nan, 100.0, 100.0, 100.0, 100.0])  # entry missed at bar1
+    c1 = np.full(n, 100.0); o2 = np.full(n, 50.0); c2 = np.full(n, 50.0)
+    dec = _decisions([Position.LONG_RESIDUAL, Position.LONG_RESIDUAL,
+                      Position.LONG_RESIDUAL, Position.FLAT,
+                      Position.FLAT, Position.FLAT])
+    led = run_ledger(idx, o1, o2, c1, c2, dec, np.ones(n), LedgerConfig())
+    m = perf_metrics(led)
+    assert led.iloc[2]["s1"] != 0.0              # retried fill landed at bar 2
+    assert m["trades"] == 1                      # counted despite 'fill:hold' reason

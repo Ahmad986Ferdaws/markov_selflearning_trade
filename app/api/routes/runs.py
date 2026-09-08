@@ -1,15 +1,14 @@
-from fastapi import APIRouter, BackgroundTasks, Depends
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.config import Settings
-from app.db import init_db
 from app.dependencies import get_db_dep, get_settings_dep
 from app.exceptions import ApiError
 from app.models.entities import Run, Trade
 from app.schemas.runs import CreateRunRequest, RunStatusResponse, TradeRecordResponse
 from app.services.comparison import format_report, run_comparison
 from app.services.ledger import mark_to_market
-from app.services.runner import request_stop, run_loop
+from app.services.runner import request_stop, start_run_task
 
 router = APIRouter(prefix="/runs", tags=["runs"])
 
@@ -17,13 +16,27 @@ router = APIRouter(prefix="/runs", tags=["runs"])
 @router.post("", response_model=RunStatusResponse)
 async def create_run(
     body: CreateRunRequest,
-    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db_dep),
     settings: Settings = Depends(get_settings_dep),
 ) -> RunStatusResponse:
     if body.ingestion_provider == "dexscreener":
         raise ApiError("dexscreener provider deferred until after Phase 1 gate", 400)
+    if body.strategy == "agent" and not settings.allow_legacy_agent_api:
+        raise ApiError(
+            "The LLM agent is CLI-only and cannot be triggered through the web "
+            "API (it would spend the server's API key with no budget ceiling). "
+            "Run it via evaluate-cli, or deliberately set "
+            "ALLOW_LEGACY_AGENT_API=true for local experimentation.",
+            400,
+        )
     trade_symbol = body.trade_symbol or (body.watchlist[0] if body.watchlist else settings.benchmark_symbol)
+    if body.trade_symbol and body.watchlist and body.trade_symbol not in body.watchlist:
+        raise ApiError(
+            f"trade_symbol {body.trade_symbol!r} is not in the watchlist — the run "
+            "would trade a symbol it never polls (and previously fell back to "
+            "MIXING symbols into one equity curve).",
+            422,
+        )
     run = Run(
         strategy=body.strategy,
         ingestion_provider=body.ingestion_provider,
@@ -31,11 +44,16 @@ async def create_run(
         watchlist=",".join(body.watchlist),
         trade_symbol=trade_symbol,
         cash=settings.starting_cash,
+        starting_cash=settings.starting_cash,
     )
     db.add(run)
     db.commit()
     db.refresh(run)
-    background_tasks.add_task(run_loop, run.id, settings)
+    # start_run_task (not BackgroundTasks): registers the asyncio task so
+    # request_stop's cancel works, resets any sticky stop flag from a previous
+    # run with the same id, and frees this request instead of pinning it on an
+    # infinite loop (review findings 5+6).
+    start_run_task(run.id, settings)
     return _run_to_response(run, 0.0, settings)
 
 
@@ -129,7 +147,6 @@ def _last_price(db: Session, run: Run) -> float:
 
 
 def _run_to_response(run: Run, unrealized: float, settings: Settings) -> RunStatusResponse:
-    last_price = run.avg_entry_price or 0.0
     return RunStatusResponse(
         id=run.id,
         strategy=run.strategy,

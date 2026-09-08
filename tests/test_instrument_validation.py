@@ -126,3 +126,17 @@ def test_gate7_fires_on_real_market_data():
     assert rep.accuracy.switch_attempts == 0         # never once predicted a change
     assert rep.accuracy.switch_recall == 0.0
     assert any("never predicted a regime change" in w for w in rep.warnings)
+
+
+def test_uniform_fallback_never_fired_on_published_runs():
+    """Regression lock for the uniform-row fallback (review finding): if a
+    state's first-ever appearance landed on a scored day, argmax would
+    tie-break to 'bull' from zero evidence. The logic-depth receipt proves the
+    causal row used at EVERY published decision had self-prob >= 0.6 — a
+    uniform row (1/3) would have shown up here. Keep the receipt pinned."""
+    import json
+
+    agg = json.loads(open("results/logic_depth/summary.json").read())["aggregate"]
+    assert agg["pooled_predictions"] == 16773
+    assert agg["global_min_prefix_self_prob"] > 0.5
+    assert agg["runs_prefix_dominant_throughout"] == 28

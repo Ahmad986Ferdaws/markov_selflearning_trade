@@ -454,7 +454,9 @@ def evaluate(
         symbol=symbol,
         chosen_window=w,
         chosen_k=k,
-        train_size=split - min_train,  # train predictions actually walked
+        train_size=split - min_train,  # size of the walked train REGION [min_train, split)
+                                       # (the selection walk makes one fewer prediction:
+                                       # its last target must stay inside the region)
         test_size=accuracy.n,          # test predictions actually evaluated
         regime_mix=mix,
         accuracy=accuracy,

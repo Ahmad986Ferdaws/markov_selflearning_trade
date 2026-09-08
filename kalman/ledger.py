@@ -12,7 +12,8 @@ so bar-t information can never touch bar-t P&L. (Tested, not just asserted.)
 
 Costs — charged on actually TRADED notional per leg, never on signal flips:
     commission_bps + half_spread_bps + slippage_bps  per side,
-    borrow_bps_pa on short-leg notional per bar (calendar-aware daily),
+    borrow_bps_pa on short-leg notional per bar (annual rate / bars_per_year —
+    exact for daily bars; set bars_per_year for other frequencies),
     financing on negative cash (rate_bps_pa) per bar.
 
 Sizing (log-price model default): the signal implies dollar exposures
@@ -99,9 +100,14 @@ def _target_shares(pos: Position, beta: float, o1: float, o2: float,
     sign = 1.0 if pos is Position.LONG_RESIDUAL else -1.0
     gross = min(cfg.gross_target, cfg.max_gross)
     if cfg.price_model is PriceModel.LOG:
-        # elasticity: dollar-split half/half, hedge leg direction from beta sign
-        l1 = sign * gross / 2.0
-        l2 = -sign * np.sign(beta if beta != 0 else 1.0) * gross / 2.0
+        # elasticity hedge: dlogP1 = beta * dlogP2, so dollar P&L offsets when
+        # notional2 = |beta| * notional1. Normalized to |L1| + |L2| = gross.
+        # (Review found the old 50/50 split used only sign(beta) — a
+        # dollar-neutral hedge that made the tracked beta MAGNITUDE irrelevant,
+        # so dynamic-vs-static hedge ratios were never actually compared.)
+        b = abs(beta) if beta != 0 else 1.0
+        l1 = sign * gross / (1.0 + b)
+        l2 = -sign * np.sign(beta if beta != 0 else 1.0) * gross * b / (1.0 + b)
         return l1 / o1, l2 / o2
     # LEVEL: beta is a share ratio; scale so gross notional == gross target
     s1_unit, s2_unit = 1.0, -beta
@@ -122,7 +128,9 @@ def run_ledger(index: pd.DatetimeIndex,
     they are consumed at bar t+1's open — never earlier.
     """
     n = len(index)
-    assert len(open1) == len(open2) == len(close1) == len(close2) == len(decisions) == len(betas) == n
+    if not (len(open1) == len(open2) == len(close1) == len(close2)
+            == len(decisions) == len(betas) == n):
+        raise ValueError("run_ledger: input lengths misaligned")  # survives -O
 
     c = cfg.costs
     per_side = c.per_side_bps / 1e4
@@ -148,15 +156,13 @@ def run_ledger(index: pd.DatetimeIndex,
             retarget = False
             if want is not cur_pos:
                 retarget = True
-                beta_entry = b_signal
             elif want is not Position.FLAT and cfg.hedge_mode is HedgeMode.REHEDGE \
                     and abs(b_signal - beta_entry) > cfg.rehedge_threshold:
                 retarget = True
-                beta_entry = b_signal
             if retarget:
                 o1, o2 = float(open1[t]), float(open2[t])
                 if np.isfinite(o1) and np.isfinite(o2) and o1 > 0 and o2 > 0:
-                    beta_use = beta_entry if cfg.hedge_mode is HedgeMode.FREEZE else b_signal
+                    beta_use = b_signal
                     t1, t2 = _target_shares(want, beta_use, o1, o2, cfg)
                     dn1, dn2 = (t1 - s1) * o1, (t2 - s2) * o2
                     turnover = abs(dn1) + abs(dn2)
@@ -164,10 +170,14 @@ def run_ledger(index: pd.DatetimeIndex,
                     cash -= dn1 + dn2 + turnover * per_side
                     s1, s2 = t1, t2
                     cur_pos = want
+                    # commit the hedge reference ONLY on a successful fill —
+                    # committing it in the decision block desynced REHEDGE
+                    # bookkeeping whenever a fill was missed (review finding 7)
+                    beta_entry = b_signal
                     exec_ts = index[t]
                     reason = f"fill:{d.reason}"
-                # else: missed fill — position unchanged, retry logic is the
-                # next bar's decision; no phantom execution at a bad price.
+                # else: missed fill — position AND beta_entry unchanged; the
+                # want != cur_pos path retries at the next bar's open.
 
         # ---- per-bar carrying costs (charged on today's close marks) -------
         c1, c2 = float(close1[t]), float(close2[t])

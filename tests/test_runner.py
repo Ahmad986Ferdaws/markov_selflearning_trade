@@ -22,11 +22,13 @@ def test_select_trade_snapshot_prefers_trade_symbol():
     assert price == 100.0
 
 
-def test_select_trade_snapshot_falls_back_to_first_snapshot():
+def test_select_trade_snapshot_never_substitutes_another_symbol():
+    """Review fix: the old fallback traded whatever symbol was polled first,
+    silently mixing instruments into one position. Now: no match -> no trade."""
     snapshots = [_snapshot("ETH-USD", 2000.0)]
 
     selected, symbol, price = _select_trade_snapshot(snapshots, "BTC-USD")
 
-    assert selected is snapshots[0]
-    assert symbol == "ETH-USD"
-    assert price == 2000.0
+    assert selected is None
+    assert symbol == "BTC-USD"
+    assert price is None

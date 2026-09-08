@@ -25,7 +25,9 @@ class YFinanceProvider(IngestionProvider):
         for symbol in watchlist:
             ticker = yf.Ticker(symbol)
             info = ticker.fast_info
-            price = getattr(info, "last_price", None) or getattr(info, "lastPrice", None)
+            price = getattr(info, "last_price", None)
+            if price is None:                       # `or` would eat a real 0.0
+                price = getattr(info, "lastPrice", None)
             if price is None:
                 hist = ticker.history(period="1d", interval="1m")
                 if hist.empty:

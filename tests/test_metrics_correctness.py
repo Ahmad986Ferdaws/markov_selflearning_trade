@@ -39,12 +39,25 @@ def _trend_history() -> pd.DataFrame:
 
 def test_regime_as_of_only_uses_past():
     hist = _trend_history()
-    # as_of inside the up-leg should match computing on the truncated history.
+    # as_of must equal computing on history STRICTLY BEFORE that date — the
+    # as_of day's own close is not knowable intraday (review fix: the old
+    # inclusive slice handed replays their own day's settled close).
     as_of = pd.Timestamp("2020-02-20")  # ~day 50, mid up-trend
     full_pit = regime_feature(hist, window=10, as_of=as_of)
-    truncated = hist[hist.index <= as_of]
+    truncated = hist[hist.index < as_of]
     manual = regime_feature(truncated, window=10)
-    assert full_pit.state == manual.state  # point-in-time == sliced history
+    assert full_pit.state == manual.state  # point-in-time == strictly-past slice
+
+
+def test_regime_as_of_excludes_same_day_close():
+    """An extreme move ON the as_of day must not leak into that day's feature."""
+    hist = _trend_history()
+    as_of = pd.Timestamp("2020-02-20")
+    spiked = hist.copy()
+    spiked.loc[as_of, "Close"] = float(hist["Close"].max()) * 10  # absurd same-day close
+    a = regime_feature(hist, window=10, as_of=as_of)
+    b = regime_feature(spiked, window=10, as_of=as_of)
+    assert a.state == b.state and a.p_next == b.p_next
 
 
 def test_regime_changes_across_time():

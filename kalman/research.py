@@ -49,9 +49,11 @@ def _causal_z(resid: np.ndarray, window: int = 60) -> np.ndarray:
 
 
 def signals_static_ols(y: np.ndarray, x: np.ndarray, train_end: int,
-                       z_window: int = 60) -> tuple[np.ndarray, np.ndarray]:
-    A = np.column_stack([x[:train_end], np.ones(train_end)])
-    coef, *_ = np.linalg.lstsq(A, y[:train_end], rcond=None)
+                       z_window: int = 60, train_start: int = 0,
+                       ) -> tuple[np.ndarray, np.ndarray]:
+    ys, xs = y[train_start:train_end], x[train_start:train_end]
+    A = np.column_stack([xs, np.ones(len(xs))])
+    coef, *_ = np.linalg.lstsq(A, ys, rcond=None)
     resid = y - (coef[0] * x + coef[1])
     return _causal_z(resid, z_window), np.full(len(y), float(coef[0]))
 
@@ -92,9 +94,10 @@ def signals_ew_ols(y: np.ndarray, x: np.ndarray, lam: float = 0.99,
 
 def signals_kalman(y: np.ndarray, x: np.ndarray, q_beta: float, q_alpha: float,
                    r: float, train_end: int, adaptive: AdaptiveQ | None = None,
+                   train_start: int = 0,
                    ) -> tuple[np.ndarray, np.ndarray, list[StepRecord]]:
-    f = PairFilter.from_ols(y[:train_end], x[:train_end], q_beta, q_alpha, r,
-                            adaptive=adaptive)
+    f = PairFilter.from_ols(y[train_start:train_end], x[train_start:train_end],
+                            q_beta, q_alpha, r, adaptive=adaptive)
     recs = run_pair_filter(y, x, f)
     z = np.array([r_.z if r_.z is not None else np.nan for r_ in recs])
     beta = np.array([float(r_.x_post[0]) for r_ in recs])
@@ -105,10 +108,19 @@ def signals_kalman(y: np.ndarray, x: np.ndarray, q_beta: float, q_alpha: float,
 # Calibration — training-only predictive likelihood
 # --------------------------------------------------------------------------- #
 def train_loglik(y: np.ndarray, x: np.ndarray, q_beta: float, q_alpha: float,
-                 r: float, burn: int = 20) -> float:
-    f = PairFilter.from_ols(y, x, q_beta, q_alpha, r)
+                 r: float, init: int | None = None) -> float:
+    """PREDICTIVE likelihood: the OLS prior is fitted on the first `init` bars
+    only, and only likelihoods from `init` onward are scored — so the prior has
+    never seen any bar it is scored on. (Review found the old version fitted
+    x0/P0 on the whole window and then scored that same window, biasing the
+    grid toward stiff small-q filters.)"""
+    n = len(y)
+    i0 = init if init is not None else max(60, n // 5)
+    if i0 >= n - 10:
+        return -np.inf
+    f = PairFilter.from_ols(y[:i0], x[:i0], q_beta, q_alpha, r)
     recs = run_pair_filter(y, x, f)
-    lls = [rec.loglik for rec in recs[burn:] if rec.loglik is not None]
+    lls = [rec.loglik for rec in recs[i0:] if rec.loglik is not None]
     return float(np.sum(lls)) if lls else -np.inf
 
 
@@ -157,9 +169,35 @@ def health_series(recs: list[StepRecord], nis_window: int = 40,
             cus = max(0.0, cus + abs(z[t - 1]) - 1.0 - cusum_k)
             if cus > cusum_h:
                 healthy[t] = False
+                cus = 0.0        # reset on alarm: gate for THIS bar, then re-arm
+                                 # (no reset made gate duration scale with overshoot)
         if t > 0 and abs(beta[t - 1]) > 1e-9 and \
                 beta_sd[t - 1] / abs(beta[t - 1]) > beta_unc_limit:
             healthy[t] = False
+    return healthy
+
+
+def health_from_signal(z: np.ndarray, window: int = 40, z2_limit: float = 2.5,
+                       cusum_k: float = 0.5, cusum_h: float = 15.0) -> np.ndarray:
+    """Variant-agnostic relationship-health gate built ONLY from the signal
+    stream, so EVERY variant in the walk-forward faces the identical gate.
+    (Review found the old comparison gated only the Kalman variants — the
+    baselines faced four gates, Kalman five, violating the identical-
+    assumptions contract.) Causal: healthy[t] uses z through t-1 only."""
+    n = len(z)
+    z2 = np.square(z)
+    healthy = np.ones(n, dtype=bool)
+    cus = 0.0
+    for t in range(n):
+        past = z2[max(0, t - window):t]
+        past = past[np.isfinite(past)]
+        if len(past) >= window // 2 and float(np.mean(past)) > z2_limit:
+            healthy[t] = False
+        if t > 0 and np.isfinite(z[t - 1]):
+            cus = max(0.0, cus + abs(z[t - 1]) - 1.0 - cusum_k)
+            if cus > cusum_h:
+                healthy[t] = False
+                cus = 0.0
     return healthy
 
 
@@ -185,7 +223,11 @@ def innovation_diagnostics(recs: list[StepRecord], start: int = 0) -> dict:
 def backtest(pair: PairData, z: np.ndarray, beta: np.ndarray,
              scfg: StrategyConfig, lcfg: LedgerConfig,
              healthy: np.ndarray | None = None,
-             start: int = 0, end: int | None = None) -> pd.DataFrame:
+             start: int = 0, end: int | None = None,
+             with_decisions: bool = False):
+    """Run one signal stream through the shared state machine + ledger.
+    Returns the ledger DataFrame; with `with_decisions=True` returns
+    (ledger, decisions) so `audit_table` can be built correctly."""
     end = len(pair) if end is None else end
     sl = slice(start, end)
     idx = pair.index[sl]
@@ -196,13 +238,17 @@ def backtest(pair: PairData, z: np.ndarray, beta: np.ndarray,
     zz, bb = z[sl], beta[sl]
     hh = (np.ones(len(zz), bool) if healthy is None else healthy[sl])
 
-    sm = StateMachine(scfg)
+    # _seen=start: the warm-up counts CAUSAL HISTORY, which exists before this
+    # slice. (Review: a fresh count per fold re-blanked the first 60 bars of
+    # every validation/test window — 24% of each fold structurally dead.)
+    sm = StateMachine(scfg, _seen=start)
     decisions: list[Decision] = []
     for t in range(len(zz)):
         zt = None if not np.isfinite(zz[t]) else float(zz[t])
         bt = float(bb[t]) if np.isfinite(bb[t]) else 0.0
         decisions.append(sm.decide(t, zt, bt, healthy=bool(hh[t])))
-    return run_ledger(idx, o1, o2, c1, c2, decisions, np.nan_to_num(bb), lcfg)
+    led = run_ledger(idx, o1, o2, c1, c2, decisions, np.nan_to_num(bb), lcfg)
+    return (led, decisions) if with_decisions else led
 
 
 # --------------------------------------------------------------------------- #
@@ -210,9 +256,9 @@ def backtest(pair: PairData, z: np.ndarray, beta: np.ndarray,
 # --------------------------------------------------------------------------- #
 def perf_metrics(led: pd.DataFrame, bars_per_year: int = BARS_PER_YEAR) -> dict:
     eq = led["equity"].to_numpy(float)
-    rets = led["ret"].to_numpy(float)
+    rets = led["ret"].to_numpy(float)[1:]   # drop the forced 0.0 at bar 0
     n = len(eq)
-    if n < 2 or eq[0] <= 0:
+    if n < 3 or eq[0] <= 0:
         return {"n": n}
     years = n / bars_per_year
     cagr = (eq[-1] / eq[0]) ** (1 / years) - 1 if years > 0 and eq[-1] > 0 else np.nan
@@ -225,13 +271,16 @@ def perf_metrics(led: pd.DataFrame, bars_per_year: int = BARS_PER_YEAR) -> dict:
     peak = np.maximum.accumulate(eq)
     mdd = float(np.min(eq / peak - 1.0))
     calmar = float(cagr / abs(mdd)) if mdd < 0 and np.isfinite(cagr) else np.nan
-    fills = led[led["fill_reason"].str.startswith("fill:", na=False)]
-    entries = fills[fills["fill_reason"].str.contains("enter")]
+    # entries = flat -> invested transitions in the EXECUTED holdings; robust
+    # to retried fills, whose reason string is 'fill:hold' (review finding)
+    gross_arr = led["gross"].to_numpy(float)
+    prev_gross = np.concatenate([[0.0], gross_arr[:-1]])
+    entries = int(np.sum((prev_gross == 0.0) & (gross_arr > 0.0)))
     return {
         "n": n, "total_return": float(eq[-1] / eq[0] - 1.0), "cagr": float(cagr),
         "vol": vol, "sharpe": sharpe, "sortino": sortino, "calmar": calmar,
         "max_drawdown": mdd, "turnover": float(led["turnover"].sum()),
-        "total_costs": float(led["costs"].sum()), "trades": int(len(entries)),
+        "total_costs": float(led["costs"].sum()), "trades": entries,
         "avg_gross": float(led["gross"].mean()),
     }
 
@@ -247,7 +296,7 @@ def sharpe_ci_block_bootstrap(rets: np.ndarray, n_boot: int = 500,
     sharpes = []
     for _ in range(n_boot):
         k = int(np.ceil(n / block))
-        starts = rng.integers(0, n - block, size=k)
+        starts = rng.integers(0, n - block + 1, size=k)   # final block included
         sample = np.concatenate([rets[s:s + block] for s in starts])[:n]
         sd = np.std(sample, ddof=1)
         sharpes.append(np.mean(sample) / sd * math.sqrt(bars_per_year) if sd > 0 else 0.0)
@@ -271,19 +320,22 @@ class WalkForwardConfig:
 VARIANTS = ("static_ols", "rolling_ols", "ew_ols", "kalman_fixed", "kalman_adaptive", "cash")
 
 
-def _variant_signals(name: str, y, x, train_end, qb, qa, r, sigma_ref):
+def _variant_signals(name: str, y, x, train_end, qb, qa, r, sigma_ref,
+                     train_start: int = 0):
     if name == "static_ols":
-        return signals_static_ols(y, x, train_end) + (None,)
+        return signals_static_ols(y, x, train_end, train_start=train_start) + (None,)
     if name == "rolling_ols":
         return signals_rolling_ols(y, x) + (None,)
     if name == "ew_ols":
         return signals_ew_ols(y, x) + (None,)
     if name == "kalman_fixed":
-        z, b, recs = signals_kalman(y, x, qb, qa, r, train_end)
+        z, b, recs = signals_kalman(y, x, qb, qa, r, train_end,
+                                    train_start=train_start)
         return z, b, recs
     if name == "kalman_adaptive":
         ad = AdaptiveQ(sigma_ref=sigma_ref)
-        z, b, recs = signals_kalman(y, x, qb, qa, r, train_end, adaptive=ad)
+        z, b, recs = signals_kalman(y, x, qb, qa, r, train_end, adaptive=ad,
+                                    train_start=train_start)
         return z, b, recs
     if name == "cash":
         n = len(y)
@@ -292,8 +344,7 @@ def _variant_signals(name: str, y, x, train_end, qb, qa, r, sigma_ref):
 
 
 def walk_forward(pair: PairData, wf: WalkForwardConfig,
-                 lcfg: LedgerConfig, use_log: bool = True,
-                 seed: int = 0) -> dict:
+                 lcfg: LedgerConfig, use_log: bool = True) -> dict:
     """Chronological folds: train (qualify + calibrate) -> validation (pick
     entry/exit from the predeclared grid by net Sharpe) -> test (once)."""
     c1 = pair.p1["Close"].to_numpy(float)
@@ -312,9 +363,10 @@ def walk_forward(pair: PairData, wf: WalkForwardConfig,
         folds.append((tr0, tr1, va1, te1))
         fold_start += wf.test
 
-    results: dict = {"folds": [], "by_variant": {v: [] for v in VARIANTS}}
+    results: dict = {"folds": [], "by_variant": {v: [] for v in VARIANTS},
+                     "test_returns": {v: [] for v in VARIANTS}}
     for fi, (tr0, tr1, va1, te1) in enumerate(folds):
-        diag = qualify_pair(pair, tr1, use_log=use_log)
+        diag = qualify_pair(pair, tr1, use_log=use_log, train_start=tr0)
         qb, qa, r, _surface = calibrate(y[tr0:tr1], x[tr0:tr1])
         sigma_ref = float(np.std(np.diff(y[tr0:tr1]), ddof=1))
 
@@ -323,8 +375,11 @@ def walk_forward(pair: PairData, wf: WalkForwardConfig,
                     "calibrated": {"q_beta": qb, "q_alpha": qa, "r": r}}
 
         for v in VARIANTS:
-            z, beta, recs = _variant_signals(v, y, x, tr1, qb, qa, r, sigma_ref)
-            healthy = health_series(recs) if recs is not None else None
+            z, beta, recs = _variant_signals(v, y, x, tr1, qb, qa, r, sigma_ref,
+                                             train_start=tr0)
+            # IDENTICAL gate for every variant, built from its own signal
+            # stream — never a Kalman-only extra hurdle
+            healthy = None if v == "cash" else health_from_signal(z)
 
             # --- validation: pick (entry, exit) from the predeclared grid ---
             best = (-np.inf, wf.entry_exit_grid[0])
@@ -342,9 +397,14 @@ def walk_forward(pair: PairData, wf: WalkForwardConfig,
             led = backtest(pair, z, beta, scfg, lcfg, healthy, va1, te1)
             m = perf_metrics(led)
             m["chosen_entry_z"], m["chosen_exit_z"] = ez, xz
+            m["gated_bars"] = int(0 if healthy is None else (~healthy[va1:te1]).sum())
+            ztest = z[va1:te1]
+            zt = ztest[np.isfinite(ztest)]
+            m["z_std_test"] = float(np.std(zt, ddof=1)) if len(zt) > 2 else None
             if recs is not None:
                 m["innovations"] = innovation_diagnostics(recs[va1:te1])
             results["by_variant"][v].append(m)
+            results["test_returns"][v].append(led["ret"].to_numpy(float)[1:])
         results["folds"].append(fold_rec)
 
     # aggregate per variant across test folds
@@ -352,15 +412,24 @@ def walk_forward(pair: PairData, wf: WalkForwardConfig,
     for v in VARIANTS:
         ms = results["by_variant"][v]
         if ms:
+            pooled = (np.concatenate(results["test_returns"][v])
+                      if results["test_returns"][v] else np.array([]))
+            lo, hi = sharpe_ci_block_bootstrap(pooled)
+            zs = [m["z_std_test"] for m in ms if m.get("z_std_test")]
             agg[v] = {
                 "folds": len(ms),
                 "mean_test_sharpe": float(np.mean([m.get("sharpe", 0.0) for m in ms])),
+                "sharpe_ci90": (round(lo, 2) if np.isfinite(lo) else None,
+                                round(hi, 2) if np.isfinite(hi) else None),
                 "total_test_return": float(np.prod(
                     [1 + m.get("total_return", 0.0) for m in ms]) - 1),
                 "total_costs": float(np.sum([m.get("total_costs", 0.0) for m in ms])),
                 "trades": int(np.sum([m.get("trades", 0) for m in ms])),
+                "gated_bars": int(np.sum([m.get("gated_bars", 0) for m in ms])),
+                "mean_z_std": float(np.mean(zs)) if zs else None,
             }
     results["aggregate"] = agg
+    results.pop("test_returns")     # arrays served their purpose; keep result JSON-able
     return results
 
 
@@ -372,12 +441,22 @@ def format_report(res: dict, pair_name: str) -> str:
         lines.append(f"fold 0 diagnostics (train only): {fr['diagnostics']}")
         lines.append(f"fold 0 calibration: {fr['calibrated']}")
         lines.append("")
-    lines.append(f"{'variant':<16} {'folds':>5} {'mean test Sharpe':>17} "
-                 f"{'total test ret':>15} {'trades':>7} {'costs':>10}")
+    lines.append(f"{'variant':<16} {'folds':>5} {'test Sharpe':>12} {'CI90':>14} "
+                 f"{'total ret':>10} {'trades':>7} {'gated':>6} {'z-std':>6} {'costs':>9}")
     for v, a in res["aggregate"].items():
-        lines.append(f"{v:<16} {a['folds']:>5} {a['mean_test_sharpe']:>17.2f} "
-                     f"{a['total_test_return']:>14.1%} {a['trades']:>7} "
-                     f"{a['total_costs']:>10.0f}")
+        ci = a.get("sharpe_ci90", (None, None))
+        ci_s = f"[{ci[0]},{ci[1]}]" if ci[0] is not None else "n/a"
+        zs = a.get("mean_z_std")
+        lines.append(f"{v:<16} {a['folds']:>5} {a['mean_test_sharpe']:>12.2f} {ci_s:>14} "
+                     f"{a['total_test_return']:>9.1%} {a['trades']:>7} "
+                     f"{a['gated_bars']:>6} {(f'{zs:.2f}' if zs else 'n/a'):>6} "
+                     f"{a['total_costs']:>9.0f}")
+    for v in ("kalman_fixed", "kalman_adaptive"):
+        zs = res["aggregate"].get(v, {}).get("mean_z_std")
+        if zs is not None and not (0.5 <= zs <= 2.0):
+            lines.append(f"WARNING: {v} innovation z-std is {zs:.2f} (far from 1) — its "
+                         "entry thresholds are not on the same scale as the baselines; "
+                         "treat cross-variant comparison with suspicion.")
     ks = res["aggregate"].get("kalman_fixed", {})
     cash = res["aggregate"].get("cash", {})
     lines.append("")
@@ -394,14 +473,22 @@ def format_report(res: dict, pair_name: str) -> str:
 
 
 def audit_table(recs: list[StepRecord], decisions: list[Decision],
-                led: pd.DataFrame) -> pd.DataFrame:
+                led: pd.DataFrame, start: int = 0) -> pd.DataFrame:
     """Trade-level audit: prior state, innovation, signal, posterior, targets,
-    fills, turnover, costs, realized P&L — one row per bar, join-safe."""
+    fills, turnover, costs, realized P&L — one row per bar.
+
+    `start` is the absolute bar index where the ledger's slice begins (the
+    same `start` given to `backtest`). Filter records are absolute-indexed
+    while ledger rows and decisions are slice-local; without the offset the
+    merge silently produced rows whose filter columns came from the wrong
+    bars and whose ledger columns were all NaN (review finding 6)."""
+    recs = recs[start:start + len(led)]
     rows = []
-    for i, rec in enumerate(recs[:len(led)]):
+    for i, rec in enumerate(recs):
         d = decisions[i] if i < len(decisions) else None
         rows.append({
-            "t": rec.t,
+            "t": i,                    # slice-local: the ledger/decision index
+            "t_abs": rec.t,            # absolute filter step, for cross-reference
             "beta_prior": float(rec.x_prior[0]), "alpha_prior": float(rec.x_prior[1]),
             "innovation": rec.innovation, "S": rec.innovation_var, "z": rec.z,
             "nis": rec.nis, "loglik": rec.loglik,

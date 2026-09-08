@@ -31,6 +31,10 @@ def enforce_decision(
     if action == "HOLD" or pct <= 0:
         return EnforcedDecision(action="HOLD", percentage=0.0, guard_note=None)
 
+    # HONESTY NOTE: this floor fires only when the caller supplies a liquidity
+    # figure. The yfinance provider produces none, so in the shipped pipeline
+    # liquidity_usd is always None and this guard has never fired — it is a
+    # hook for providers that report liquidity, not an active protection.
     if liquidity_usd is not None and liquidity_usd < settings.liquidity_floor_usd:
         return EnforcedDecision(
             action="HOLD",
@@ -42,6 +46,10 @@ def enforce_decision(
         # Allocation cap applies to BUY only: it limits cash committed per order.
         # SELL percentage is "% of existing position to exit" and must be able to
         # reach 100% so positions can fully close.
+        # SCOPE NOTE: this bounds a SINGLE order against *current cash*, not
+        # total exposure — repeated capped buys still converge to fully
+        # invested (0.85^n cash after n polls at 15%). It is a per-order
+        # throttle, exactly as docs/03 defines it, not a portfolio cap.
         max_pct = settings.max_allocation_pct
         if pct > max_pct:
             notes.append(f"allocation clamped {pct:.1f}% -> {max_pct:.1f}%")
@@ -69,7 +77,7 @@ def enforce_decision(
     return EnforcedDecision(action=action, percentage=pct, guard_note=note)
 
 
-def effective_price(price: float, side: str, settings: Settings, liquidity_usd: float | None = None) -> tuple[float, float]:
+def effective_price(price: float, side: str, settings: Settings) -> tuple[float, float]:
     """Return (execution_price, fees_paid_per_unit_basis) with fee + slippage."""
     fee_rate = settings.fee_pct / 100.0
     slip_rate = settings.slippage_pct / 100.0

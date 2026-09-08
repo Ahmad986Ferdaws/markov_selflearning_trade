@@ -4,6 +4,42 @@ All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/); the project is a portfolio /
 research artifact rather than a released package, so versions are snapshots.
 
+## [0.4.1] — 2026-09-08 — deep review: 24 verified findings fixed
+
+### Security (fail-closed)
+- **The LLM agent is no longer publicly triggerable.** Review found the legacy web surface
+  (`POST /runs {"strategy":"agent"}`, `GET /runs/{id}/comparison`) reached the live
+  Anthropic client with no budget ceiling and no cache, while the old tripwire test
+  grepped the wrong module. Now guarded at the route, the runner loop, and the comparison
+  replay by `ALLOW_LEGACY_AGENT_API` (default **off**), with runtime TestClient
+  enforcement tests.
+
+### Kalman framework (methodology corrections — verdict re-earned)
+- LOG-model sizing now uses β's **magnitude** (true elasticity hedge; the old 50/50 split
+  used only its sign, so dynamic-vs-static hedging was never actually compared).
+- Health gating made variant-agnostic (identical z-based causal gate for every variant);
+  per-fold warm-up re-blanking removed; calibration likelihood made truly predictive;
+  proper Engle–Granger p-values via `coint` (SPY/QQQ: p≈0.43–0.83, weaker than the
+  mislabeled 0.21–0.63); REHEDGE missed-fill desync, cooldown ticking, trade counting,
+  audit-table alignment, bootstrap final block, `tr0` threading all fixed.
+- Corrected 15-fold/20y walk-forward: **no robust edge after costs** — every variant's
+  90% bootstrap CI (now printed in the report, with per-variant z-std and gated-bar
+  columns) straddles or sits below zero.
+
+### Legacy path correctness
+- `as_of` regime replays no longer see their own day's settled close (strict `<`).
+- Cross-symbol snapshot mixing refused (replay, runner, and a 422 at run creation).
+- `start_run_task` wired into the route: stop/cancel is real, stop flags reset per run,
+  requests no longer pin on the infinite loop; dust trades flattened like the ledger;
+  replays use the run's own stored `starting_cash`; inert zscore thresholds warn loudly;
+  `REGIME_K` reachable end-to-end; `regime-cli` pinned to snapshots; liquidity-floor and
+  allocation-cap semantics documented honestly; falsy-zero ingestion checks fixed.
+
+### Canonical path
+- Uniform-row fallback in `estimate_transition_matrix` documented, and its never-fired
+  receipt (per-step self-prob ≥ 0.600 on all 16,773 published decisions) pinned as a
+  regression test. Headline numbers untouched. Tests: **105 passing**.
+
 ## [0.4.0] — 2026-07-28 — Kalman pairs research framework
 
 ### Added ([docs/20](docs/20-kalman-pairs.md))

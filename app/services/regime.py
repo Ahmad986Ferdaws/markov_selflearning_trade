@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import Literal
 
 import numpy as np
 import pandas as pd
 import yfinance as yf
+
+logger = logging.getLogger(__name__)
 
 StateLabel = Literal["bull", "bear", "sideways"]
 STATE_ORDER: tuple[StateLabel, ...] = ("bull", "bear", "sideways")
@@ -64,7 +67,19 @@ def define_states(
     asset's own volatility so the model actually changes state (fixed +/-2%/day
     thresholds left BTC in 'sideways' ~99% of the time). mode="absolute" keeps
     the old fixed-threshold behavior for backward compatibility.
+
+    HONESTY NOTE: in zscore mode, ``bull_thresh``/``bear_thresh`` are INERT —
+    only ``k`` matters. Passing custom thresholds without mode="absolute" is
+    almost certainly a mistake, so it is warned about loudly rather than
+    silently ignored (verified: absurd thresholds used to produce byte-identical
+    output with no hint).
     """
+    if mode == "zscore" and (bull_thresh, bear_thresh) != (0.02, -0.02):
+        logger.warning(
+            "define_states: bull_thresh/bear_thresh (%s/%s) are IGNORED in "
+            "zscore mode — pass mode='absolute' to use fixed thresholds, or "
+            "tune `k` instead.", bull_thresh, bear_thresh,
+        )
     rolling = returns.rolling(window=window, min_periods=window).mean()
     if mode == "zscore":
         roll_std = returns.rolling(window=window, min_periods=window).std()
@@ -79,7 +94,16 @@ def define_states(
 
 
 def estimate_transition_matrix(states: pd.Series) -> np.ndarray:
-    """MLE transition counts; rows sum to 1."""
+    """MLE transition counts; rows sum to 1.
+
+    DISCLOSED FALLBACK: a state with zero observed OUTGOING transitions gets a
+    uniform 1/3 row. Downstream argmax then tie-breaks to index 0 ("bull") —
+    i.e. on the first-ever appearance of a regime the model "predicts" bull
+    from zero evidence. On every scored day of the published studies this
+    branch never fired (per-step self-probability >= 0.600 across all 16,773
+    held-out decisions — results/logic_depth); docs/16's early-BTC -0.167 is
+    the one recorded firing, on a 2-day class in a sub-period run.
+    """
     n = len(STATE_ORDER)
     counts = np.zeros((n, n))
     labels = states.astype(str).tolist()
@@ -135,22 +159,26 @@ def sparse_cell_warnings(states: pd.Series, min_count: int = 20) -> list[str]:
 def regime_feature(
     history: pd.DataFrame,
     window: int = 20,
+    k: float = 0.5,
     bull_thresh: float = 0.02,
     bear_thresh: float = -0.02,
     as_of=None,
 ) -> RegimeFeature:
     """Latest state + one-step forecast from daily close history.
 
-    Point-in-time: when ``as_of`` is given, only history up to and including
-    that date is used, so the feature is what would have been known at ``as_of``
-    (no lookahead). Without it, the latest available state is returned.
+    Point-in-time: when ``as_of`` is given, only daily bars STRICTLY BEFORE the
+    as_of date are used. The as_of day's own bar is excluded — an intraday
+    timestamp on day D cannot know how day D will close (review found the old
+    inclusive slice handed intraday replays the settled close of their own day).
+    Without ``as_of``, the latest available state is returned.
     """
     closes = history["Close"] if "Close" in history.columns else history.squeeze()
     if as_of is not None:
         as_of_date = pd.Timestamp(as_of).date()
-        closes = closes[[d <= as_of_date for d in closes.index.date]]
+        closes = closes[[d < as_of_date for d in closes.index.date]]
     returns = closes.pct_change().dropna()
-    states = define_states(returns, window=window, bull_thresh=bull_thresh, bear_thresh=bear_thresh)
+    states = define_states(returns, window=window, k=k,
+                           bull_thresh=bull_thresh, bear_thresh=bear_thresh)
     if len(states) < 2:
         uniform = 1.0 / 3
         return RegimeFeature(state="sideways", p_next={s: uniform for s in STATE_ORDER})
@@ -166,8 +194,7 @@ def regime_feature(
 
 
 def fetch_daily_history(symbol: str, years: int = 3) -> pd.DataFrame:
-    ticker = symbol.replace("-USD", "-USD") if "-" in symbol else symbol
-    data = yf.download(ticker, period=f"{years}y", interval="1d", progress=False, auto_adjust=True)
+    data = yf.download(symbol, period=f"{years}y", interval="1d", progress=False, auto_adjust=True)
     if data.empty:
         raise ValueError(f"No data returned for {symbol}")
     if isinstance(data.columns, pd.MultiIndex):
@@ -185,6 +212,7 @@ def _position_from_state(state: str) -> float:
 def walk_forward_backtest(
     history: pd.DataFrame,
     window: int = 20,
+    k: float = 0.5,
     bull_thresh: float = 0.02,
     bear_thresh: float = -0.02,
     fee_pct: float = 0.0,
@@ -206,7 +234,8 @@ def walk_forward_backtest(
     for t in range(min_train, len(returns)):
         train_returns = returns.iloc[:t]
         train_states = define_states(
-            train_returns, window=window, bull_thresh=bull_thresh, bear_thresh=bear_thresh
+            train_returns, window=window, k=k,
+            bull_thresh=bull_thresh, bear_thresh=bear_thresh,
         )
         if len(train_states) < 10:
             continue
@@ -247,7 +276,8 @@ def walk_forward_backtest(
     max_dd = float(dd.min()) if len(dd) else 0.0
     mix = states.value_counts(normalize=True).to_dict() if len(states) else {}
 
-    all_states = define_states(returns, window=window, bull_thresh=bull_thresh, bear_thresh=bear_thresh)
+    all_states = define_states(returns, window=window, k=k,
+                               bull_thresh=bull_thresh, bear_thresh=bear_thresh)
     warnings = sparse_cell_warnings(all_states)
 
     return BacktestResult(
@@ -265,26 +295,41 @@ def walk_forward_backtest(
 def run_phase0_report(
     symbol: str = "BTC-USD",
     window: int = 20,
+    k: float = 0.5,
     bull_thresh: float = 0.02,
     bear_thresh: float = -0.02,
     fee_pct: float = 0.3,
     slippage_pct: float = 0.5,
     years: int = 3,
 ) -> str:
-    """CLI report for Phase 0 acceptance gate."""
-    history = fetch_daily_history(symbol, years=years)
+    """CLI report for Phase 0 acceptance gate.
+
+    Uses the pinned snapshot when one exists (reproducible, offline — same
+    policy as evaluate-cli); falls back to a live pull only when no snapshot
+    has ever been taken for the symbol.
+    """
+    # lazy import: data_cache imports fetch_daily_history from this module,
+    # so a top-level import here would be circular
+    from app.services.data_cache import load_or_fetch
+
+    history, source = load_or_fetch(symbol, years=years)
+    logger.info("phase0 data source: %s", source)
     returns = history["Close"].pct_change().dropna()
-    states = define_states(returns, window=window, bull_thresh=bull_thresh, bear_thresh=bear_thresh)
+    states = define_states(returns, window=window, k=k,
+                           bull_thresh=bull_thresh, bear_thresh=bear_thresh)
     p = estimate_transition_matrix(states)
     pi = stationary_distribution(p)
-    feat = regime_feature(history, window=window, bull_thresh=bull_thresh, bear_thresh=bear_thresh)
+    feat = regime_feature(history, window=window, k=k,
+                          bull_thresh=bull_thresh, bear_thresh=bear_thresh)
 
     bt_no_cost = walk_forward_backtest(
-        history, window=window, bull_thresh=bull_thresh, bear_thresh=bear_thresh, fee_pct=0, slippage_pct=0
+        history, window=window, k=k, bull_thresh=bull_thresh,
+        bear_thresh=bear_thresh, fee_pct=0, slippage_pct=0,
     )
     bt_cost = walk_forward_backtest(
         history,
         window=window,
+        k=k,
         bull_thresh=bull_thresh,
         bear_thresh=bear_thresh,
         fee_pct=fee_pct,

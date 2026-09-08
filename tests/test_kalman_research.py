@@ -117,3 +117,86 @@ def test_cash_reference_is_flat():
         assert m["trades"] == 0
         assert m["total_costs"] == 0.0
         assert m["total_return"] == pytest.approx(0.0)
+
+
+# review fix K3: warm-up counts causal history, not slice-local bars
+def test_warmup_not_reapplied_mid_series():
+    from kalman.strategy import Position, StateMachine, StrategyConfig
+
+    sm = StateMachine(StrategyConfig(entry_z=2.0, exit_z=0.5, warmup=60), _seen=1000)
+    assert sm.decide(0, -3.0, 1.0).target is Position.LONG_RESIDUAL
+
+
+# review fix K10: cooldown ticks on gated bars too
+def test_cooldown_consumed_during_gated_bars():
+    from kalman.strategy import Position, StateMachine, StrategyConfig
+
+    sm = StateMachine(StrategyConfig(entry_z=2.0, exit_z=0.5, warmup=0, cooldown=3))
+    sm.decide(0, -2.5, 1.0)                       # enter
+    sm.decide(1, -0.1, 1.0)                       # exit -> cooldown=3
+    for t in (2, 3, 4):
+        sm.decide(t, None, 1.0)                   # stale/gated bars still count
+    assert sm.decide(5, -3.0, 1.0).target is Position.LONG_RESIDUAL
+
+
+# review fix K2: the walk-forward gate is variant-agnostic and causal
+def test_health_from_signal_causal_and_symmetric():
+    import numpy as np
+
+    from kalman.research import health_from_signal
+
+    rng = np.random.default_rng(0)
+    z = rng.normal(0, 1, 300)
+    h1 = health_from_signal(z)
+    z_mut = z.copy(); z_mut[200] = 50.0           # bar-200 shock
+    h2 = health_from_signal(z_mut)
+    assert np.array_equal(h1[:201], h2[:201])     # healthy[t] uses z<t only
+    assert not h2[201:230].all()                  # ...and the gate does react after
+
+
+# review fix K4: calibration likelihood is predictive (init never scored)
+def test_train_loglik_scores_only_post_init_region():
+    import numpy as np
+
+    from kalman.data import synthetic_pair
+    from kalman.research import train_loglik
+
+    pair, _ = synthetic_pair(n=400, seed=6)
+    y = np.log(pair.p1["Close"].to_numpy(float))
+    x = np.log(pair.p2["Close"].to_numpy(float))
+    full = train_loglik(y, x, 1e-5, 1e-6, 1e-3, init=60)
+    tail = train_loglik(y, x, 1e-5, 1e-6, 1e-3, init=len(y) - 20)
+    assert np.isfinite(full) and np.isfinite(tail)
+    assert abs(tail) < abs(full)                  # far fewer scored bars
+    assert train_loglik(y, x, 1e-5, 1e-6, 1e-3, init=len(y) - 5) == -np.inf
+
+
+# review fix K6: the audit table aligns for non-zero-start slices
+def test_audit_table_aligns_on_sliced_backtest():
+    import numpy as np
+
+    from kalman.data import synthetic_pair
+    from kalman.ledger import LedgerConfig
+    from kalman.research import audit_table, backtest, signals_kalman
+    from kalman.strategy import StrategyConfig
+
+    pair, _ = synthetic_pair(n=500, seed=8)
+    c1 = pair.p1["Close"].to_numpy(float); c2 = pair.p2["Close"].to_numpy(float)
+    z, b, recs = signals_kalman(c1, c2, 1e-5, 1e-6, 0.05, train_end=100)
+    led, dec = backtest(pair, z, b, StrategyConfig(warmup=50), LedgerConfig(),
+                        None, 200, 400, with_decisions=True)
+    at = audit_table(recs, dec, led, start=200)
+    assert len(at) == len(led)
+    assert int(at["t_abs"].iloc[0]) == 200        # filter cols from the right bars
+    assert at["equity"].notna().all()             # ledger cols actually joined
+
+
+# review fix K5: proper Engle-Granger p-value is reported (coint, not raw ADF)
+def test_pair_diagnostics_use_proper_engle_granger():
+    from kalman.data import synthetic_pair
+    from kalman.pairs import qualify_pair
+
+    pair, _ = synthetic_pair(n=900, seed=12)
+    d = qualify_pair(pair, train_end=800, min_overlap=100)
+    assert 0.0 <= d.eg_pvalue <= 1.0
+    assert "EG p=" in d.summary() and "anti-conservative" in d.summary()

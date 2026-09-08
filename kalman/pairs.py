@@ -14,7 +14,7 @@ from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
-from statsmodels.tsa.stattools import adfuller
+from statsmodels.tsa.stattools import adfuller, coint
 
 from .data import PairData
 
@@ -24,8 +24,12 @@ class PairDiagnostics:
     n_train: int
     ols_beta: float
     ols_alpha: float
-    eg_adf_stat: float          # ADF on the OLS residual (Engle-Granger step 2)
-    eg_adf_pvalue: float
+    eg_pvalue: float            # PROPER Engle-Granger p (statsmodels.coint —
+                                # MacKinnon cointegration null, estimated-beta aware)
+    resid_adf_stat: float       # naive ADF on the OLS residual, for reference —
+                                # anti-conservative (its null ignores that beta
+                                # was fitted to minimize this very residual)
+    resid_adf_pvalue: float
     half_life_days: float       # residual AR(1) half-life
     resid_autocorr_1: float
     beta_sign_stable: bool      # sign agreement across two half-window OLS fits
@@ -36,7 +40,8 @@ class PairDiagnostics:
     def summary(self) -> str:
         return (
             f"n={self.n_train}  beta={self.ols_beta:.3f}  "
-            f"EG-ADF p={self.eg_adf_pvalue:.3f}  half-life={self.half_life_days:.1f}d  "
+            f"EG p={self.eg_pvalue:.3f} (resid-ADF p={self.resid_adf_pvalue:.3f}, "
+            f"anti-conservative)  half-life={self.half_life_days:.1f}d  "
             f"rho1={self.resid_autocorr_1:.2f}  sign-stable={self.beta_sign_stable}  "
             f"split-drift={self.beta_split_drift:.3f}\n  -> {self.verdict}"
         )
@@ -49,10 +54,10 @@ def _ols(y: np.ndarray, x: np.ndarray) -> tuple[float, float, np.ndarray]:
 
 
 def qualify_pair(pair: PairData, train_end: int, use_log: bool = True,
-                 min_overlap: int = 500) -> PairDiagnostics:
-    """Diagnostics computed strictly on bars [0, train_end)."""
-    c1 = pair.p1["Close"].to_numpy(float)[:train_end]
-    c2 = pair.p2["Close"].to_numpy(float)[:train_end]
+                 min_overlap: int = 500, train_start: int = 0) -> PairDiagnostics:
+    """Diagnostics computed strictly on bars [train_start, train_end)."""
+    c1 = pair.p1["Close"].to_numpy(float)[train_start:train_end]
+    c2 = pair.p2["Close"].to_numpy(float)[train_start:train_end]
     mask = np.isfinite(c1) & np.isfinite(c2)
     c1, c2 = c1[mask], c2[mask]
     if use_log:
@@ -60,6 +65,10 @@ def qualify_pair(pair: PairData, train_end: int, use_log: bool = True,
     n = len(c1)
 
     beta, alpha, resid = _ols(c1, c2)
+    # PROPER Engle-Granger: coint() uses the cointegration null distribution,
+    # which accounts for beta being estimated. A raw ADF on the fitted residual
+    # is anti-conservative (kept only as a reference number).
+    _, eg_p, _ = coint(c1, c2)
     adf_stat, adf_p, *_ = adfuller(resid, autolag="AIC")
 
     # AR(1) half-life of the residual
@@ -75,13 +84,14 @@ def qualify_pair(pair: PairData, train_end: int, use_log: bool = True,
     drift = abs(b1 - b2)
 
     notes = []
-    if adf_p > 0.05:
-        notes.append(f"EG-ADF p={adf_p:.2f}: no stationarity evidence at 5%")
+    if eg_p > 0.05:
+        notes.append(f"Engle-Granger p={eg_p:.2f}: no cointegration evidence at 5%")
     if not np.isfinite(half_life) or half_life > n / 4:
         notes.append("half-life long relative to window")
     if not sign_stable:
         notes.append("hedge-ratio SIGN flipped between halves")
     verdict = "; ".join(notes) if notes else "diagnostics unremarkable (NOT proof of edge)"
-    return PairDiagnostics(n, beta, alpha, float(adf_stat), float(adf_p),
+    return PairDiagnostics(n, beta, alpha, float(eg_p),
+                           float(adf_stat), float(adf_p),
                            half_life, rho1, bool(sign_stable), drift,
                            n >= min_overlap, verdict)

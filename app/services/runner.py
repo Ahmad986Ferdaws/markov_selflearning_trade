@@ -37,9 +37,9 @@ def _select_trade_snapshot(
     for snapshot in snapshots:
         if snapshot.symbol == trade_symbol:
             return snapshot, trade_symbol, snapshot.price
-    if snapshots:
-        fallback = snapshots[0]
-        return fallback, fallback.symbol, fallback.price
+    # No cross-symbol fallback: trading whatever symbol happened to be polled
+    # first silently mixed instruments into one position (review finding 3).
+    # Skip the poll instead; the loop retries next interval.
     return None, trade_symbol, None
 
 
@@ -78,7 +78,13 @@ async def run_loop(run_id: int, settings: Settings) -> None:
                 as_of=trade_snapshot.timestamp if trade_snapshot else None,
             )
 
-            if run.strategy == "agent":
+            if run.strategy == "agent" and not settings.allow_legacy_agent_api:
+                # belt-and-suspenders with the route guard: a pre-existing DB
+                # row must not spend the key either — fail closed to baseline
+                logger.warning("run %s: strategy=agent refused (legacy agent API "
+                               "disabled); using baseline decision", run_id)
+                intent = baseline_decision(feat, trade_symbol)
+            elif run.strategy == "agent":
                 decision = await agent_service.get_agent_decision(
                     trade_snapshot.truncated_metrics() if trade_snapshot else {},
                     feat,

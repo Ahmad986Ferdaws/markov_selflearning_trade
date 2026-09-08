@@ -10,6 +10,7 @@ def main() -> None:
         run_phase0_report(
             symbol=s.regime_symbol,
             window=s.regime_window,
+            k=s.regime_k,
             bull_thresh=s.regime_bull_thresh,
             bear_thresh=s.regime_bear_thresh,
             fee_pct=s.fee_pct,

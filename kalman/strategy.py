@@ -75,6 +75,13 @@ class StateMachine:
         may be executed at the next execution event only."""
         self._seen += 1
 
+        # Cooldown measures BARS SINCE EXIT, so it must tick on gated bars too
+        # (review: gates used to return before the decrement, making a 5-bar
+        # cooldown unbounded in wall-clock time across an unhealthy stretch).
+        in_cooldown = self.cooldown_left > 0
+        if in_cooldown:
+            self.cooldown_left -= 1
+
         # ---- gates ---------------------------------------------------------
         if self._seen <= self.cfg.warmup:
             return self._flatten(t, "gate:warmup")
@@ -85,10 +92,11 @@ class StateMachine:
         if not healthy:
             return self._flatten(t, "gate:health")
 
-        if self.cooldown_left > 0:
-            self.cooldown_left -= 1
-            return Decision(t, self.pos, "cooldown", gated=True) \
-                if self.pos is Position.FLAT else self._exit(t, "cooldown-exit")
+        if in_cooldown:
+            # cooldown_left > 0 implies pos is FLAT: it is set only by
+            # _exit/_flatten, both of which flatten first, and entries are
+            # blocked here until it expires.
+            return Decision(t, Position.FLAT, "cooldown", gated=True)
 
         # ---- in a position: exits first ------------------------------------
         if self.pos is not Position.FLAT:

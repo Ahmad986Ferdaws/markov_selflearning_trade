@@ -45,6 +45,14 @@ class Settings(BaseSettings):
     # Replay-only mode: serve ONLY the persisted response cache, never call a
     # live provider. This is what any public-facing surface must use.
     agent_cache_only: bool = False
+    # FAIL-CLOSED guard on the LEGACY web surface. Review found that
+    # POST /runs {"strategy":"agent"} and GET /runs/{id}/comparison could reach
+    # the live Anthropic client (app/services/agent.py) with NO budget ceiling
+    # and NO cache — i.e. the agent WAS publicly triggerable on the user's key,
+    # violating the project's hard rule. With this False (the default), those
+    # paths refuse/skip live agent calls; only a deliberate local opt-in
+    # (ALLOW_LEGACY_AGENT_API=true in .env) re-enables them.
+    allow_legacy_agent_api: bool = False
 
 
 @lru_cache

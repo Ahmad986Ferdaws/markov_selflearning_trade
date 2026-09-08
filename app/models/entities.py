@@ -16,6 +16,11 @@ class Run(Base):
     watchlist: Mapped[str] = mapped_column(Text, default="BTC-USD")
     trade_symbol: Mapped[str] = mapped_column(String(64), default="BTC-USD")
     cash: Mapped[float] = mapped_column(Float, default=1000.0)
+    # capital the run STARTED with — frozen at creation so replays/returns are
+    # computed against the run's own base, not whatever STARTING_CASH is today
+    # (nullable: rows from before this column existed fall back to settings).
+    # NOTE: paper_trading.db is regenerable; delete it once to pick up the column.
+    starting_cash: Mapped[float | None] = mapped_column(Float, nullable=True)
     position_qty: Mapped[float] = mapped_column(Float, default=0.0)
     avg_entry_price: Mapped[float] = mapped_column(Float, default=0.0)
     realized_pnl: Mapped[float] = mapped_column(Float, default=0.0)

@@ -93,7 +93,10 @@ def test_comparison_replays_only_trade_symbol_snapshots(monkeypatch: pytest.Monk
         )
     db.commit()
 
-    report = run_comparison(db, 1, Settings(anthropic_api_key="test"))
+    # explicit opt-in: without allow_legacy_agent_api the replay fail-closes to
+    # HOLD and never calls the (faked) agent — that guard has its own test
+    report = run_comparison(
+        db, 1, Settings(anthropic_api_key="test", allow_legacy_agent_api=True))
 
     assert report.snapshot_count == 2
     assert seen_symbols == ["BTC-USD", "BTC-USD"]
