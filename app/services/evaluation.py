@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
+from numbers import Real
 
 import numpy as np
 import pandas as pd
@@ -166,8 +167,18 @@ def _walk_forward(
 
         # --- positions, decided at t from state_t (one engine, all policies) ---
         for name, fn in policies.items():
-            ctx = PolicyContext(state=cur, prev_pos=prev_pos[name], p_next=dist, day_index=t)
-            pos = float(fn(ctx))
+            # A policy may own/mutate its input, never the accuracy evidence or
+            # another policy's forecast.
+            ctx = PolicyContext(state=cur, prev_pos=prev_pos[name], p_next=dist.copy(), day_index=t)
+            value = fn(ctx)
+            if isinstance(value, (bool, np.bool_)) or not isinstance(value, Real):
+                raise ValueError(f"policy {name!r} must return a real exposure in [0, 1]")
+            try:
+                pos = float(value)
+            except (ValueError, OverflowError) as error:
+                raise ValueError(f"policy {name!r} returned an invalid exposure") from error
+            if not math.isfinite(pos) or not 0.0 <= pos <= 1.0:
+                raise ValueError(f"policy {name!r} must return a finite exposure in [0, 1]")
             positions[name].append(pos)
             prev_pos[name] = pos
 
