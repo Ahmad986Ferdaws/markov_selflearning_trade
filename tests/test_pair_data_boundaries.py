@@ -30,3 +30,17 @@ def test_missing_observations_survive_without_imputation():
     result = align_pair(data, frame(), 'a', 'b', min_overlap=2)
     pd.testing.assert_frame_equal(result.p1, data)
     assert len(result) == 3
+
+
+def test_decimal_object_prices_remain_supported():
+    from decimal import Decimal
+    data = frame().map(lambda v: Decimal(str(v)))
+    result = align_pair(data, frame(), 'a', 'b', min_overlap=2)
+    pd.testing.assert_frame_equal(result.p1, frame())
+
+
+def test_object_wrapped_complex_is_not_silently_cast():
+    data = frame().astype(object)
+    data.iloc[1, 1] = np.complex128(1+2j)
+    with pytest.raises(ValueError):
+        align_pair(data, frame(), 'a', 'b', min_overlap=2)

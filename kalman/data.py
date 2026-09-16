@@ -58,9 +58,13 @@ def _validate_frame(df: pd.DataFrame, name: str) -> pd.DataFrame:
     if missing:
         raise ValueError(f"{name}: missing columns {missing}")
     raw = df[list(REQUIRED_COLS)]
-    if any(dtype.kind not in "iuf" for dtype in raw.dtypes):
+    if any(np.iscomplexobj(v) or isinstance(v, (bool, np.bool_))
+           for v in raw.to_numpy().flat):
         raise ValueError(f"{name}: prices must be real numeric values")
-    sub = raw.astype(float)
+    try:
+        sub = raw.astype(float)
+    except (TypeError, ValueError, OverflowError) as error:
+        raise ValueError(f"{name}: prices must be real numeric values") from error
     if np.isinf(sub.to_numpy()).any():
         raise ValueError(f"{name}: infinite prices present")
     # Test each observed cell: dropna() would hide a bad price whenever the
