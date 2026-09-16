@@ -17,7 +17,7 @@ Costs — charged on actually TRADED notional per leg, never on signal flips:
     financing on negative cash (rate_bps_pa) per bar.
 
 Sizing (log-price model default): the signal implies dollar exposures
-    L1 = +/- gross/2,  L2 = -sign * beta_sign * gross/2  (elasticity-normalized)
+    L1 = sign * gross/(1+abs(beta)),  L2 = -beta * L1
 translated to SHARES at the fill price. Gross normalization documented:
 |L1| + |L2| = gross_target. For the level model, beta is a share ratio and is
 translated directly to shares (s2 = -beta * s1).
@@ -48,6 +48,17 @@ class HedgeMode(Enum):
     REHEDGE = "rehedge"
 
 
+def _nonnegative(value, name, *, positive=False):
+    if isinstance(value, (bool, np.bool_)) or not isinstance(value, (int, float)):
+        raise ValueError(f"{name} must be a real number")
+    try:
+        valid = np.isfinite(float(value)) and (value > 0 if positive else value >= 0)
+    except OverflowError:
+        valid = False
+    if not valid:
+        raise ValueError(f"{name} must be finite and {'positive' if positive else 'nonnegative'}")
+
+
 @dataclass
 class CostConfig:
     commission_bps: float = 1.0
@@ -56,6 +67,15 @@ class CostConfig:
     borrow_bps_pa: float = 25.0
     financing_bps_pa: float = 0.0
     bars_per_year: int = 252
+
+    def __post_init__(self):
+        for name in ("commission_bps", "half_spread_bps", "slippage_bps",
+                     "borrow_bps_pa", "financing_bps_pa"):
+            _nonnegative(getattr(self, name), name)
+        if (isinstance(self.bars_per_year, bool) or not isinstance(self.bars_per_year, int)
+                or self.bars_per_year <= 0):
+            raise ValueError("bars_per_year must be a positive integer")
+        _nonnegative(self.per_side_bps, "total per-side cost")
 
     @property
     def per_side_bps(self) -> float:
@@ -71,6 +91,17 @@ class LedgerConfig:
     hedge_mode: HedgeMode = HedgeMode.FREEZE
     rehedge_threshold: float = 0.10       # |beta - beta_entry| to re-target
     costs: CostConfig = field(default_factory=CostConfig)
+
+    def __post_init__(self):
+        for name in ("capital", "max_gross"):
+            _nonnegative(getattr(self, name), name, positive=True)
+        for name in ("gross_target", "rehedge_threshold"):
+            _nonnegative(getattr(self, name), name)
+        if not isinstance(self.price_model, PriceModel) or not isinstance(self.hedge_mode, HedgeMode):
+            raise ValueError("price_model and hedge_mode must use their enum values")
+        if not isinstance(self.costs, CostConfig):
+            raise ValueError("costs must be CostConfig")
+        self.costs.__post_init__()
 
 
 @dataclass
@@ -105,9 +136,9 @@ def _target_shares(pos: Position, beta: float, o1: float, o2: float,
         # (Review found the old 50/50 split used only sign(beta) — a
         # dollar-neutral hedge that made the tracked beta MAGNITUDE irrelevant,
         # so dynamic-vs-static hedge ratios were never actually compared.)
-        b = abs(beta) if beta != 0 else 1.0
+        b = abs(beta)
         l1 = sign * gross / (1.0 + b)
-        l2 = -sign * np.sign(beta if beta != 0 else 1.0) * gross * b / (1.0 + b)
+        l2 = -beta * l1
         return l1 / o1, l2 / o2
     # LEVEL: beta is a share ratio; scale so gross notional == gross target
     s1_unit, s2_unit = 1.0, -beta
@@ -128,9 +159,28 @@ def run_ledger(index: pd.DatetimeIndex,
     they are consumed at bar t+1's open — never earlier.
     """
     n = len(index)
+    if n == 0:
+        raise ValueError("run_ledger: no bars to account")
+    if (not isinstance(index, pd.DatetimeIndex) or index.hasnans or
+            not index.is_unique or not index.is_monotonic_increasing):
+        raise ValueError("run_ledger: timestamps must be unique and chronological")
     if not (len(open1) == len(open2) == len(close1) == len(close2)
             == len(decisions) == len(betas) == n):
         raise ValueError("run_ledger: input lengths misaligned")  # survives -O
+
+    cfg.__post_init__()
+    for name, values in (("open1", open1), ("open2", open2), ("close1", close1),
+                         ("close2", close2), ("betas", betas)):
+        raw = np.asarray(values)
+        if raw.ndim != 1 or raw.dtype.kind not in "iuf":
+            raise ValueError(f"{name} must be a real one-dimensional array")
+        if name.startswith("open"):
+            if np.isinf(raw).any():
+                raise ValueError(f"{name} contains infinite fill prices")
+        elif not np.isfinite(raw).all() or (name.startswith("close") and (raw <= 0).any()):
+            raise ValueError(f"{name} cannot support finite positive close accounting")
+    if any(not isinstance(d.target, Position) for d in decisions):
+        raise ValueError("decisions must have Position targets")
 
     c = cfg.costs
     per_side = c.per_side_bps / 1e4
@@ -188,6 +238,8 @@ def run_ledger(index: pd.DatetimeIndex,
 
         equity = cash + s1 * c1 + s2 * c2
         gross = abs(s1 * c1) + abs(s2 * c2)
+        if not np.isfinite([cash, equity, gross, costs, turnover]).all():
+            raise ValueError(f"non-finite ledger accounting at bar {t}")
         rows.append(LedgerRow(t, index[t], exec_ts, s1, s2, cash, equity,
                               gross, s1 * c1 + s2 * c2, turnover, costs, reason))
 
