@@ -219,7 +219,7 @@ _NUM = re.compile(_NUMBER)
 _POS_KEYS = ("position", "exposure", "target", "target_position", "weight", "allocation")
 _LABELED = re.compile(
     r"\b(?:position|exposure|target_position|target|weight|allocation)\s*"
-    r"(?:to|of|at|[:=])?\s*(" + _NUMBER + r")(?![\w.%])", re.I,
+    r"(?:to|of|at|[:=])?\s*(" + _NUMBER + r")(?![\w.%])(?!\s*[-+/*^=])", re.I,
 )
 
 
@@ -247,6 +247,8 @@ def _parse_position(raw: str, fallback: float) -> tuple[float, str]:
     try:
         m = re.search(r"\{.*\}", text, re.DOTALL)
         data = json.loads(m.group(0) if m else text)
+    except RecursionError:
+        return hold
     except (ValueError, TypeError):
         data = None
     if isinstance(data, dict):
