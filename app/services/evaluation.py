@@ -290,6 +290,47 @@ def _train_freq(states: list[str | None], start: int, end: int) -> np.ndarray:
 # --------------------------------------------------------------------------- #
 # Public entry point
 # --------------------------------------------------------------------------- #
+def _validated_closes(history: pd.DataFrame) -> pd.Series:
+    if not isinstance(history, pd.DataFrame) or not history.columns.is_unique:
+        raise ValueError("history must be a DataFrame with unique columns")
+    if not isinstance(history.index, pd.DatetimeIndex) or history.index.hasnans:
+        raise ValueError("history must have non-missing datetime timestamps")
+    if not history.index.is_unique or not history.index.is_monotonic_increasing:
+        raise ValueError("history timestamps must be unique and sorted ascending")
+    if "Close" not in history.columns:
+        raise ValueError("history must contain a Close column")
+    closes = history["Close"]
+    if closes.dtype.kind not in "iuf":
+        raise ValueError("Close prices must be real numeric values")
+    closes = closes.astype(float)
+    if not np.isfinite(closes).all() or (closes <= 0).any():
+        raise ValueError("Close prices must be finite and positive; missing bars are not imputed")
+    return closes
+
+
+def _validate_controls(train_frac, grid_windows, grid_k, fee_pct, slippage_pct, min_train):
+    def finite(value):
+        try:
+            return (not isinstance(value, (bool, np.bool_)) and
+                    isinstance(value, (int, float, np.integer, np.floating)) and
+                    math.isfinite(value))
+        except OverflowError:
+            return False
+    if not finite(train_frac) or not 0 < train_frac < 1:
+        raise ValueError("train_frac must be finite and inside (0, 1)")
+    if isinstance(min_train, bool) or not isinstance(min_train, int) or min_train < 2:
+        raise ValueError("min_train must be an integer >= 2")
+    if not grid_windows or any(isinstance(w, bool) or not isinstance(w, int) or w < 2
+                               for w in grid_windows):
+        raise ValueError("grid_windows must contain integers >= 2")
+    if not grid_k or any(not finite(k) or k < 0 for k in grid_k):
+        raise ValueError("grid_k must contain finite nonnegative values")
+    if any(not finite(c) or c < 0 for c in (fee_pct, slippage_pct)):
+        raise ValueError("cost percentages must be finite and nonnegative")
+    if fee_pct + slippage_pct >= 100:
+        raise ValueError("combined one-way cost must be below 100 percent")
+
+
 def evaluate(
     history: pd.DataFrame,
     symbol: str = "BTC-USD",
@@ -309,8 +350,11 @@ def evaluate(
     buy_hold; Phase C injects the LLM agent here without touching the engine.
     """
     policies = policies if policies is not None else DEFAULT_POLICIES
-    closes = history["Close"] if "Close" in history.columns else history.squeeze()
-    returns = closes.pct_change().dropna()
+    _validate_controls(train_frac, grid_windows, grid_k, fee_pct, slippage_pct, min_train)
+    closes = _validated_closes(history)
+    returns = closes.pct_change(fill_method=None).iloc[1:]
+    if not np.isfinite(returns).all():
+        raise ValueError("Close prices produced non-finite returns")
     n = len(returns)
     if n < min_train + 30:
         raise ValueError(f"Not enough history: {n} returns")
