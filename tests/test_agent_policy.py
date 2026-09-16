@@ -163,6 +163,7 @@ def test_agent_flows_through_engine_like_any_policy():
     rng = np.random.default_rng(0)
     closes = pd.Series(100 * np.cumprod(1 + rng.normal(0.001, 0.02, 400)))
     hist = pd.DataFrame({"Close": closes})
+    hist.index = pd.date_range("2020-01-01", periods=len(hist))
 
     policies = dict(DEFAULT_POLICIES)
     policies["agent"] = build_agent_policy(FakeProvider('{"position": 1.0}'))
