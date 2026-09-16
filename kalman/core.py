@@ -49,8 +49,41 @@ def _assert_finite(name: str, *vals: float) -> None:
             raise ValueError(f"non-finite value reached the filter: {name}")
 
 
+def _finite_real(value, name: str) -> float:
+    if isinstance(value, (bool, np.bool_)) or not isinstance(value, (int, float, np.integer, np.floating)):
+        raise ValueError(f"{name} must be a finite real number")
+    try:
+        number = float(value)
+    except (ValueError, OverflowError) as error:
+        raise ValueError(f"{name} must be finite") from error
+    if not math.isfinite(number):
+        raise ValueError(f"{name} must be finite")
+    return number
+
+
+def _positive(value, name: str) -> float:
+    value = _finite_real(value, name)
+    if value <= 0:
+        raise ValueError(f"{name} must be positive")
+    return value
+
+
+def _prior(value, shape, name):
+    raw = np.asarray(value)
+    if raw.shape != shape or raw.dtype.kind not in "iuf":
+        raise ValueError(f"{name} must be a real array of shape {shape}")
+    result = raw.astype(float, copy=True)
+    _assert_finite(name, result)
+    if len(shape) == 2:
+        if not np.allclose(result, result.T, rtol=0, atol=1e-12):
+            raise ValueError(f"{name} must be symmetric")
+        result = _symmetrize(result)
+    return result
+
+
 def _symmetrize(P: np.ndarray) -> np.ndarray:
-    P = 0.5 * (P + P.T)
+    _assert_finite("covariance", P)
+    P = 0.5 * P + 0.5 * P.T
     # PSD guard: clip tiny negative eigenvalues from floating-point drift.
     w, V = np.linalg.eigh(P)
     if w.min() < -1e-9 * max(1.0, abs(w.max())):
@@ -93,6 +126,16 @@ class AdaptiveQ:
     m_max: float = 4.0
     window: int = 20
 
+    def __post_init__(self):
+        self.sigma_ref = _positive(self.sigma_ref, "sigma_ref")
+        self.gamma = _finite_real(self.gamma, "gamma")
+        self.m_min = _positive(self.m_min, "m_min")
+        self.m_max = _positive(self.m_max, "m_max")
+        if self.m_min > self.m_max:
+            raise ValueError("m_min must not exceed m_max")
+        if isinstance(self.window, bool) or not isinstance(self.window, int) or self.window < 2:
+            raise ValueError("window must be an integer >= 2")
+
     def multiplier(self, past_returns: np.ndarray) -> float:
         """past_returns must END at t-1 (caller guarantees the lag)."""
         if len(past_returns) < self.window or self.sigma_ref <= 0:
@@ -116,12 +159,13 @@ class PairFilter:
         P0: np.ndarray | None = None,
         adaptive: AdaptiveQ | None = None,
     ):
-        if q_beta <= 0 or q_alpha <= 0 or r <= 0:
-            raise ValueError("q_beta, q_alpha, r must be positive")
+        q_beta = _positive(q_beta, "q_beta")
+        q_alpha = _positive(q_alpha, "q_alpha")
+        r = _positive(r, "r")
         self.Q = np.diag([q_beta, q_alpha]).astype(float)   # separate units
         self.R = float(r)
-        self.x = (np.zeros(2) if x0 is None else np.asarray(x0, float).copy())
-        self.P = (np.diag([10.0, 10.0]) if P0 is None else np.asarray(P0, float).copy())
+        self.x = (np.zeros(2) if x0 is None else _prior(x0, (2,), "x0"))
+        self.P = (np.diag([10.0, 10.0]) if P0 is None else _prior(P0, (2, 2), "P0"))
         self.adaptive = adaptive
         self._t = -1
 
@@ -149,8 +193,10 @@ class PairFilter:
         """One predict(+update) step. `y=None` -> missing observation
         (predict-only). `past_returns` must end at t-1 (lagged) when adaptive
         Q is enabled."""
+        p2 = _finite_real(p2, "p2")
+        if y is not None:
+            y = _finite_real(y, "y")
         self._t += 1
-        _assert_finite("p2", p2)
 
         Qt = self.Q
         if self.adaptive is not None:
@@ -201,11 +247,12 @@ class TrendFilter:
     def __init__(self, q_level: float, q_vel: float, r: float,
                  x0: np.ndarray | None = None, P0: np.ndarray | None = None,
                  adaptive: AdaptiveQ | None = None):
-        if q_level <= 0 or q_vel <= 0 or r <= 0:
-            raise ValueError("q_level, q_vel, r must be positive")
+        q_level = _positive(q_level, "q_level")
+        q_vel = _positive(q_vel, "q_vel")
+        r = _positive(r, "r")
         self.ql, self.qv, self.R = float(q_level), float(q_vel), float(r)
-        self.x = (np.zeros(2) if x0 is None else np.asarray(x0, float).copy())
-        self.P = (np.diag([10.0, 1.0]) if P0 is None else np.asarray(P0, float).copy())
+        self.x = (np.zeros(2) if x0 is None else _prior(x0, (2,), "x0"))
+        self.P = (np.diag([10.0, 1.0]) if P0 is None else _prior(P0, (2, 2), "P0"))
         self.adaptive = adaptive
         self._t = -1
 
@@ -218,9 +265,10 @@ class TrendFilter:
 
     def step(self, y: float | None, dt: float = 1.0,
              past_returns: np.ndarray | None = None) -> StepRecord:
+        dt = _positive(dt, "dt")
+        if y is not None:
+            y = _finite_real(y, "y")
         self._t += 1
-        if dt <= 0:
-            raise ValueError("dt must be positive")
         mult = 1.0
         if self.adaptive is not None:
             mult = self.adaptive.multiplier(
