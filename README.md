@@ -102,6 +102,12 @@ The credibility claim is *byte-reproducibility from a fresh clone*:
 
 - **Pinned data** — `data/snapshots/` holds the exact yfinance pulls; `history_hash` stamps them.
 - **Deterministic records** — every run writes a JSON record to `results/` (and `results/robustness/`).
+
+New daily CLI records use `results/{symbol}_{report_sha256}.json`, with identity
+derived from the complete report. Identical reports reuse their path; different
+reports on the same price history remain separate. The older data-hash filenames
+are retained as historical evidence and are never overwritten by new runs.
+
 - **Locked deps** — `requirements.lock` pins 77 packages.
 
 Both `data/snapshots/` and `results/` are committed for this reason. `make robust` regenerates the

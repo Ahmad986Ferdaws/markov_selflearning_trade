@@ -9,6 +9,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import re
+import tempfile
 from dataclasses import asdict
 from pathlib import Path
 
@@ -50,10 +53,29 @@ def load_or_fetch(
 
 
 def save_run_record(report, results_dir: Path | str = RESULTS_DIR) -> Path:
-    """Persist the full report keyed by data hash so re-runs are idempotent."""
+    """Persist by complete report content, preserving distinct runs on the same data.
+
+    Existing historical data-hash filenames are never overwritten. Identical
+    reports reuse one path; changed metrics/policies produce separate evidence.
+    """
+    payload = json.dumps(asdict(report), indent=2, sort_keys=True, allow_nan=False)
+    digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()
+    symbol = re.sub(r"[^A-Za-z0-9_-]", "_", report.symbol)[:80] or "symbol"
     results_dir = Path(results_dir)
     results_dir.mkdir(parents=True, exist_ok=True)
-    data_hash = getattr(report, "data_hash", "") or "nohash"
-    path = results_dir / f"{report.symbol.replace('/', '_')}_{data_hash[:8]}.json"
-    path.write_text(json.dumps(asdict(report), indent=2, default=str))
+    path = results_dir / f"{symbol}_{digest}.json"
+    if path.exists():
+        if path.read_text(encoding="utf-8") != payload:
+            raise ValueError(f"existing content-addressed record differs: {path}")
+        return path
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=results_dir,
+                                         prefix=".record-", delete=False) as f:
+            temporary = Path(f.name)
+            f.write(payload)
+        os.replace(temporary, path)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
     return path
