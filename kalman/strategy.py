@@ -29,6 +29,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
+import math
+from numbers import Real
 
 
 class Position(Enum):
@@ -49,6 +51,16 @@ class StrategyConfig:
     beta_max: float = 5.0
 
     def __post_init__(self) -> None:
+        for name in ("entry_z", "exit_z", "stop_z", "beta_min", "beta_max"):
+            value = getattr(self, name)
+            if isinstance(value, bool) or not isinstance(value, Real) or not math.isfinite(value):
+                raise ValueError(f"{name} must be a finite real number")
+        for name in ("warmup", "max_holding", "cooldown"):
+            value = getattr(self, name)
+            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                raise ValueError(f"{name} must be a nonnegative integer")
+        if self.beta_min > self.beta_max:
+            raise ValueError("beta_min must not exceed beta_max")
         if not (0 <= self.exit_z < self.entry_z <= self.stop_z):
             raise ValueError("need 0 <= exit_z < entry_z <= stop_z")
 
@@ -87,6 +99,8 @@ class StateMachine:
             return self._flatten(t, "gate:warmup")
         if z is None:                                   # stale / missing bar
             return self._flatten(t, "gate:stale-data")
+        if not isinstance(z, Real) or not math.isfinite(z):
+            return self._flatten(t, "gate:invalid-signal")
         if not (self.cfg.beta_min <= beta <= self.cfg.beta_max):
             return self._flatten(t, "gate:extreme-beta")
         if not healthy:
