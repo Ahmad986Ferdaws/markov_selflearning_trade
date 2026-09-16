@@ -44,8 +44,12 @@ class PairData:
 
 
 def _validate_frame(df: pd.DataFrame, name: str) -> pd.DataFrame:
+    if not df.columns.is_unique:
+        raise ValueError(f"{name}: duplicate columns")
     if not isinstance(df.index, pd.DatetimeIndex):
         raise ValueError(f"{name}: index must be a DatetimeIndex")
+    if df.index.hasnans:
+        raise ValueError(f"{name}: missing timestamps")
     if df.index.has_duplicates:
         raise ValueError(f"{name}: duplicate timestamps")
     if not df.index.is_monotonic_increasing:
@@ -53,8 +57,19 @@ def _validate_frame(df: pd.DataFrame, name: str) -> pd.DataFrame:
     missing = [c for c in REQUIRED_COLS if c not in df.columns]
     if missing:
         raise ValueError(f"{name}: missing columns {missing}")
-    sub = df[list(REQUIRED_COLS)].astype(float)
-    if (sub.dropna() <= 0).any().any():
+    raw = df[list(REQUIRED_COLS)]
+    if any(np.iscomplexobj(v) or isinstance(v, (bool, np.bool_))
+           for v in raw.to_numpy().flat):
+        raise ValueError(f"{name}: prices must be real numeric values")
+    try:
+        sub = raw.astype(float)
+    except (TypeError, ValueError, OverflowError) as error:
+        raise ValueError(f"{name}: prices must be real numeric values") from error
+    if np.isinf(sub.to_numpy()).any():
+        raise ValueError(f"{name}: infinite prices present")
+    # Test each observed cell: dropna() would hide a bad price whenever the
+    # other column in the same row is missing. NaN itself remains explicit.
+    if (sub <= 0).any().any():
         raise ValueError(f"{name}: non-positive prices present")
     return sub
 
