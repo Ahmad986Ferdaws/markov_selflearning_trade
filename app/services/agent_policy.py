@@ -25,6 +25,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import math
 import re
 from dataclasses import dataclass
 from pathlib import Path
@@ -213,11 +214,12 @@ def _format_context(ctx) -> dict:
     }
 
 
-_NUM = re.compile(r"-?\d+(?:\.\d+)?")
+_NUMBER = r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?"
+_NUM = re.compile(_NUMBER)
 _POS_KEYS = ("position", "exposure", "target", "target_position", "weight", "allocation")
 _LABELED = re.compile(
-    r"(?:position|exposure|target|weight|allocation)\s*(?:to|of|at|[:=])?\s*(-?\d+(?:\.\d+)?)",
-    re.I,
+    r"\b(?:position|exposure|target_position|target|weight|allocation)\s*"
+    r"(?:to|of|at|[:=])?\s*(" + _NUMBER + r")(?![\w.%])", re.I,
 )
 
 
@@ -232,31 +234,48 @@ def _parse_position(raw: str, fallback: float) -> tuple[float, str]:
 
     Order of attempts: (1) strict JSON with a recognized key; (2) a labeled value
     in prose ("position: 0.7", "exposure to 0.8"); (3) salvage a bare number ONLY
-    when the reply contains exactly one in-range number — so a stray number that
+    when the entire reply is one in-range numeric token — so a stray number that
     precedes the real one (a z-score, a year, a window length) can't be mistaken
     for the position. Anything ambiguous holds the previous position.
     """
-    text = (raw or "").strip()
-    # 1) strict JSON with a recognized key
+    hold = (float(fallback), "unparseable_hold")
+    if not isinstance(raw, str):
+        return hold
+    text = raw.strip()
+    # A recognized JSON field with an invalid value is a failed decision;
+    # never salvage a number from its reasoning instead.
     try:
         m = re.search(r"\{.*\}", text, re.DOTALL)
         data = json.loads(m.group(0) if m else text)
-        if isinstance(data, dict):
-            for key in _POS_KEYS:
-                if data.get(key) is not None:
-                    return max(0.0, min(1.0, float(data[key]))), "strict_json"
-    except Exception:  # noqa: BLE001
-        pass
-    # 2) a labeled position somewhere in prose
+    except (ValueError, TypeError):
+        data = None
+    if isinstance(data, dict):
+        for key in _POS_KEYS:
+            if key in data:
+                value = data[key]
+                if isinstance(value, bool) or not isinstance(value, (int, float)):
+                    return hold
+                try:
+                    pos = float(value)
+                except OverflowError:
+                    return hold
+                if not math.isfinite(pos):
+                    return hold
+                return max(0.0, min(1.0, pos)), "strict_json"
+        return hold
     lm = _LABELED.search(text)
     if lm:
-        return max(0.0, min(1.0, float(lm.group(1)))), "salvaged_labeled"
-    # 3) exactly one in-range number -> safe to use; multiple -> too ambiguous
-    in_range = [v for v in (float(x) for x in _NUM.findall(text)) if 0.0 <= v <= 1.0]
-    if len(in_range) == 1:
-        return in_range[0], "salvaged_single_number"
-    # 4) ambiguous or empty -> hold
-    return float(fallback), "unparseable_hold"
+        pos = float(lm.group(1))
+        if math.isfinite(pos):
+            return max(0.0, min(1.0, pos)), "salvaged_labeled"
+        return hold
+    # Unlabeled salvage is restricted to the entire reply, not one plausible
+    # number among dates, risk estimates, or other contextual numbers.
+    if _NUM.fullmatch(text):
+        pos = float(text)
+        if math.isfinite(pos) and 0.0 <= pos <= 1.0:
+            return pos, "salvaged_single_number"
+    return hold
 
 
 # --------------------------------------------------------------------------- #
