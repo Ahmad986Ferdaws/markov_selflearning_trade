@@ -29,6 +29,8 @@ import math
 import re
 from dataclasses import dataclass
 from pathlib import Path
+import os
+import tempfile
 
 import numpy as np
 
@@ -169,7 +171,12 @@ class ResponseCache:
         self.misses = 0
         if self.path and self.path.exists():
             try:
-                self._d = json.loads(self.path.read_text())
+                loaded = json.loads(self.path.read_text())
+                if not isinstance(loaded, dict) or any(
+                    not isinstance(k, str) or not isinstance(v, str) for k, v in loaded.items()
+                ):
+                    raise ValueError("response cache must map strings to strings")
+                self._d = loaded
             except Exception:  # noqa: BLE001 - corrupt cache shouldn't kill a run
                 self._d = {}
 
@@ -182,6 +189,8 @@ class ResponseCache:
             return self._d[key]
         self.misses += 1
         val = fn()
+        if not isinstance(val, str):
+            raise ValueError("provider response must be text")
         self._d[key] = val
         return val
 
@@ -189,7 +198,16 @@ class ResponseCache:
         if not self.path:
             return
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.path.write_text(json.dumps(self._d, indent=2, sort_keys=True))
+        temporary = None
+        try:
+            with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=self.path.parent,
+                                             prefix=f".{self.path.name}.", delete=False) as f:
+                temporary = Path(f.name)
+                json.dump(self._d, f, indent=2, sort_keys=True)
+            os.replace(temporary, self.path)
+        finally:
+            if temporary is not None:
+                temporary.unlink(missing_ok=True)
 
 
 # --------------------------------------------------------------------------- #
