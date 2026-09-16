@@ -42,3 +42,15 @@ def test_record_name_is_contained_and_deterministic(tmp_path):
     path = save_run_record(report, tmp_path)
     assert path.parent == tmp_path
     assert path == save_run_record(report, tmp_path)
+
+
+def test_replayed_report_becomes_latest_without_changing_bytes(tmp_path):
+    import os
+    from app.cli.diagnose import _latest_record
+    first = save_run_record(Report(), tmp_path)
+    second = save_run_record(replace(Report(), total_return=.2), tmp_path)
+    os.utime(first, (100, 100)); os.utime(second, (200, 200))
+    content = first.read_bytes()
+    save_run_record(Report(), tmp_path)
+    assert _latest_record(tmp_path) == first
+    assert first.read_bytes() == content

@@ -67,6 +67,8 @@ def save_run_record(report, results_dir: Path | str = RESULTS_DIR) -> Path:
     if path.exists():
         if path.read_text(encoding="utf-8") != payload:
             raise ValueError(f"existing content-addressed record differs: {path}")
+        # diagnose-cli selects the latest run by mtime, including replays.
+        path.touch()
         return path
     temporary = None
     try:
