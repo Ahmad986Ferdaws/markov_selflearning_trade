@@ -133,8 +133,10 @@ class AdaptiveQ:
         self.m_max = _positive(self.m_max, "m_max")
         if self.m_min > self.m_max:
             raise ValueError("m_min must not exceed m_max")
-        if isinstance(self.window, bool) or not isinstance(self.window, int) or self.window < 2:
+        if (isinstance(self.window, (bool, np.bool_)) or
+                not isinstance(self.window, (int, np.integer)) or self.window < 2):
             raise ValueError("window must be an integer >= 2")
+        self.window = int(self.window)
 
     def multiplier(self, past_returns: np.ndarray) -> float:
         """past_returns must END at t-1 (caller guarantees the lag)."""

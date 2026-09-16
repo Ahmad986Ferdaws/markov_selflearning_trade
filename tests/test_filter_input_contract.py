@@ -40,3 +40,10 @@ def test_valid_prior_is_owned_and_zero_psd_prior_allowed():
     f = PairFilter(.01, .01, .1, x0=x, P0=p)
     x[:] = np.nan; p[:] = np.nan
     assert np.isfinite(f.step(2., 2.).x_post).all()
+
+
+def test_numpy_integer_adaptive_window_matches_python_window():
+    native = AdaptiveQ(.1, window=3)
+    grid = AdaptiveQ(.1, window=np.int64(3))
+    assert grid.multiplier(np.array([.1, -.2, .1])) == native.multiplier(np.array([.1, -.2, .1]))
+    assert type(grid.window) is int
