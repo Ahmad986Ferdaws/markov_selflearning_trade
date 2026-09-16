@@ -20,6 +20,6 @@ def test_complete_numbers_and_finite_clamping(raw, expected):
 
 @pytest.mark.parametrize('raw', ['position: +0.5+0.2', 'position: .5/.2',
     'position: 0.5-0.7', 'position: .5 + .2', 'position: .5 / .2',
-    '[' * 2000 + '0.5' + ']' * 2000])
+    '[' * 10000 + '0.5' + ']' * 10000])
 def test_malformed_expressions_and_nested_json_hold(raw):
     assert _parse_position(raw, .3) == (.3, 'unparseable_hold')
