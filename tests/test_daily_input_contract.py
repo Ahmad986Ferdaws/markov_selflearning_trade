@@ -47,3 +47,14 @@ def test_valid_prices_preserve_daily_split():
     result = evaluate(frame, **options)
     assert result.test_size == 44
     assert result == evaluate(frame.copy(), **options)
+
+
+def test_fixed_width_costs_cannot_overflow_into_rebates():
+    with pytest.raises(ValueError, match='cost'):
+        evaluate(history(), fee_pct=np.int8(100), slippage_pct=np.int8(100))
+
+
+def test_numpy_cost_controls_match_python_values():
+    options = dict(grid_windows=(10,), grid_k=(.5,))
+    assert evaluate(history(), fee_pct=np.float32(.5), slippage_pct=np.int8(1), **options) == \
+        evaluate(history(), fee_pct=.5, slippage_pct=1., **options)

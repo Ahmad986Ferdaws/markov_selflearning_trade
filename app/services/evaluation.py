@@ -327,7 +327,7 @@ def _validate_controls(train_frac, grid_windows, grid_k, fee_pct, slippage_pct, 
         raise ValueError("grid_k must contain finite nonnegative values")
     if any(not finite(c) or c < 0 for c in (fee_pct, slippage_pct)):
         raise ValueError("cost percentages must be finite and nonnegative")
-    if fee_pct + slippage_pct >= 100:
+    if float(fee_pct) + float(slippage_pct) >= 100:
         raise ValueError("combined one-way cost must be below 100 percent")
 
 
@@ -351,6 +351,8 @@ def evaluate(
     """
     policies = policies if policies is not None else DEFAULT_POLICIES
     _validate_controls(train_frac, grid_windows, grid_k, fee_pct, slippage_pct, min_train)
+    # Do not let fixed-width NumPy arithmetic wrap costs during later walks.
+    fee_pct, slippage_pct = float(fee_pct), float(slippage_pct)
     closes = _validated_closes(history)
     returns = closes.pct_change(fill_method=None).iloc[1:]
     if not np.isfinite(returns).all():
