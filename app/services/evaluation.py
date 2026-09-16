@@ -229,9 +229,9 @@ def _accuracy(pred_probs, actual_idx, train_freq, cur_idx=None) -> AccuracyMetri
     balanced = float(np.mean(recalls)) if recalls else 0.0
     p_recalls = [persist_correct[c] / per_total[c] for c in range(n_states) if per_total[c] > 0]
     persist_balanced = float(np.mean(p_recalls)) if p_recalls else 0.0
-    # a majority-class predictor gets recall 1.0 on one class, 0.0 on the rest that
-    # occur -> balanced acc = 1/(# classes present), not a fixed 1/3.
-    naive_balanced = 1.0 / len(recalls) if recalls else 0.0
+    # A training-majority class absent from test earns no recall at all.
+    naive_balanced = (1.0 / len(recalls)
+                      if recalls and per_total[naive_pred] > 0 else 0.0)
     return AccuracyMetrics(
         hit_rate=hits / n,
         balanced_accuracy=balanced,
@@ -272,7 +272,8 @@ def _policy_metrics(name: str, positions: list[float], market_rets: list[float],
     rets = pd.Series(strat_rets)
     total_return = eq_s.iloc[-1] - 1.0
     sharpe = float(rets.mean() / rets.std() * ANN) if rets.std() > 0 else 0.0
-    roll_max = eq_s.cummax()
+    # Capital at inception is a peak too, including before the first loss/fee.
+    roll_max = eq_s.cummax().clip(lower=1.0)
     dd = ((eq_s - roll_max) / roll_max).replace([np.inf, -np.inf], np.nan).dropna()
     max_dd = float(dd.min()) if len(dd) else 0.0
     return PolicyResult(name, float(total_return), sharpe, max_dd, trades, float(total_cost))
