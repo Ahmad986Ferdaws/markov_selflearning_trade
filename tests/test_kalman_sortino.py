@@ -46,7 +46,7 @@ def test_gaussian_returns_match_downside_deviation_definition():
     rets = np.random.default_rng(3).normal(-0.0002, 0.01, 800)
     m = perf_metrics(_ledger(rets))
     assert m["sortino"] == pytest.approx(_textbook_sortino(rets), rel=1e-12)
-    assert m["sortino"] < 0                                    # sign follows the mean
+    assert (m["sortino"] < 0) == (np.mean(rets) < 0)           # sign follows the sample mean
 
 
 def test_no_downside_is_undefined_not_zero():
