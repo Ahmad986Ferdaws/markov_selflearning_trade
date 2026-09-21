@@ -60,6 +60,7 @@ def test_regime_feature_accepts_mode_and_matches_define_states_semantics():
 
 
 def test_runner_passes_k_and_mode_from_settings():
+    # source-level tripwire, as tests/test_kalman_ledger.py does for the ledger
     src = inspect.getsource(runner.run_loop)
     assert "k=settings.regime_k" in src
     assert "mode=settings.regime_mode" in src
@@ -75,3 +76,14 @@ def test_unknown_regime_mode_is_rejected_at_settings_and_at_the_feature():
     history, _ = load_or_fetch("BTC-USD", years=3)
     with pytest.raises(ValueError, match="regime mode"):
         regime_feature(history, window=20, mode="absolut")
+
+
+def test_regime_mode_is_case_and_whitespace_insensitive_but_typos_fail():
+    import pytest
+    from pydantic import ValidationError
+
+    assert Settings(_env_file=None, regime_mode="Absolute").regime_mode == "absolute"
+    assert Settings(_env_file=None, regime_mode=" ZSCORE ").regime_mode == "zscore"
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, regime_mode="zsc ore")
+    assert Settings(_env_file=".env.example").regime_mode == "zscore"     # template documents it
