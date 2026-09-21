@@ -240,7 +240,9 @@ _LABELED = re.compile(
     # after the number: no word char, no ".digit" (0.5.3), no ".." (0..5 — the
     # engine would otherwise backtrack to "0"), no "%" — but a single sentence
     # period ("exposure to 0.8.") is prose, not part of the number
-    r"(?:to|of|at|[:=])?\s*(" + _NUMBER + r")(?!\w|\.[\d.]|%)(?!\s*[-+/*^=])", re.I,
+    # (the lookbehind keeps a trailing "." out of the number itself, so "1.."
+    # cannot be read as "1." followed by a harmless period)
+    r"(?:to|of|at|[:=])?\s*(" + _NUMBER + r")(?<!\.)(?!\w|\.[\d.]|%)(?!\s*[-+/*^=])", re.I,
 )
 
 
@@ -286,9 +288,14 @@ def _parse_position(raw: str, fallback: float) -> tuple[float, str]:
                     return hold
                 return max(0.0, min(1.0, pos)), "strict_json"
         return hold
-    lm = _LABELED.search(text)
-    if lm:
-        pos = float(lm.group(1))
+    # Every labeled value in the reply must agree. "weight 0.6. Position: 0.4."
+    # names two candidates, and first-match-wins would take the wrong one now
+    # that a sentence period no longer stops the match — ambiguous, so hold.
+    labeled = {float(m.group(1)) for m in _LABELED.finditer(text)}
+    if labeled:
+        if len(labeled) != 1:
+            return hold
+        pos = labeled.pop()
         if math.isfinite(pos):
             return max(0.0, min(1.0, pos)), "salvaged_labeled"
         return hold
