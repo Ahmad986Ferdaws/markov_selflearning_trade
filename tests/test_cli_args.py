@@ -72,11 +72,18 @@ def test_evaluate_engine_value_error_is_one_line(monkeypatch, capsys):
     assert "Not enough history" in capsys.readouterr().err
 
 
+def _pinned_settings() -> Settings:
+    # explicit kwargs outrank any exported EVAL_*/FEE_PCT/REGIME_* in the shell
+    return Settings(_env_file=None, regime_symbol="BTC-USD", eval_train_frac=0.7,
+                    eval_grid_windows="10,20,30", eval_grid_k="0.2,0.35,0.5,0.75",
+                    fee_pct=0.3, slippage_pct=0.5, llm_provider="none")
+
+
 def test_evaluate_symbol_flag_runs_the_pinned_snapshot(monkeypatch, tmp_path, capsys):
     # end-to-end on the committed BTC snapshot; the record goes to tmp, not results/
     from app.services.data_cache import save_run_record
 
-    monkeypatch.setattr(evaluate_cli, "get_settings", lambda: Settings(_env_file=None))
+    monkeypatch.setattr(evaluate_cli, "get_settings", _pinned_settings)
     monkeypatch.setattr(evaluate_cli, "save_run_record", lambda report: save_run_record(report, tmp_path))
     evaluate_cli.main(["--symbol", "BTC-USD", "--years", "3", "--provider", "none"])
     out = capsys.readouterr().out
@@ -84,6 +91,40 @@ def test_evaluate_symbol_flag_runs_the_pinned_snapshot(monkeypatch, tmp_path, ca
     assert "Model        hit-rate: 90.9%" in out          # the CI determinism grep
     assert "Persistence  hit-rate: 90.9%" in out
     assert list(tmp_path.glob("BTC-USD_*.json"))
+
+
+@pytest.mark.parametrize("argv", [["--years", "5"], ["--symbol", "NOPE-USD"], ["--symbol", "BTC-USD", "--years", "7"]])
+def test_unpinned_symbol_or_span_is_refused_without_refresh(argv, monkeypatch, capsys):
+    # the only way to the network is --refresh; a new (symbol, years) pair must
+    # not fetch just because the flags were spelled correctly
+    def boom(*a, **k):
+        raise AssertionError("fetch_daily_history must not be reached")
+    monkeypatch.setattr("app.services.data_cache.fetch_daily_history", boom)
+    monkeypatch.setattr(evaluate_cli, "get_settings", _pinned_settings)
+    with pytest.raises(SystemExit) as exc:
+        evaluate_cli.main(argv + ["--provider", "none"])
+    assert exc.value.code == 2
+    err = capsys.readouterr().err
+    assert "no pinned snapshot" in err and "--refresh" in err
+
+
+def test_symbol_is_upper_cased_and_empty_is_refused(monkeypatch, capsys, tmp_path):
+    from app.services.data_cache import save_run_record
+
+    monkeypatch.setattr(evaluate_cli, "get_settings", _pinned_settings)
+    with pytest.raises(SystemExit) as exc:
+        evaluate_cli.main(["--symbol=", "--provider", "none"])
+    assert exc.value.code == 2 and "must not be empty" in capsys.readouterr().err
+    monkeypatch.setattr(evaluate_cli, "save_run_record", lambda report: save_run_record(report, tmp_path))
+    evaluate_cli.main(["--symbol", "btc-usd", "--provider", "none"])
+    assert "cache:data/snapshots/BTC-USD_3y.pkl" in capsys.readouterr().out
+
+
+def test_provider_choice_is_case_insensitive_like_the_env_setting(no_data, capsys):
+    # the .env value is lower-cased by make_provider; the flag must match
+    with pytest.raises(SystemExit) as exc:
+        evaluate_cli.main(["--provider", "Ollama", "--symbol", "NOPE"])
+    assert exc.value.code == 2 and "no pinned snapshot" in capsys.readouterr().err   # got past parsing
 
 
 # --- kalman-cli -----------------------------------------------------------------
@@ -122,3 +163,10 @@ def test_kalman_symbol_arity_is_checked(argv, monkeypatch):
     with pytest.raises(SystemExit) as exc:
         kalman_cli.main(argv)
     assert exc.value.code == 2
+
+
+def test_kalman_unpinned_pair_is_a_usage_error_not_a_traceback(capsys):
+    with pytest.raises(SystemExit) as exc:
+        kalman_cli.main(["pairs", "SPY", "NOPE"])
+    assert exc.value.code == 2
+    assert "no pinned snapshot" in capsys.readouterr().err

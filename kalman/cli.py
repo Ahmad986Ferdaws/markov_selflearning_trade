@@ -112,7 +112,10 @@ def main(argv: list[str] | None = None) -> None:
     if args.command in PAIR_COMMANDS:
         if len(args.symbols) > 2:
             parser.error(f"`{args.command}` takes at most two symbols, got {args.symbols}")
-        COMMANDS[args.command](*args.symbols)
+        try:
+            COMMANDS[args.command](*args.symbols)
+        except FileNotFoundError as error:   # pairs are read from pinned snapshots only
+            parser.error(f"no pinned snapshot for that pair ({error}); nothing is fetched live")
     else:
         if args.symbols:
             parser.error(f"`{args.command}` takes no symbols, got {args.symbols}")

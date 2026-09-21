@@ -9,15 +9,19 @@ Usage:
   evaluate-cli --symbol SPY --years 20    # another pinned snapshot (data/snapshots/SPY_20y.pkl)
   evaluate-cli --help
 
+Only --refresh touches the network: any (symbol, years) that is not already
+pinned under data/snapshots/ is refused otherwise.
+
 The provider can also be set once via LLM_PROVIDER in .env. The agent's responses
 are cached to data/agent_cache/, so a re-run is free and reproducible.
 """
 
 import argparse
 import sys
+from typing import NoReturn
 
 from app.config import get_settings
-from app.services.data_cache import load_or_fetch, save_run_record
+from app.services.data_cache import load_or_fetch, save_run_record, snapshot_path
 from app.services.evaluation import DEFAULT_POLICIES, evaluate, format_daily_report
 
 
@@ -37,20 +41,21 @@ def build_parser() -> argparse.ArgumentParser:
                     "prediction accuracy vs persistence, and trading vs buy-and-hold "
                     "net of costs. Optionally adds the LLM agent as a third policy.",
     )
-    p.add_argument("--provider", choices=("anthropic", "ollama", "none"),
+    p.add_argument("--provider", choices=("anthropic", "ollama", "none"), type=str.lower,
                    help="add the LLM agent as a third policy (overrides LLM_PROVIDER)")
     p.add_argument("--cache-only", action="store_true",
                    help="replay the agent from its on-disk response cache; never make a live call")
     p.add_argument("--refresh", action="store_true",
-                   help="re-pull fresh data from yfinance and re-pin the snapshot")
-    p.add_argument("--symbol", help="ticker to evaluate (default: REGIME_SYMBOL from .env); a "
-                                    "symbol without a pinned snapshot is fetched live and pinned")
+                   help="pull data from yfinance and (re-)pin the snapshot; the ONLY way "
+                        "this command touches the network")
+    p.add_argument("--symbol", help="ticker to evaluate (default: REGIME_SYMBOL from .env); "
+                                    "must already be pinned under data/snapshots unless --refresh")
     p.add_argument("--years", type=int, default=3,
                    help="history span in years; selects data/snapshots/<symbol>_<years>y.pkl (default 3)")
     return p
 
 
-def _fail(message: str) -> None:
+def _fail(message: str) -> NoReturn:
     print(f"evaluate-cli: {message}", file=sys.stderr)
     raise SystemExit(2)
 
@@ -96,7 +101,16 @@ def main(argv: list[str] | None = None) -> None:
     s = get_settings()
     if args.provider:
         s = s.model_copy(update={"llm_provider": args.provider})
-    symbol = args.symbol or s.regime_symbol
+    if args.symbol is not None and not args.symbol.strip():
+        _fail("--symbol must not be empty")
+    # Yahoo tickers are upper-case; a lower-case spelling would only "work" on a
+    # case-insensitive filesystem and then write a second record family.
+    symbol = args.symbol.strip().upper() if args.symbol is not None else s.regime_symbol
+    # Never reach the network by accident: without --refresh the (symbol, years)
+    # pair must already be pinned, whatever flags got it here.
+    if not args.refresh and not snapshot_path(symbol, args.years).exists():
+        _fail(f"no pinned snapshot for {symbol} ({args.years}y) at "
+              f"{snapshot_path(symbol, args.years)}; pass --refresh to fetch and pin it")
 
     # A typo in a .env knob used to surface as a raw traceback after the data
     # load; validate the grid before touching data or a provider.
