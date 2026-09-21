@@ -136,3 +136,41 @@ def test_main_default_picks_newest_record(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr(diagnose, "RESULTS_DIR", tmp_path)
     main([])
     assert "Diagnosis: NEW" in capsys.readouterr().out
+
+
+# --- values, not just keys (Codex review on #26) -----------------------------------
+@pytest.mark.parametrize("value", [None, "0.9", True, float("nan"), float("inf"), [0.9]])
+def test_non_numeric_accuracy_values_are_refused(value):
+    rec = _record(0.9, 0.9, 0.8, 0.8)
+    rec["accuracy"]["hit_rate"] = value
+    with pytest.raises(NotARunRecord, match="finite number"):
+        format_diagnosis(rec)
+
+
+@pytest.mark.parametrize("n", [1.9, 328.0, "328", True, None])
+def test_non_integral_prediction_counts_are_refused(n):
+    with pytest.raises(NotARunRecord, match="integer count"):
+        format_diagnosis(_record(0.9, 0.9, 0.8, 0.8, n=n))
+
+
+@pytest.mark.parametrize("bad", [
+    {"policies": [None]}, {"policies": "baseline"},
+    {"policies": [{"name": "b", "total_return": None}]},
+    {"warnings": "gate fired"}, {"warnings": [None]},
+])
+def test_malformed_policies_or_warnings_are_refused(bad):
+    with pytest.raises(NotARunRecord):
+        format_diagnosis(_record(0.9, 0.9, 0.8, 0.8, **bad))
+
+
+def test_main_null_metric_exits_1_without_traceback(tmp_path, capsys):
+    rec = _record(0.9, 0.9, 0.8, 0.8)
+    rec["accuracy"]["persistence_hit_rate"] = None
+    path = tmp_path / "null.json"
+    path.write_text(json.dumps(rec))
+    with pytest.raises(SystemExit) as exc:
+        main([str(path)])
+    assert exc.value.code == 1
+    captured = capsys.readouterr()
+    assert "finite number" in captured.err and "Traceback" not in captured.err
+    assert "[record]" not in captured.out       # refused before any narration

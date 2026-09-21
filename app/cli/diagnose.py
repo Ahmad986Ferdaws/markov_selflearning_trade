@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -59,13 +60,31 @@ def as_run_record(rec) -> dict:
     missing = [k for k in _REQUIRED_ACCURACY if k not in acc]
     if missing:
         raise NotARunRecord(f"run record is missing accuracy field(s): {', '.join(missing)}")
-    try:
-        n = int(acc.get("n", 0))
-    except (TypeError, ValueError) as error:
-        raise NotARunRecord("run record 'accuracy.n' is not an integer") from error
+    for key in _REQUIRED_ACCURACY:
+        if not _is_finite_number(acc[key]):
+            raise NotARunRecord(f"run record accuracy.{key} must be a finite number, got {acc[key]!r}")
+    n = acc.get("n", 0)
+    # a genuine count: JSON int, not a float to truncate, not a bool, not "328"
+    if isinstance(n, bool) or not isinstance(n, int):
+        raise NotARunRecord(f"run record 'accuracy.n' must be an integer count, got {n!r}")
     if n <= 0:
         raise NotARunRecord("run record has no held-out predictions (accuracy.n = 0); nothing to diagnose")
+    pols = rec.get("policies", [])
+    if not isinstance(pols, list) or any(not isinstance(p, dict) for p in pols):
+        raise NotARunRecord("run record 'policies' must be a list of objects")
+    for p in pols:
+        for key in ("total_return", "sharpe"):
+            if key in p and not _is_finite_number(p[key]):
+                raise NotARunRecord(f"run record policy {p.get('name', '?')!r}.{key} must be a finite number")
+    warns = rec.get("warnings", [])
+    if not isinstance(warns, list) or any(not isinstance(w, str) for w in warns):
+        raise NotARunRecord("run record 'warnings' must be a list of strings")
     return rec
+
+
+def _is_finite_number(value) -> bool:
+    return (not isinstance(value, bool) and isinstance(value, (int, float))
+            and math.isfinite(value))
 
 
 def load_run_record(path: Path) -> dict:
