@@ -174,3 +174,44 @@ def test_main_null_metric_exits_1_without_traceback(tmp_path, capsys):
     captured = capsys.readouterr()
     assert "finite number" in captured.err and "Traceback" not in captured.err
     assert "[record]" not in captured.out       # refused before any narration
+
+
+# --- inputs that still escaped as tracebacks (independent review of #26) -------
+@pytest.mark.parametrize("bad", [
+    {"policies": [{"name": None, "total_return": 0.1}]},
+    {"policies": [{"name": ["b"], "total_return": 0.1}]},
+    {"symbol": None}, {"symbol": {"x": 1}},
+])
+def test_non_string_names_are_refused(bad):
+    with pytest.raises(NotARunRecord, match="must be a string"):
+        format_diagnosis(_record(0.9, 0.9, 0.8, 0.8, **bad))
+
+
+def test_integer_too_large_for_a_float_is_refused():
+    rec = _record(0.9, 0.9, 0.8, 0.8)
+    rec["accuracy"]["hit_rate"] = 10 ** 400          # math.isfinite would overflow
+    with pytest.raises(NotARunRecord, match="finite number"):
+        format_diagnosis(rec)
+    rec = _record(0.9, 0.9, 0.8, 0.8, policies=[{"name": "b", "total_return": 10 ** 400}])
+    with pytest.raises(NotARunRecord, match="finite number"):
+        format_diagnosis(rec)
+
+
+def test_main_non_utf8_file_exits_1_with_one_line(tmp_path, capsys):
+    bad = tmp_path / "binary.json"
+    bad.write_bytes(b"\xff\xfe\x00garbage")
+    with pytest.raises(SystemExit) as exc:
+        main([str(bad)])
+    assert exc.value.code == 1
+    captured = capsys.readouterr()
+    assert captured.err == f"diagnose-cli: {bad}: not a UTF-8 text file\n"
+    assert captured.out == ""
+
+
+def test_main_refusal_names_the_file(tmp_path, capsys):
+    summary = tmp_path / "summary.json"
+    summary.write_text(json.dumps({"aggregate": {"edge": 0.0}}))
+    with pytest.raises(SystemExit):
+        main([str(summary)])
+    err = capsys.readouterr().err
+    assert str(summary) in err and "no 'accuracy' block" in err

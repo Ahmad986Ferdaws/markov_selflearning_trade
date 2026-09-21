@@ -13,7 +13,8 @@ already-computed record — it cannot re-derive market state, so it is
 lookahead-safe by construction.
 
 It is equally honest about its input: anything that is not a run record with
-held-out predictions is refused with a one-line message and exit status 1.
+held-out predictions is refused with a one-line message naming the file and
+exit status 1 (usage errors exit 2, as argparse does).
 It used to default every missing field to zero and narrate "IDENTICAL to
 persistence" over an empty dict, a study summary, or a JSON array.
 """
@@ -69,10 +70,14 @@ def as_run_record(rec) -> dict:
         raise NotARunRecord(f"run record 'accuracy.n' must be an integer count, got {n!r}")
     if n <= 0:
         raise NotARunRecord("run record has no held-out predictions (accuracy.n = 0); nothing to diagnose")
+    if "symbol" in rec and not isinstance(rec["symbol"], str):
+        raise NotARunRecord("run record 'symbol' must be a string")
     pols = rec.get("policies", [])
     if not isinstance(pols, list) or any(not isinstance(p, dict) for p in pols):
         raise NotARunRecord("run record 'policies' must be a list of objects")
     for p in pols:
+        if "name" in p and not isinstance(p["name"], str):
+            raise NotARunRecord("run record policy 'name' must be a string")
         for key in ("total_return", "sharpe"):
             if key in p and not _is_finite_number(p[key]):
                 raise NotARunRecord(f"run record policy {p.get('name', '?')!r}.{key} must be a finite number")
@@ -83,18 +88,27 @@ def as_run_record(rec) -> dict:
 
 
 def _is_finite_number(value) -> bool:
-    return (not isinstance(value, bool) and isinstance(value, (int, float))
-            and math.isfinite(value))
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return False
+    try:
+        return math.isfinite(value)
+    except OverflowError:          # a JSON integer too large for a float
+        return False
 
 
 def load_run_record(path: Path) -> dict:
-    """Read + validate a record file; every failure becomes a NotARunRecord."""
+    """Read + validate a record file; every failure becomes a NotARunRecord.
+
+    Messages do not repeat the path; `main` prefixes it once for every refusal.
+    """
     try:
-        raw = json.loads(Path(path).read_text())
+        raw = json.loads(Path(path).read_text(encoding="utf-8"))
     except OSError as error:
-        raise NotARunRecord(f"cannot read {path}: {error.strerror or error}") from error
+        raise NotARunRecord(f"cannot read file ({error.strerror or error})") from error
+    except UnicodeDecodeError as error:
+        raise NotARunRecord("not a UTF-8 text file") from error
     except json.JSONDecodeError as error:
-        raise NotARunRecord(f"{path} is not valid JSON ({error.msg} at line {error.lineno})") from error
+        raise NotARunRecord(f"not valid JSON ({error.msg} at line {error.lineno})") from error
     return as_run_record(raw)
 
 
@@ -179,7 +193,7 @@ def main(argv: list[str] | None = None) -> None:
     try:
         rec = load_run_record(path)
     except NotARunRecord as error:
-        print(f"diagnose-cli: {error}", file=sys.stderr)
+        print(f"diagnose-cli: {path}: {error}", file=sys.stderr)
         raise SystemExit(1)
     print(f"[record] {path}")
     print(format_diagnosis(rec))
