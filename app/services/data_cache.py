@@ -74,7 +74,12 @@ def atomic_write_text(path: Path | str, text: str) -> Path:
     else:  # pragma: no cover - 64 uuid collisions
         raise OSError(f"could not create a temporary file next to {path}")
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
+        try:
+            f = os.fdopen(fd, "w", encoding="utf-8")
+        except BaseException:
+            os.close(fd)
+            raise
+        with f:
             f.write(text)
         os.replace(temporary, path)
     finally:
@@ -87,7 +92,13 @@ def _legacy_record_path(results_dir: Path, report) -> Path | None:
     stays inside results_dir (the old naming did not sanitize the symbol)."""
     data_hash = getattr(report, "data_hash", "") or "nohash"
     candidate = results_dir / f"{report.symbol.replace('/', '_')}_{data_hash[:8]}.json"
-    if candidate.resolve().parent != results_dir.resolve():
+    try:
+        # a symlinked legacy file pointing outside is not ours to touch; a NUL
+        # byte or an over-long name raises here (ValueError / ENAMETOOLONG) and
+        # simply means "no legacy record"
+        if candidate.resolve().parent != results_dir.resolve() or not candidate.exists():
+            return None
+    except (OSError, ValueError):
         return None
     return candidate
 
@@ -115,9 +126,13 @@ def save_run_record(report, results_dir: Path | str = RESULTS_DIR) -> Path:
         path.touch()
         return path
     legacy = _legacy_record_path(results_dir, report)
-    if legacy is not None and legacy != path and legacy.exists():
+    if legacy is not None and legacy != path:
         try:
-            same = json.loads(legacy.read_text(encoding="utf-8")) == json.loads(payload)
+            # strict: the legacy JSON re-serialised canonically must equal the
+            # new payload byte for byte (so 1 vs 1.0 or true vs 1 do not match)
+            canonical = json.dumps(json.loads(legacy.read_text(encoding="utf-8")),
+                                   indent=2, sort_keys=True, allow_nan=False)
+            same = canonical == payload
         except (OSError, ValueError):
             same = False   # unreadable or not JSON: leave it alone, write the new record
         if same:

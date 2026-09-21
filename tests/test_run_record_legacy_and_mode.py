@@ -14,6 +14,8 @@ import json
 import os
 import shutil
 import stat
+
+import pytest
 from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 
@@ -69,15 +71,32 @@ def test_unreadable_legacy_file_is_left_alone(tmp_path):
     assert path != legacy and legacy.read_text() == "historical evidence, not JSON"
 
 
-def test_legacy_lookup_never_escapes_the_results_dir(tmp_path):
+def test_legacy_lookup_never_follows_a_symlink_out_of_the_results_dir(tmp_path):
+    # the old naming replaced "/" with "_", so no symbol string can name a path
+    # outside results/; the guard matters for a legacy entry that is a symlink
     results = tmp_path / "results"
     results.mkdir()
-    outside = tmp_path / "escape_abcdef12.json"          # what "../escape" would name
-    report = replace(Report(), symbol="../escape")
-    outside.write_text(json.dumps(asdict(report), indent=2))
-    path = save_run_record(report, results)
-    assert path.parent == results
-    assert outside.read_text() == json.dumps(asdict(report), indent=2)
+    outside = tmp_path / "elsewhere.json"
+    outside.write_text(_legacy_bytes(Report()))           # value-identical target
+    (results / "SYN_abcdef12.json").symlink_to(outside)
+    before = outside.stat().st_mtime
+    path = save_run_record(Report(), results)
+    assert path.parent == results and not path.is_symlink()   # a new record inside
+    assert outside.read_text() == _legacy_bytes(Report()) and outside.stat().st_mtime == before
+
+
+@pytest.mark.parametrize("symbol", ["A" * 300, "SY\x00N", "../escape", "", "."])
+def test_degenerate_symbols_still_yield_a_record(tmp_path, symbol):
+    # main returned a record for these; the legacy lookup must not raise
+    path = save_run_record(replace(Report(), symbol=symbol), tmp_path)
+    assert path.parent == tmp_path and path.exists()
+
+
+def test_legacy_reuse_is_type_strict(tmp_path):
+    legacy = tmp_path / "SYN_abcdef12.json"
+    legacy.write_text(json.dumps({"symbol": "SYN", "data_hash": "abcdef12" * 8, "total_return": 1}))
+    path = save_run_record(replace(Report(), total_return=1.0), tmp_path)   # 1 vs 1.0
+    assert path != legacy
 
 
 def test_fresh_evaluate_reuses_the_committed_receipt(tmp_path):
