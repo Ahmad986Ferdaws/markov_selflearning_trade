@@ -25,6 +25,9 @@ def test_labeled_value_before_sentence_period_parses(raw, expected):
 @pytest.mark.parametrize("raw", [
     "position: 0.5.3",          # a second number glued on
     "position: 0.8.5",
+    "position: 0..5",           # repeated dots: no backtracking to "0" (Codex review)
+    "position: 0.5..3",
+    "position: 0.5..",
     "position: 0.5oops",
     "position: 50%",
     "position: 0.5 + 0.2",

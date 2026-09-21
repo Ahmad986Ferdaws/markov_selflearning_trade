@@ -237,9 +237,10 @@ _NUM = re.compile(_NUMBER)
 _POS_KEYS = ("position", "exposure", "target", "target_position", "weight", "allocation")
 _LABELED = re.compile(
     r"\b(?:position|exposure|target_position|target|weight|allocation)\s*"
-    # after the number: no word char, no ".digit" (0.5.3), no "%" — but a bare
-    # sentence period ("exposure to 0.8.") is prose, not part of the number
-    r"(?:to|of|at|[:=])?\s*(" + _NUMBER + r")(?!\w|\.\d|%)(?!\s*[-+/*^=])", re.I,
+    # after the number: no word char, no ".digit" (0.5.3), no ".." (0..5 — the
+    # engine would otherwise backtrack to "0"), no "%" — but a single sentence
+    # period ("exposure to 0.8.") is prose, not part of the number
+    r"(?:to|of|at|[:=])?\s*(" + _NUMBER + r")(?!\w|\.[\d.]|%)(?!\s*[-+/*^=])", re.I,
 )
 
 
