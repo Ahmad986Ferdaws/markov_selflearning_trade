@@ -45,7 +45,7 @@ def test_zero_predictions_is_refused_not_narrated():
 
 
 def test_non_integer_n_is_refused():
-    with pytest.raises(NotARunRecord, match="not an integer"):
+    with pytest.raises(NotARunRecord, match="integer count"):
         format_diagnosis(_record(0.9, 0.9, 0.8, 0.8, n="many"))
 
 
