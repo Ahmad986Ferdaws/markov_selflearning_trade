@@ -9,7 +9,7 @@
 
 from __future__ import annotations
 
-import sys
+import argparse
 
 import numpy as np
 
@@ -19,11 +19,6 @@ from .data import (load_pair_from_snapshots, synthetic_constant_pair,
 from .ledger import LedgerConfig
 from .pairs import qualify_pair
 from .research import WalkForwardConfig, format_report, walk_forward
-
-
-def _pair_args() -> tuple[str, str]:
-    a = [x for x in sys.argv[2:] if not x.startswith("-")]
-    return (a[0] if a else "SPY"), (a[1] if len(a) > 1 else "QQQ")
 
 
 def demo() -> None:
@@ -50,8 +45,7 @@ def demo() -> None:
     print("NOTE: synthetic correctness demo — not empirical performance.")
 
 
-def pairs() -> None:
-    s1, s2 = _pair_args()
+def pairs(s1: str = "SPY", s2: str = "QQQ") -> None:
     pair = load_pair_from_snapshots(s1, s2)
     d = qualify_pair(pair, train_end=int(len(pair) * 0.5))
     print(f"=== Pair qualification (TRAIN half only): {s1}/{s2} ===")
@@ -59,8 +53,7 @@ def pairs() -> None:
     print("(1 pair screened; diagnostics, not proof of profitability)")
 
 
-def walkforward() -> None:
-    s1, s2 = _pair_args()
+def walkforward(s1: str = "SPY", s2: str = "QQQ") -> None:
     pair = load_pair_from_snapshots(s1, s2)
     res = walk_forward(pair, WalkForwardConfig(), LedgerConfig())
     print(format_report(res, f"{s1}/{s2}"))
@@ -97,14 +90,33 @@ def replay() -> None:
 
 COMMANDS = {"demo": demo, "pairs": pairs, "walkforward": walkforward,
             "trend": trend, "replay": replay}
+PAIR_COMMANDS = ("pairs", "walkforward")
 
 
-def main() -> None:
-    cmd = sys.argv[1] if len(sys.argv) > 1 else "demo"
-    if cmd not in COMMANDS:
-        print(__doc__)
-        raise SystemExit(1)
-    COMMANDS[cmd]()
+def build_parser() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(
+        prog="kalman-cli", description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    p.add_argument("command", nargs="?", default="demo", choices=sorted(COMMANDS),
+                   help="research command (default: demo)")
+    p.add_argument("symbols", nargs="*", metavar="SYMBOL",
+                   help="pair for `pairs` / `walkforward` (default: SPY QQQ); "
+                        "loaded from the pinned data/snapshots, never fetched live")
+    return p
+
+
+def main(argv: list[str] | None = None) -> None:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    if args.command in PAIR_COMMANDS:
+        if len(args.symbols) > 2:
+            parser.error(f"`{args.command}` takes at most two symbols, got {args.symbols}")
+        COMMANDS[args.command](*args.symbols)
+    else:
+        if args.symbols:
+            parser.error(f"`{args.command}` takes no symbols, got {args.symbols}")
+        COMMANDS[args.command]()
 
 
 if __name__ == "__main__":
