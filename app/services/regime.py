@@ -173,6 +173,8 @@ def regime_feature(
     inclusive slice handed intraday replays the settled close of their own day).
     Without ``as_of``, the latest available state is returned.
     """
+    if mode not in ("zscore", "absolute"):
+        raise ValueError(f"regime mode must be 'zscore' or 'absolute', got {mode!r}")
     closes = history["Close"] if "Close" in history.columns else history.squeeze()
     if as_of is not None:
         as_of_date = pd.Timestamp(as_of).date()

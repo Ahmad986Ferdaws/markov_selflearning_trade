@@ -1,4 +1,5 @@
 from functools import lru_cache
+from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -12,7 +13,9 @@ class Settings(BaseSettings):
     regime_symbol: str = "BTC-USD"
     regime_window: int = 20
     regime_k: float = 0.5
-    regime_mode: str = "zscore"
+    # validated: define_states treats anything but "zscore" as absolute mode,
+    # so a typo here must fail at startup rather than silently relabel
+    regime_mode: Literal["zscore", "absolute"] = "zscore"
     regime_bull_thresh: float = 0.02
     regime_bear_thresh: float = -0.02
     benchmark_symbol: str = "BTC-USD"

@@ -63,3 +63,15 @@ def test_runner_passes_k_and_mode_from_settings():
     src = inspect.getsource(runner.run_loop)
     assert "k=settings.regime_k" in src
     assert "mode=settings.regime_mode" in src
+
+
+# --- a typo must not silently select absolute mode (Codex review on #30) ------
+def test_unknown_regime_mode_is_rejected_at_settings_and_at_the_feature():
+    import pytest
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, regime_mode="zscor")
+    history, _ = load_or_fetch("BTC-USD", years=3)
+    with pytest.raises(ValueError, match="regime mode"):
+        regime_feature(history, window=20, mode="absolut")
