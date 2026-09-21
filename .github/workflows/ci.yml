@@ -16,6 +16,8 @@ jobs:
           cache: pip
       - name: Install
         run: pip install -e ".[dev]"
+      - name: Lint (pyflakes rules only — unused imports, undefined names)
+        run: ruff check app kalman scripts tests
       - name: Test suite (fully offline — FakeProvider, pinned snapshots)
         run: python -m pytest -q
       - name: Determinism receipt — the null result must reproduce

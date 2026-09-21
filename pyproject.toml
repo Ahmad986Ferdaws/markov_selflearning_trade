@@ -29,6 +29,7 @@ dependencies = [
 dev = [
     "pytest>=8.3.0",
     "pytest-asyncio>=0.24.0",
+    "ruff>=0.6.0",
 ]
 
 [project.scripts]
@@ -44,3 +45,13 @@ packages = ["app", "kalman"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py311"
+extend-exclude = ["design", "media", "data", "results"]
+
+[tool.ruff.lint]
+# Correctness only (the pyflakes rule set): unused imports and variables,
+# undefined names, duplicate definitions. No style or formatting rules are
+# enforced, so the check never argues about layout.
+select = ["F"]

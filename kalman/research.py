@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import itertools
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
@@ -27,8 +27,8 @@ import pandas as pd
 from .core import AdaptiveQ, PairFilter, StepRecord, run_pair_filter
 from .data import PairData
 from .ledger import LedgerConfig, run_ledger
-from .pairs import PairDiagnostics, qualify_pair
-from .strategy import Decision, Position, StateMachine, StrategyConfig
+from .pairs import qualify_pair
+from .strategy import Decision, StateMachine, StrategyConfig
 
 BARS_PER_YEAR = 252
 
