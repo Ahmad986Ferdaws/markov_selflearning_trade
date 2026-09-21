@@ -32,6 +32,7 @@ def _parse_ints(s: str) -> tuple[int, ...]:
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="evaluate-cli",
+        allow_abbrev=False,   # `--ref` must not silently mean --refresh (a live fetch)
         description="Daily walk-forward evaluation on the pinned snapshot: regime "
                     "prediction accuracy vs persistence, and trading vs buy-and-hold "
                     "net of costs. Optionally adds the LLM agent as a third policy.",

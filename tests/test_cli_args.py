@@ -31,6 +31,9 @@ def no_data(monkeypatch):
     ["--years", "0"],
     ["--years", "three"],
     ["--not-a-flag"],
+    ["--ref"],                      # abbreviation would have meant --refresh: a live fetch
+    ["--prov", "none"],
+    ["--sym", "BTC-USD"],
 ])
 def test_evaluate_bad_invocations_exit_2_before_touching_data(argv, no_data, capsys):
     with pytest.raises(SystemExit) as exc:

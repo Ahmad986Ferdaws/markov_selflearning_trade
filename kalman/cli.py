@@ -95,7 +95,7 @@ PAIR_COMMANDS = ("pairs", "walkforward")
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog="kalman-cli", description=__doc__,
+        prog="kalman-cli", description=__doc__, allow_abbrev=False,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     p.add_argument("command", nargs="?", default="demo", choices=sorted(COMMANDS),
