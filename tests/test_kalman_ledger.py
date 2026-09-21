@@ -14,7 +14,7 @@ from kalman.data import align_pair, synthetic_pair
 from kalman.ledger import (CostConfig, HedgeMode, LedgerConfig, PriceModel,
                            run_ledger)
 from kalman.research import backtest, signals_kalman
-from kalman.strategy import Decision, Position, StateMachine, StrategyConfig
+from kalman.strategy import Decision, Position, StrategyConfig
 
 
 def _mk_pair(n=6, p1=100.0, p2=50.0):

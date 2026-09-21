@@ -29,7 +29,6 @@ import pandas as pd
 
 from app.services.data_cache import load_or_fetch
 from app.services.evaluation import _walk_forward, causal_states, evaluate
-from app.services.regime import STATE_TO_IDX
 
 OUT = Path("results/long_history")
 OUT.mkdir(parents=True, exist_ok=True)
