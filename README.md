@@ -128,6 +128,8 @@ is built and offline-verified; the live agent row is pending a reachable model:
 evaluate-cli --provider ollama              # free, local (Qwen on Ollama)
 evaluate-cli --provider anthropic           # hosted; needs ANTHROPIC_API_KEY in .env
 evaluate-cli --provider ollama --cache-only # replay recorded decisions; zero live calls
+evaluate-cli --symbol SPY --years 20        # any other pinned snapshot (data/snapshots/)
+evaluate-cli --help                         # only --refresh ever touches the network
 ```
 
 ## Documentation
