@@ -84,6 +84,8 @@ def _build_regime_lookup(
         lookup[key] = regime_feature(
             benchmark_history,
             window=settings.regime_window,
+            k=settings.regime_k,            # was omitted: REGIME_K was inert here
+            mode=settings.regime_mode,      # was never read anywhere
             bull_thresh=settings.regime_bull_thresh,
             bear_thresh=settings.regime_bear_thresh,
             as_of=snap_row.created_at,

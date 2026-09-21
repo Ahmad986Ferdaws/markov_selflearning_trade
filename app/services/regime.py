@@ -163,6 +163,7 @@ def regime_feature(
     bull_thresh: float = 0.02,
     bear_thresh: float = -0.02,
     as_of=None,
+    mode: str = "zscore",
 ) -> RegimeFeature:
     """Latest state + one-step forecast from daily close history.
 
@@ -172,12 +173,14 @@ def regime_feature(
     inclusive slice handed intraday replays the settled close of their own day).
     Without ``as_of``, the latest available state is returned.
     """
+    if mode not in ("zscore", "absolute"):
+        raise ValueError(f"regime mode must be 'zscore' or 'absolute', got {mode!r}")
     closes = history["Close"] if "Close" in history.columns else history.squeeze()
     if as_of is not None:
         as_of_date = pd.Timestamp(as_of).date()
         closes = closes[[d < as_of_date for d in closes.index.date]]
     returns = closes.pct_change().dropna()
-    states = define_states(returns, window=window, k=k,
+    states = define_states(returns, window=window, k=k, mode=mode,
                            bull_thresh=bull_thresh, bear_thresh=bear_thresh)
     if len(states) < 2:
         uniform = 1.0 / 3

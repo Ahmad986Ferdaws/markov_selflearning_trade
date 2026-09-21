@@ -1,5 +1,7 @@
 from functools import lru_cache
+from typing import Literal
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -12,7 +14,15 @@ class Settings(BaseSettings):
     regime_symbol: str = "BTC-USD"
     regime_window: int = 20
     regime_k: float = 0.5
-    regime_mode: str = "zscore"
+    # validated: define_states treats anything but "zscore" as absolute mode,
+    # so a typo here must fail at startup rather than silently relabel
+    regime_mode: Literal["zscore", "absolute"] = "zscore"
+
+    @field_validator("regime_mode", mode="before")
+    @classmethod
+    def _normalise_regime_mode(cls, value):
+        # REGIME_MODE=Absolute / " zscore " are the same knob; typos still fail
+        return value.strip().lower() if isinstance(value, str) else value
     regime_bull_thresh: float = 0.02
     regime_bear_thresh: float = -0.02
     benchmark_symbol: str = "BTC-USD"

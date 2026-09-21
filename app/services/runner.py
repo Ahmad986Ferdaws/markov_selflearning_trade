@@ -70,9 +70,15 @@ async def run_loop(run_id: int, settings: Settings) -> None:
                 await asyncio.sleep(settings.poll_interval_seconds)
                 continue
 
+            # k and mode are the knobs that actually move a zscore label;
+            # bull/bear_thresh only matter in absolute mode. Review found the
+            # legacy paths passed only the inert pair, so REGIME_K in .env
+            # changed nothing here while regime-cli honoured it.
             feat = regime_feature(
                 benchmark_history,
                 window=settings.regime_window,
+                k=settings.regime_k,
+                mode=settings.regime_mode,
                 bull_thresh=settings.regime_bull_thresh,
                 bear_thresh=settings.regime_bear_thresh,
                 as_of=trade_snapshot.timestamp if trade_snapshot else None,
