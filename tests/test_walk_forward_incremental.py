@@ -121,7 +121,8 @@ def test_pinned_btc_record_reproduces_exactly():
     # The committed receipt was produced by the from-scratch estimator; the
     # incremental walk must reproduce every accuracy number bit-for-bit.
     rec = json.loads(Path("results/BTC-USD_4a150b23.json").read_text())
-    history, _ = load_or_fetch("BTC-USD", years=3)
+    history, src = load_or_fetch("BTC-USD", years=3)
+    assert src.startswith("cache:")          # pinned snapshot, never a live pull
     report = evaluate(
         history, symbol="BTC-USD", train_frac=0.7,
         grid_windows=(10, 20, 30), grid_k=(0.2, 0.35, 0.5, 0.75),

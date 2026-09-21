@@ -138,7 +138,7 @@ class _TransitionCounter:
         self.n_observed = 0
         self._last: int | None = None
 
-    def observe(self, label) -> None:
+    def observe(self, label: str | None) -> None:
         if label not in STATE_TO_IDX:
             return
         idx = STATE_TO_IDX[label]
@@ -190,6 +190,8 @@ def _walk_forward(
     # whole prefix at every step (which made the walk quadratic: ~15 s per
     # config grid on a 20-year history). Everything before `start` is primed
     # first so the estimate at day t is over exactly the labels up to t.
+    if start < 0:
+        raise ValueError("start must be >= 0 (a negative slice would prime the tail twice)")
     counter = _TransitionCounter()
     for s in states[:start]:
         counter.observe(s)
