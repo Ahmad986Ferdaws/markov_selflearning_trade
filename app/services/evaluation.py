@@ -526,14 +526,23 @@ def evaluate(
 
 
 def format_daily_report(r: DailyReport) -> str:
+    # `"  " + ", ".join(...) or "(none)"` never showed the fallback: the
+    # two-space prefix made the left operand truthy even for an empty mix.
+    mix_line = (
+        "  " + ", ".join(f"{s}={p:.1%}" for s, p in r.regime_mix.items())
+        if r.regime_mix else "  (none)"
+    )
     lines = [
         f"=== Daily Evaluation: {r.symbol} ===",
         f"Train days: {r.train_size}  |  Test days: {r.test_size}  |  "
         f"Chosen window={r.chosen_window}, k={r.chosen_k}",
-        f"Data hash: {r.data_hash[:12]} (reproducible)" if r.data_hash else "",
+    ]
+    if r.data_hash:
+        lines.append(f"Data hash: {r.data_hash[:12]} (reproducible)")
+    lines += [
         "",
         "--- Regime mix (test) ---",
-        "  " + ", ".join(f"{s}={p:.1%}" for s, p in r.regime_mix.items()) or "  (none)",
+        mix_line,
         "",
         "--- Prediction accuracy (held-out test) ---",
         f"  Model        hit-rate: {r.accuracy.hit_rate:.1%}   balanced-acc: {r.accuracy.balanced_accuracy:.1%}   log-loss: {r.accuracy.log_loss:.3f}",
