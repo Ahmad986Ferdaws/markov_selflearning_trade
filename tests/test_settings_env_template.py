@@ -45,7 +45,11 @@ def test_provider_is_never_built_with_an_empty_model(monkeypatch, name):
     assert provider is not None and provider.model
 
 
-def test_explicit_values_in_template_still_apply():
+def test_explicit_values_in_template_still_apply(monkeypatch):
+    # the process environment outranks the file; keep a developer's exported
+    # LLM_PROVIDER from leaking into this assertion
+    for name in ("LLM_PROVIDER", "ALLOW_LEGACY_AGENT_API"):
+        monkeypatch.delenv(name, raising=False)
     s = Settings(_env_file=TEMPLATE)
     assert s.llm_provider == "none"
     assert s.allow_legacy_agent_api is False
