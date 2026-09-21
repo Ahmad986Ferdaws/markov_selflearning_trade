@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 
 from app.services.data_cache import history_hash
-from app.services.regime import STATE_ORDER, STATE_TO_IDX, estimate_transition_matrix, label_state
+from app.services.regime import STATE_ORDER, STATE_TO_IDX, label_state
 
 ANN = math.sqrt(252)
 _EPS = 1e-12
@@ -119,6 +119,43 @@ DEFAULT_POLICIES: dict = {
 }
 
 
+class _TransitionCounter:
+    """Incremental MLE transition counts over the valid labels seen so far.
+
+    `row(i)` is bit-for-bit what `estimate_transition_matrix(pd.Series(observed))[i]`
+    returns when `observed` is every label in STATE_TO_IDX observed so far, in
+    order — including the disclosed uniform-row fallback for a state with no
+    outgoing transitions yet. Labels that are None/unknown are skipped exactly
+    as the from-scratch estimator skips them (the next valid label chains to
+    the last valid one). The walk-forward updates this in O(1) per day instead
+    of re-counting the whole prefix, so a 20-year history evaluates in well
+    under a second instead of ~15 s, with identical output.
+    """
+
+    def __init__(self) -> None:
+        n_states = len(STATE_ORDER)
+        self.counts = np.zeros((n_states, n_states))
+        self.n_observed = 0
+        self._last: int | None = None
+
+    def observe(self, label) -> None:
+        if label not in STATE_TO_IDX:
+            return
+        idx = STATE_TO_IDX[label]
+        if self._last is not None:
+            self.counts[self._last, idx] += 1
+        self._last = idx
+        self.n_observed += 1
+
+    def row(self, idx: int) -> np.ndarray:
+        row = self.counts[idx]
+        row_sum = row.sum()
+        if row_sum > 0:
+            return row / row_sum
+        n_states = len(STATE_ORDER)
+        return np.ones(n_states) / n_states
+
+
 def _walk_forward(
     returns: pd.Series,
     states: list[str | None],
@@ -149,18 +186,25 @@ def _walk_forward(
     r = returns.to_numpy()
     n = len(r)
 
+    # Transition counts accumulate day by day instead of being rebuilt from the
+    # whole prefix at every step (which made the walk quadratic: ~15 s per
+    # config grid on a 20-year history). Everything before `start` is primed
+    # first so the estimate at day t is over exactly the labels up to t.
+    counter = _TransitionCounter()
+    for s in states[:start]:
+        counter.observe(s)
+
     for t in range(start, min(end, n - 1)):
         cur = states[t]
+        counter.observe(cur)
         nxt = states[t + 1]
         if cur is None or nxt is None or cur not in STATE_TO_IDX or nxt not in STATE_TO_IDX:
             continue
 
         # --- prediction (uses only states up to and including t) ---
-        observed = [s for s in states[: t + 1] if s in STATE_TO_IDX]
-        if len(observed) < 2:
+        if counter.n_observed < 2:
             continue
-        p = estimate_transition_matrix(pd.Series(observed))
-        dist = p[STATE_TO_IDX[cur]]
+        dist = counter.row(STATE_TO_IDX[cur])
         pred_probs.append(dist)
         actual_idx.append(STATE_TO_IDX[nxt])
         cur_idx.append(STATE_TO_IDX[cur])
