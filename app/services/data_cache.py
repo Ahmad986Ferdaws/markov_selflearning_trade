@@ -11,7 +11,7 @@ import hashlib
 import json
 import os
 import re
-import tempfile
+import uuid
 from dataclasses import asdict
 from pathlib import Path
 
@@ -52,17 +52,34 @@ def load_or_fetch(
     return history, f"fetched:{symbol} ({years}y) -> {path}"
 
 
-def file_mode_from_umask() -> int:
-    """The mode a plainly created file would get (0o666 masked by the umask).
+def atomic_write_text(path: Path | str, text: str) -> Path:
+    """Write `text` to `path` atomically, with a plainly created file's mode.
 
-    NamedTemporaryFile creates its file 0o600; renaming it into place keeps
-    that mode, so records and caches came out owner-only while every other
-    committed file is 0o644. Callers chmod the temporary to this before the
-    rename.
+    The temporary is created with os.open(..., 0o666) so the kernel applies
+    the process umask at creation (0o644 under the usual 022) — not
+    NamedTemporaryFile's owner-only 0o600, which survives the rename, and
+    without touching the process-wide umask (an os.umask(0)/restore pair is
+    a race for every other thread). The rename is atomic; a failed write
+    leaves the destination untouched.
     """
-    umask = os.umask(0)
-    os.umask(umask)
-    return 0o666 & ~umask
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    for _ in range(64):
+        temporary = path.parent / f".{path.name}.{uuid.uuid4().hex}.tmp"
+        try:
+            fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o666)
+            break
+        except FileExistsError:
+            continue
+    else:  # pragma: no cover - 64 uuid collisions
+        raise OSError(f"could not create a temporary file next to {path}")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(text)
+        os.replace(temporary, path)
+    finally:
+        temporary.unlink(missing_ok=True)
+    return path
 
 
 def _legacy_record_path(results_dir: Path, report) -> Path | None:
@@ -106,15 +123,4 @@ def save_run_record(report, results_dir: Path | str = RESULTS_DIR) -> Path:
         if same:
             legacy.touch()
             return legacy
-    temporary = None
-    try:
-        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=results_dir,
-                                         prefix=".record-", delete=False) as f:
-            temporary = Path(f.name)
-            f.write(payload)
-        os.chmod(temporary, file_mode_from_umask())
-        os.replace(temporary, path)
-    finally:
-        if temporary is not None:
-            temporary.unlink(missing_ok=True)
-    return path
+    return atomic_write_text(path, payload)

@@ -18,7 +18,7 @@ from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 
 from app.services.agent_policy import ResponseCache
-from app.services.data_cache import file_mode_from_umask, load_or_fetch, save_run_record
+from app.services.data_cache import atomic_write_text, load_or_fetch, save_run_record
 from app.services.evaluation import evaluate
 
 CANONICAL = Path("results/BTC-USD_4a150b23.json")
@@ -95,7 +95,6 @@ def test_fresh_evaluate_reuses_the_committed_receipt(tmp_path):
 def test_new_record_mode_follows_the_umask(tmp_path):
     path = save_run_record(Report(), tmp_path)
     assert stat.S_IMODE(path.stat().st_mode) == (0o666 & ~_umask())
-    assert stat.S_IMODE(path.stat().st_mode) == file_mode_from_umask()
 
 
 def test_agent_cache_mode_follows_the_umask(tmp_path):
@@ -104,3 +103,22 @@ def test_agent_cache_mode_follows_the_umask(tmp_path):
     cache.save()
     assert stat.S_IMODE(cache.path.stat().st_mode) == (0o666 & ~_umask())
     assert json.loads(cache.path.read_text()) == {"k": "v"}
+
+
+def test_writers_never_touch_the_process_umask(tmp_path, monkeypatch):
+    # an os.umask(0)/restore pair would race every other thread in the process
+    def forbidden(_mask):
+        raise AssertionError("os.umask must not be called by the writers")
+    monkeypatch.setattr(os, "umask", forbidden)
+    save_run_record(Report(), tmp_path)
+    cache = ResponseCache(tmp_path / "c.json")
+    cache.get_or_call("k", lambda: "v")
+    cache.save()
+
+
+def test_atomic_write_leaves_no_temporary_and_replaces_in_place(tmp_path):
+    target = tmp_path / "out.json"
+    target.write_text("old")
+    atomic_write_text(target, "new")
+    assert target.read_text() == "new"
+    assert [p.name for p in tmp_path.iterdir()] == ["out.json"]
