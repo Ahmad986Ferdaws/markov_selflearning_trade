@@ -12,12 +12,7 @@ import numpy as np
 import pandas as pd
 
 from app.services.data_cache import load_or_fetch
-from app.services.regime import (
-    _position_from_state,
-    define_states,
-    sparse_cell_warnings,
-    walk_forward_backtest,
-)
+from app.services.regime import define_states, sparse_cell_warnings, walk_forward_backtest
 
 
 def _prefix_relabel_oracle(history, window, k, bull_thresh, bear_thresh,
@@ -33,7 +28,7 @@ def _prefix_relabel_oracle(history, window, k, bull_thresh, bear_thresh,
         if len(train_states) < 10:
             continue
         cur = train_states.iloc[-1]
-        pos = _position_from_state(cur)
+        pos = 1.0 if cur == "bull" else 0.0        # the Phase-0 rule: long in bull, flat otherwise
         cost = abs(pos - prev) * cost_rate
         equity *= 1.0 + (pos * float(returns.iloc[t]) - cost)
         equities.append(equity)
@@ -71,6 +66,21 @@ def test_warmup_skipping_matches_when_min_train_precedes_labels():
                                 bull_thresh=0.02, bear_thresh=-0.02,
                                 fee_pct=0.0, slippage_pct=0.0, min_train=5)
     assert len(bt.returns) == 300 - 1 - (20 - 1) - 10   # returns - warm-up - 10 labelled
+
+
+def test_null_label_after_warmup_matches_oracle():
+    # A zero close makes the next return infinite, so the rolling stats and
+    # therefore the labels go missing for a window AFTER warm-up. The latest
+    # labelled state must be carried across that gap exactly as the old
+    # prefix re-labelling did (labels[t-1] alone would be wrong here).
+    history = _random_walk(400, seed=4)
+    history.iloc[150, 0] = 0.0
+    bt = _assert_matches_oracle(history, window=10, k=0.5, bull_thresh=0.02, bear_thresh=-0.02,
+                                fee_pct=0.3, slippage_pct=0.5, min_train=60)
+    returns = history["Close"].pct_change().dropna()
+    labels = define_states(returns, window=10, k=0.5)
+    assert len(labels) < len(returns) - 9              # a gap exists after warm-up
+    assert len(bt.returns) > 0
 
 
 def test_pinned_btc_snapshot_matches_oracle_and_sparse_warnings():

@@ -74,7 +74,8 @@ def define_states(
     silently ignored (verified: absurd thresholds used to produce byte-identical
     output with no hint).
     """
-    return _label_series(returns, window, k, mode, bull_thresh, bear_thresh).dropna().astype(str)
+    return _label_series(returns, window=window, k=k, mode=mode,
+                         bull_thresh=bull_thresh, bear_thresh=bear_thresh).dropna().astype(str)
 
 
 def _label_series(
@@ -256,16 +257,17 @@ def walk_forward_backtest(
     # A trailing-window label never looks past its own day, so the label at
     # position t-1 of the full series IS the last label of the prefix; we only
     # need a running count of labelled days and the latest labelled state.
-    labels = _label_series(returns, window, k, "zscore", bull_thresh, bear_thresh)
+    labels = _label_series(returns, window=window, k=k, mode="zscore",
+                           bull_thresh=bull_thresh, bear_thresh=bear_thresh)
     label_list = labels.tolist()
     valid = labels.notna().to_numpy()
-    n_labelled_before: list[int] = []   # labelled days at positions < t
-    last_label_before: list[str | None] = []
-    count, latest = 0, None
-    for i in range(len(returns) + 1):
+    n_labelled_before: list[int] = []      # labelled days at positions < t
+    last_label_before: list[str] = []      # latest labelled state before t ("" until one exists)
+    count, latest = 0, ""
+    for i in range(len(returns)):
         n_labelled_before.append(count)
         last_label_before.append(latest)
-        if i < len(returns) and valid[i]:
+        if valid[i]:
             count += 1
             latest = str(label_list[i])
 
