@@ -53,3 +53,15 @@ def test_explicit_values_in_template_still_apply(monkeypatch):
     s = Settings(_env_file=TEMPLATE)
     assert s.llm_provider == "none"
     assert s.allow_legacy_agent_api is False
+
+
+def test_blank_process_variable_no_longer_overrides_the_env_file(tmp_path, monkeypatch):
+    # Documented precedence change (Codex review on #25): a blank value means
+    # "unset" in BOTH sources, so exporting LLM_PROVIDER="" cannot switch off a
+    # provider configured in .env any more. Use LLM_PROVIDER=none for that.
+    env = tmp_path / ".env"
+    env.write_text("LLM_PROVIDER=ollama\n")
+    monkeypatch.setenv("LLM_PROVIDER", "")
+    assert Settings(_env_file=env).llm_provider == "ollama"
+    monkeypatch.setenv("LLM_PROVIDER", "none")
+    assert Settings(_env_file=env).llm_provider == "none"
