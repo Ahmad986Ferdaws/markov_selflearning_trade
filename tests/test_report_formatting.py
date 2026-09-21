@@ -11,11 +11,19 @@ from app.services.evaluation import (
 )
 
 
+def _accuracy(**overrides) -> AccuracyMetrics:
+    base = dict(hit_rate=0.9, balanced_accuracy=0.8, log_loss=0.3, naive_hit_rate=0.7,
+                naive_balanced=0.5, naive_log_loss=0.9, persistence_hit_rate=0.9,
+                persistence_balanced=0.8, n=40, n_switch=0, switch_recall=0.0, switch_attempts=0)
+    base.update(overrides)
+    return AccuracyMetrics(**base)
+
+
 def _report(**overrides) -> DailyReport:
     base = dict(
         symbol="SYN", chosen_window=20, chosen_k=0.5, train_size=100, test_size=40,
         regime_mix={"sideways": 0.6, "bull": 0.4},
-        accuracy=AccuracyMetrics(0.9, 0.8, 0.3, 0.7, 0.5, 0.9, 0.9, 0.8, 40, 4, 0.0, 0),
+        accuracy=_accuracy(n_switch=4),
         policies=[PolicyResult("baseline", -0.1, -0.5, -0.2, 3, 0.02)],
         train_best_score=0.85, data_hash="abcdef0123456789", warnings=[],
     )
@@ -42,8 +50,10 @@ def test_missing_data_hash_leaves_no_stray_blank_line():
     out = format_daily_report(_report(data_hash=""))
     lines = out.splitlines()
     assert not any(line.startswith("Data hash") for line in lines)
-    # header, train/test line, then exactly one separator before the mix block
-    assert lines[2] == "" and lines[3] == "--- Regime mix (test) ---"
+    # exactly one separator between the header block and the mix block
+    i = lines.index("--- Regime mix (test) ---")
+    assert lines[i - 1] == "" and lines[i - 2].startswith("Train days:")
+    assert "\n\n\n" not in out
 
 
 def test_data_hash_is_shown_truncated_when_present():
@@ -58,6 +68,5 @@ def test_warnings_block_only_when_there_are_warnings():
 
 
 def test_switch_recall_reads_na_when_no_switch_days():
-    acc = AccuracyMetrics(0.9, 0.8, 0.3, 0.7, 0.5, 0.9, 0.9, 0.8, 40, 0, 0.0, 0)
-    out = format_daily_report(_report(accuracy=acc))
+    out = format_daily_report(_report(accuracy=_accuracy(n_switch=0)))
     assert "model recall on them: n/a" in out
