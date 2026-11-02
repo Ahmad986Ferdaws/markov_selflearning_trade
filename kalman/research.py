@@ -265,9 +265,15 @@ def perf_metrics(led: pd.DataFrame, bars_per_year: int = BARS_PER_YEAR) -> dict:
     vol = float(np.std(rets, ddof=1)) * math.sqrt(bars_per_year)
     sharpe = float(np.mean(rets) / np.std(rets, ddof=1) * math.sqrt(bars_per_year)) \
         if np.std(rets, ddof=1) > 0 else 0.0
-    downside = rets[rets < 0]
-    sortino = float(np.mean(rets) / np.std(downside, ddof=1) * math.sqrt(bars_per_year)) \
-        if len(downside) > 1 and np.std(downside, ddof=1) > 0 else 0.0
+    # Sortino divides by the DOWNSIDE DEVIATION: sqrt(mean(min(r, 0)^2)) over
+    # every return. The previous np.std(rets[rets < 0], ddof=1) measured the
+    # spread of the losses around their own average loss, which collapses to
+    # a floating-point residue when losses are similar in size (a strategy
+    # with Sortino 11.2 printed 4.6e16) and is biased ~15% on ordinary
+    # returns. Undefined (nan, like calmar) when there is no downside at all.
+    downside_dev = float(np.sqrt(np.mean(np.minimum(rets, 0.0) ** 2)))
+    sortino = float(np.mean(rets) / downside_dev * math.sqrt(bars_per_year)) \
+        if downside_dev > 0 else np.nan
     peak = np.maximum.accumulate(eq)
     mdd = float(np.min(eq / peak - 1.0))
     calmar = float(cagr / abs(mdd)) if mdd < 0 and np.isfinite(cagr) else np.nan
