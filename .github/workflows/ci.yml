@@ -17,6 +17,10 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
+    # The suite and the determinism receipt finish in about two minutes; a
+    # hung network call (yfinance is importable even though tests never use it)
+    # should fail the run, not hold a runner for six hours.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
