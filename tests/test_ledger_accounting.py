@@ -79,3 +79,26 @@ def test_a_buy_over_the_cap_is_clamped_and_both_percentages_are_kept(db, run):
     assert run.cash == pytest.approx(800.0)                 # exactly 20% committed
     assert run.position_qty * trade.execution_price == pytest.approx(200.0)
     assert trade.execution_price == pytest.approx(100.8)
+
+
+def test_mark_to_market_and_portfolio_value_identities(db, run):
+    assert mark_to_market(run, 123.0) == 0.0                 # no position, no unrealized
+    assert portfolio_value(run, 123.0) == 1000.0
+    trade = apply_trade(db, run, _intent("BUY", 10.0), price=100.0, settings=SETTINGS)
+    db.refresh(run)
+    qty, entry = run.position_qty, run.avg_entry_price
+    assert entry == pytest.approx(trade.execution_price)      # first buy sets the basis at the fill
+    assert mark_to_market(run, 110.0) == pytest.approx((110.0 - entry) * qty)
+    assert mark_to_market(run, 100.0) < 0                     # flat price is a loss after costs
+    assert portfolio_value(run, 110.0) == pytest.approx(run.cash + qty * 110.0)
+
+
+def test_two_buys_average_the_entry_price_by_quantity(db, run):
+    first = apply_trade(db, run, _intent("BUY", 10.0), price=100.0, settings=SETTINGS)
+    db.refresh(run)
+    q1 = run.position_qty
+    second = apply_trade(db, run, _intent("BUY", 10.0), price=200.0, settings=SETTINGS)
+    db.refresh(run)
+    q2 = run.position_qty - q1
+    expected = (first.execution_price * q1 + second.execution_price * q2) / (q1 + q2)
+    assert run.avg_entry_price == pytest.approx(expected)
