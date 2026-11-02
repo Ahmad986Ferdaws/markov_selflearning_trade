@@ -9,6 +9,18 @@ description = "An honest, simulation-only daily evaluation harness — and the v
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
+keywords = ["markov", "regime", "persistence-baseline", "walk-forward", "backtest", "null-result", "paper-trading"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Office/Business :: Financial :: Investment",
+    "Topic :: Scientific/Engineering",
+    "Typing :: Typed",
+]
 dependencies = [
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.32.0",
@@ -39,15 +51,26 @@ evaluate-cli = "app.cli.evaluate:main"
 diagnose-cli = "app.cli.diagnose:main"
 kalman-cli = "kalman.cli:main"
 
+[project.urls]
+Homepage = "https://github.com/Ahmad986Ferdaws/markov_selflearning_trade"
+Repository = "https://github.com/Ahmad986Ferdaws/markov_selflearning_trade"
+Changelog = "https://github.com/Ahmad986Ferdaws/markov_selflearning_trade/blob/main/CHANGELOG.md"
+Documentation = "https://github.com/Ahmad986Ferdaws/markov_selflearning_trade/tree/main/docs"
+Issues = "https://github.com/Ahmad986Ferdaws/markov_selflearning_trade/issues"
+
 [tool.hatch.build.targets.wheel]
 packages = ["app", "kalman"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+# pytest-asyncio warns on every run until this is explicit; "function" is the
+# scope the async tests already assume.
+asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 
 [tool.ruff]
 target-version = "py311"
+line-length = 110
 extend-exclude = ["design", "media", "data", "results"]
 
 [tool.ruff.lint]

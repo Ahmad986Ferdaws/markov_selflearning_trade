@@ -18,11 +18,17 @@ Expected (from results/BTC-USD_4a150b23.json and docs/19):
   328 held-out predictions · 30 switch days · 0 switch attempts ·
   298 hits (90.85%) · model hit-rate == persistence hit-rate exactly.
 
-Run:  python scripts/independent_rederivation.py   (exit 0 iff all reproduce)
+Run:  python scripts/independent_rederivation.py [--snapshot PATH]
+
+Exit codes:
+  0  REPRODUCED: every expected number matched
+  1  MISMATCH: the snapshot is the pinned one but the numbers differ (engine or rule bug)
+  2  SNAPSHOT CHANGED: the pickle is not the pinned data; re-pin before re-deriving
 """
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import sys
 
@@ -66,10 +72,27 @@ def labels_from_prices(closes: pd.Series) -> list:
     return out, len(rets)
 
 
-def main() -> int:
-    hist = pd.read_pickle("data/snapshots/BTC-USD_3y.pkl")
+DEFAULT_SNAPSHOT = "data/snapshots/BTC-USD_3y.pkl"
+
+
+def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Re-derive the BTC-USD headline from the pinned snapshot with zero app imports.",
+        epilog="exit codes: 0 reproduced, 1 mismatch, 2 snapshot changed",
+        allow_abbrev=False,
+    )
+    parser.add_argument("--snapshot", default=DEFAULT_SNAPSHOT,
+                        help="pickle to re-derive from (default: %(default)s)")
+    return parser.parse_args(argv)
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = _parse_args(argv)
+    hist = pd.read_pickle(args.snapshot)
     closes = hist["Close"] if "Close" in hist.columns else hist.squeeze()
-    if snapshot_hash(closes) != EXPECTED_HASH:
+    digest = snapshot_hash(closes)
+    print(f"snapshot={args.snapshot}  rows={len(closes)}  hash={digest[:12]}")
+    if digest != EXPECTED_HASH:
         print("SNAPSHOT CHANGED — the pickle on disk is not the pinned data the "
               "headline was computed on; re-pin before re-deriving.")
         return 2
