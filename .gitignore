@@ -11,6 +11,10 @@ build/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+.hypothesis/
 
 # Runtime state (regenerable)
 paper_trading.db
