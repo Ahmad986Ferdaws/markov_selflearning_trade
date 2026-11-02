@@ -1,0 +1,22 @@
+# Optional local hooks. Install once with `pip install pre-commit && pre-commit install`.
+# The ruff hook is pinned to the pyflakes rules only (unused imports, undefined
+# names): ruff's own defaults grew to hundreds of rules in 0.17 and would reject
+# idiomatic FastAPI `Depends()` defaults (B008). The rest are hygiene.
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.3
+    hooks:
+      - id: ruff
+        args: [--select, F]
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: end-of-file-fixer
+        files: \.(py|toml|yml|yaml|md|cff)$
+      - id: trailing-whitespace
+        files: \.(py|toml|yml|yaml|cff)$
+      - id: check-yaml
+      - id: check-toml
+      - id: check-added-large-files
+        args: [--maxkb=2048]
+      - id: detect-private-key
