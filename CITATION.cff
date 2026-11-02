@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you reuse this harness or cite the null result, please cite it as below."
+type: software
+title: "REGIME: an honest, simulation-only evaluation harness for a Markov regime trading model"
+abstract: >-
+  A daily walk-forward evaluation harness that measures a Markov regime model against the
+  persistence baseline ("tomorrow's regime = today's") and reports the result even when it
+  is null. On 20 markets and up to 20 years of history the edge over persistence is exactly
+  zero, verified pointwise across 16,773 held-out predictions.
+authors:
+  - family-names: Shafiq
+    given-names: Ahmad Ferdaws
+version: 0.4.1
+date-released: "2026-09-08"
+license: MIT
+repository-code: https://github.com/Ahmad986Ferdaws/markov_selflearning_trade
+keywords:
+  - markov regime model
+  - persistence baseline
+  - walk-forward evaluation
+  - null result
+  - paper trading
