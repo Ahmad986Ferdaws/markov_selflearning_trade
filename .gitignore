@@ -1,5 +1,8 @@
-# Secrets — never commit the real .env (only .env.example is tracked)
+# Secrets — never commit the real .env or any variant of it (.env.local,
+# .env.production, ...); only the empty-valued .env.example is tracked.
 .env
+.env.*
+!.env.example
 
 # Python / virtualenv
 .venv/
