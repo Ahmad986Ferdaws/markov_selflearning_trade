@@ -52,3 +52,26 @@ def test_a_single_column_frame_without_close_hashes_like_the_close_series():
     a = _frame()
     b = a.rename(columns={"Close": "Price"})
     assert history_hash(a) == history_hash(b)
+
+
+# --- load_or_fetch: the pinned path ---------------------------------------------
+def _explode(*args, **kwargs):
+    raise AssertionError("network fetch attempted while a pinned snapshot exists")
+
+
+def test_an_existing_snapshot_is_served_without_any_fetch(tmp_path, monkeypatch):
+    monkeypatch.setattr(data_cache, "fetch_daily_history", _explode)
+    frame = _frame()
+    frame.to_pickle(tmp_path / "BTC-USD_3y.pkl")
+    out, source = load_or_fetch("BTC-USD", years=3, cache_dir=tmp_path)
+    pd.testing.assert_frame_equal(out, frame)
+    assert source.startswith("cache:")
+
+
+def test_the_years_argument_selects_a_distinct_snapshot(tmp_path, monkeypatch):
+    monkeypatch.setattr(data_cache, "fetch_daily_history", _explode)
+    _frame(3).to_pickle(tmp_path / "BTC-USD_3y.pkl")
+    _frame(12).to_pickle(tmp_path / "BTC-USD_12y.pkl")
+    three, _ = load_or_fetch("BTC-USD", years=3, cache_dir=tmp_path)
+    twelve, _ = load_or_fetch("BTC-USD", years=12, cache_dir=tmp_path)
+    assert (len(three), len(twelve)) == (3, 12)
