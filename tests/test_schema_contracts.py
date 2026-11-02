@@ -39,3 +39,23 @@ def test_trade_intent_requires_a_symbol_and_defaults_the_rest():
         TradeIntent(action="HOLD")
     intent = TradeIntent(action="HOLD", symbol="BTC-USD")
     assert (intent.percentage, intent.reasoning) == (0, "")
+
+
+def test_agent_decision_bare_hold_is_a_valid_reply():
+    """The prompt invites {"action": "HOLD"}; requiring percentage used to
+    force a second billed repair call for nothing."""
+    decision = AgentDecision(action="HOLD")
+    assert (decision.percentage, decision.reasoning) == (0.0, "")
+
+
+def test_agent_decision_rejects_lowercase_actions_and_out_of_range_percentages():
+    with pytest.raises(ValidationError):
+        AgentDecision(action="buy")
+    with pytest.raises(ValidationError):
+        AgentDecision(action="BUY", percentage=100.5)
+
+
+def test_agent_decision_coerces_an_integer_percentage_to_float():
+    decision = AgentDecision(action="BUY", percentage=15)
+    assert decision.percentage == 15.0
+    assert isinstance(decision.percentage, float)
