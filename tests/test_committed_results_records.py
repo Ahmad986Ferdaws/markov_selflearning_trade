@@ -50,3 +50,39 @@ def test_headline_record_is_the_receipt_the_readme_quotes():
     assert acc["naive_hit_rate"] == pytest.approx(0.720, abs=1e-3)
     assert (acc["n_switch"], acc["switch_attempts"], acc["switch_recall"]) == (30, 0, 0.0)
     assert any("persistence" in w for w in rec["warnings"])    # the gate fired and was kept
+
+
+# --- robustness study (docs/16) ----------------------------------------------------
+ROBUSTNESS = RESULTS / "robustness"
+
+
+def _asset_records(folder: Path) -> list[Path]:
+    return sorted(p for p in folder.glob("*.json") if p.name != "summary.json")
+
+
+def test_every_robustness_record_is_a_full_report_tied_to_persistence():
+    records = _asset_records(ROBUSTNESS)
+    assert len(records) == 20
+    for path in records:
+        rec = _load(path)
+        assert set(rec) == REPORT_KEYS, path.name
+        acc = rec["accuracy"]
+        assert acc["hit_rate"] == acc["persistence_hit_rate"], path.name
+        assert acc["balanced_accuracy"] == acc["persistence_balanced"], path.name
+
+
+def test_robustness_summary_agrees_with_its_records_and_with_docs_16():
+    summary = _load(ROBUSTNESS / "summary.json")
+    agg = summary["aggregate"]
+    assert agg["n_assets"] == 20 == len(summary["assets"])
+    assert agg["n_failed"] == 0
+    assert agg["assets_model_beats_persistence"] == 0
+    assert agg["mean_edge_vs_persist_bal"] == 0.0 == agg["max_edge_vs_persist_bal"]
+    for asset in summary["assets"]:
+        assert asset["edge_vs_persist_hit"] == 0.0, asset["symbol"]
+        assert asset["edge_vs_persist_bal"] == 0.0, asset["symbol"]
+        assert not asset["beats_persistence"], asset["symbol"]
+    # docs/16: the only non-zero edge anywhere is early-BTC, and it is negative
+    early = next(t for t in summary["temporal"] if t["symbol"] == "BTC-USD:early")
+    assert early["edge_vs_persist_bal"] < 0
+    assert all(t["edge_vs_persist_bal"] <= 0 for t in summary["temporal"])
