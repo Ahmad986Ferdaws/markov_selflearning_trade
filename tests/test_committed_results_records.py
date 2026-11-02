@@ -86,3 +86,29 @@ def test_robustness_summary_agrees_with_its_records_and_with_docs_16():
     early = next(t for t in summary["temporal"] if t["symbol"] == "BTC-USD:early")
     assert early["edge_vs_persist_bal"] < 0
     assert all(t["edge_vs_persist_bal"] <= 0 for t in summary["temporal"])
+
+
+# --- long-history study (docs/18) ----------------------------------------------------
+LONG_HISTORY = RESULTS / "long_history"
+
+
+def test_long_history_records_hold_the_identity_over_twenty_years():
+    records = _asset_records(LONG_HISTORY)
+    assert len(records) == 8
+    for path in records:
+        rec = _load(path)
+        assert REPORT_KEYS <= set(rec), path.name
+        acc = rec["accuracy"]
+        assert acc["hit_rate"] == acc["persistence_hit_rate"], path.name
+        assert acc["switch_attempts"] == 0, path.name
+
+
+def test_long_history_summary_reports_zero_edge_on_every_asset():
+    summary = _load(LONG_HISTORY / "summary.json")
+    assets = summary["assets"]
+    assert len(assets) == 8
+    edge_keys = [k for k in assets[0] if k.startswith("edge_vs_persist")]
+    assert edge_keys, "summary assets carry no edge_vs_persist_* fields"
+    for asset in assets:
+        for key in edge_keys:
+            assert asset[key] == 0.0, (asset.get("symbol"), key)
