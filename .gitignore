@@ -9,6 +9,8 @@ __pycache__/
 dist/
 build/
 .pytest_cache/
+.ruff_cache/
+.mypy_cache/
 
 # Runtime state (regenerable)
 paper_trading.db
