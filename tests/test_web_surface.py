@@ -61,3 +61,21 @@ def test_dexscreener_provider_is_refused_with_a_400():
                                         "watchlist": ["BTC-USD"]})
     assert resp.status_code == 400
     assert "deferred" in resp.json()["detail"]
+
+
+def test_openapi_inventory_is_exactly_the_legacy_runs_surface_plus_health():
+    """Tripwire: the web API must stay the quarantined legacy surface. Adding an
+    endpoint that evaluates, refreshes data, or talks to a provider would make
+    this fail, which is the point: such a route needs the same scrutiny the
+    agent-policy invariants already enforce."""
+    paths = _client().get("/openapi.json").json()["paths"]
+    assert set(paths) == {
+        "/health",
+        "/runs",
+        "/runs/{run_id}",
+        "/runs/{run_id}/trades",
+        "/runs/{run_id}/stop",
+        "/runs/{run_id}/comparison",
+    }
+    forbidden = ("evaluate", "agent", "snapshot", "refresh", "provider")
+    assert not [p for p in paths if any(w in p for w in forbidden)]
