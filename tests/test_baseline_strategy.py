@@ -39,3 +39,20 @@ def test_bear_sells_half_the_position_whatever_the_forecast_says(p_bull):
     intent = baseline_decision(_feature("bear", p_bull), "ETH-USD")
     assert (intent.action, intent.percentage, intent.symbol) == ("SELL", 50.0, "ETH-USD")
     assert "exit bias" in intent.reasoning
+
+
+@pytest.mark.parametrize("p_bull", [0.0, 0.4, 0.99])
+def test_sideways_waits_whatever_the_forecast_says(p_bull):
+    intent = baseline_decision(_feature("sideways", p_bull), "BTC-USD")
+    assert (intent.action, intent.percentage) == ("HOLD", 0.0)
+    assert "wait" in intent.reasoning
+
+
+def test_every_baseline_decision_already_satisfies_the_guard_contract():
+    """Whatever the baseline emits must be a valid TradeIntent (literal action,
+    0 <= percentage <= 100) so the guards never see an out-of-range request."""
+    for state in ("bull", "bear", "sideways"):
+        for p_bull in (0.0, 0.4, 1.0):
+            intent = baseline_decision(_feature(state, p_bull), "X")
+            assert intent.action in {"BUY", "SELL", "HOLD"}
+            assert 0 <= intent.percentage <= 100
