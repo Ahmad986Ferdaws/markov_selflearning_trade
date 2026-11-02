@@ -38,6 +38,13 @@ evaluate-cli = "app.cli.evaluate:main"
 diagnose-cli = "app.cli.diagnose:main"
 kalman-cli = "kalman.cli:main"
 
+[project.urls]
+Homepage = "https://github.com/Ahmad986Ferdaws/markov_selflearning_trade"
+Repository = "https://github.com/Ahmad986Ferdaws/markov_selflearning_trade"
+Changelog = "https://github.com/Ahmad986Ferdaws/markov_selflearning_trade/blob/main/CHANGELOG.md"
+Documentation = "https://github.com/Ahmad986Ferdaws/markov_selflearning_trade/tree/main/docs"
+Issues = "https://github.com/Ahmad986Ferdaws/markov_selflearning_trade/issues"
+
 [tool.hatch.build.targets.wheel]
 packages = ["app", "kalman"]
 
