@@ -1,0 +1,15 @@
+# Normalise line endings on checkout so the data hashes and the pre-commit
+# whitespace hooks behave the same on every platform.
+* text=auto eol=lf
+
+# Pinned snapshots, proof media, and the demo video are binary evidence: never
+# diffed, never line-ending converted.
+*.pkl  binary
+*.png  binary
+*.mp4  binary
+*.gif  binary
+*.ico  binary
+
+# Generated run records are reviewed as data, not prose; collapse them in PR diffs.
+results/**/*.json  linguist-generated=true
+results/**/*.csv   linguist-generated=true
