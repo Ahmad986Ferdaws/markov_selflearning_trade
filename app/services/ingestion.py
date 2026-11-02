@@ -40,7 +40,9 @@ class YFinanceProvider(IngestionProvider):
                 NormalizedSnapshot(
                     symbol=symbol,
                     price=price,
-                    volume=float(vol) if vol else None,
+                    # None means "not reported"; a real 0.0 (a halted or
+                    # pre-open bar) must survive as 0.0, exactly as for price.
+                    volume=float(vol) if vol is not None else None,
                     timestamp=now,
                     source="yfinance",
                 )
