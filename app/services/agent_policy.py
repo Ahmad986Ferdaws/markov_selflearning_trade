@@ -29,11 +29,10 @@ import math
 import re
 from dataclasses import dataclass
 from pathlib import Path
-import os
-import tempfile
 
 import numpy as np
 
+from app.services.data_cache import atomic_write_text
 from app.services.regime import STATE_ORDER
 
 logger = logging.getLogger(__name__)
@@ -197,17 +196,8 @@ class ResponseCache:
     def save(self) -> None:
         if not self.path:
             return
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        temporary = None
-        try:
-            with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=self.path.parent,
-                                             prefix=f".{self.path.name}.", delete=False) as f:
-                temporary = Path(f.name)
-                json.dump(self._d, f, indent=2, sort_keys=True)
-            os.replace(temporary, self.path)
-        finally:
-            if temporary is not None:
-                temporary.unlink(missing_ok=True)
+        # atomic rename, umask-respecting mode (not tempfile's 0o600)
+        atomic_write_text(self.path, json.dumps(self._d, indent=2, sort_keys=True))
 
 
 # --------------------------------------------------------------------------- #
