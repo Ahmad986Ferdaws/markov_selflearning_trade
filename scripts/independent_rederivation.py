@@ -23,6 +23,7 @@ Run:  python scripts/independent_rederivation.py   (exit 0 iff all reproduce)
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import sys
 
@@ -66,8 +67,22 @@ def labels_from_prices(closes: pd.Series) -> list:
     return out, len(rets)
 
 
-def main() -> int:
-    hist = pd.read_pickle("data/snapshots/BTC-USD_3y.pkl")
+DEFAULT_SNAPSHOT = "data/snapshots/BTC-USD_3y.pkl"
+
+
+def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Re-derive the BTC-USD headline from the pinned snapshot with zero app imports.",
+        allow_abbrev=False,
+    )
+    parser.add_argument("--snapshot", default=DEFAULT_SNAPSHOT,
+                        help="pickle to re-derive from (default: %(default)s)")
+    return parser.parse_args(argv)
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = _parse_args(argv)
+    hist = pd.read_pickle(args.snapshot)
     closes = hist["Close"] if "Close" in hist.columns else hist.squeeze()
     if snapshot_hash(closes) != EXPECTED_HASH:
         print("SNAPSHOT CHANGED — the pickle on disk is not the pinned data the "
