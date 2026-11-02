@@ -34,7 +34,16 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Sequence[str] | None = None) -> None:
-    args = build_parser().parse_args(argv)
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    if args.window is not None and args.window < 2:
+        parser.error("--window must be at least 2 (a rolling mean needs two bars)")
+    if args.k is not None and args.k < 0:
+        parser.error("--k must be non-negative (it multiplies a standard deviation)")
+    for name in ("fee_pct", "slippage_pct"):
+        value = getattr(args, name)
+        if value is not None and not 0 <= value < 100:
+            parser.error(f"--{name.replace('_', '-')} must be a percentage in [0, 100)")
     s = get_settings()
     print(
         run_phase0_report(

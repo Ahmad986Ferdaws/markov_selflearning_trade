@@ -48,3 +48,26 @@ def test_a_single_override_leaves_the_others_on_their_settings(captured):
     [kwargs] = captured
     assert kwargs["window"] == 10
     assert (kwargs["symbol"], kwargs["k"]) == ("BTC-USD", 0.5)
+
+
+@pytest.mark.parametrize("argv", [
+    ["--window", "1"],
+    ["--k", "-0.1"],
+    ["--fee-pct", "100"],
+    ["--slippage-pct", "-1"],
+    ["--window", "ten"],
+])
+def test_an_out_of_range_or_malformed_flag_is_a_usage_error_not_a_report(captured, argv):
+    with pytest.raises(SystemExit) as exc:
+        cli.main(argv)
+    assert exc.value.code == 2          # argparse usage error
+    assert captured == []               # the report was never attempted
+
+
+def test_help_lists_every_flag_and_exits_zero(capsys):
+    with pytest.raises(SystemExit) as exc:
+        cli.main(["--help"])
+    assert exc.value.code == 0
+    out = capsys.readouterr().out
+    for flag in ("--symbol", "--window", "--k", "--fee-pct", "--slippage-pct"):
+        assert flag in out
