@@ -54,3 +54,32 @@ def test_synthetic_trend_is_seeded_and_returns_aligned_level_and_velocity():
     pd.testing.assert_series_equal(y, y_again)
     assert truth.index.equals(y.index)
     assert list(truth.columns) == ["level", "velocity"]
+
+
+# --- align_pair validators ------------------------------------------------------------
+def test_align_pair_rejects_a_non_positive_price():
+    bad, good = _leg([1.0, 2.0, 0.0, 3.0]), _leg([1.0, 2.0, 3.0, 4.0])
+    with pytest.raises(ValueError, match="non-positive"):
+        align_pair(bad, good, "A", "B", min_overlap=2)
+
+
+def test_align_pair_rejects_an_unsorted_index():
+    good = _leg([1.0, 2.0, 3.0, 4.0])
+    with pytest.raises(ValueError, match="not sorted"):
+        align_pair(good.iloc[::-1], good, "A", "B", min_overlap=2)
+
+
+def test_align_pair_rejects_a_missing_required_column():
+    good = _leg([1.0, 2.0, 3.0, 4.0])
+    with pytest.raises(ValueError, match="missing columns"):
+        align_pair(good.drop(columns=["Open"]), good, "A", "B", min_overlap=2)
+
+
+def test_align_pair_inner_joins_the_calendar_and_enforces_the_minimum_overlap():
+    a = _leg(np.arange(1, 11, dtype=float), start="2020-01-01")   # ten business days
+    b = _leg(np.arange(1, 11, dtype=float), start="2020-01-08")   # five of them shared
+    pair = align_pair(a, b, "A", "B", min_overlap=5)
+    assert len(pair) == 5
+    assert pair.index.equals(a.index.intersection(b.index))
+    with pytest.raises(ValueError, match="overlap too short"):
+        align_pair(a, b, "A", "B", min_overlap=6)
