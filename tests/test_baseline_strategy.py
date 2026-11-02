@@ -32,3 +32,10 @@ def test_bull_with_the_forecast_just_under_the_threshold_holds():
 def test_bull_with_no_bull_probability_reported_holds():
     feature = RegimeFeature(state="bull", p_next={"bear": 0.5, "sideways": 0.5})
     assert baseline_decision(feature, "BTC-USD").action == "HOLD"
+
+
+@pytest.mark.parametrize("p_bull", [0.0, 0.4, 0.99])
+def test_bear_sells_half_the_position_whatever_the_forecast_says(p_bull):
+    intent = baseline_decision(_feature("bear", p_bull), "ETH-USD")
+    assert (intent.action, intent.percentage, intent.symbol) == ("SELL", 50.0, "ETH-USD")
+    assert "exit bias" in intent.reasoning
