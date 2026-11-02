@@ -59,3 +59,43 @@ def test_buy_with_no_cash_is_rejected():
     out = _enforce(TradeIntent(action="BUY", percentage=10.0, symbol="BTC-USD"), Settings(), cash=0.0)
     assert out.action == "HOLD"
     assert "insufficient cash" in out.guard_note
+
+
+# --- liquidity floor ------------------------------------------------------------
+def test_liquidity_floor_is_inert_when_no_liquidity_is_reported():
+    """yfinance reports no liquidity, so the shipped pipeline never trips this
+    guard; the test pins that None means 'unknown', not 'zero'."""
+    s = Settings(liquidity_floor_usd=50_000.0)
+    out = _enforce(TradeIntent(action="BUY", percentage=10.0, symbol="BTC-USD"), s, liquidity=None)
+    assert out.action == "BUY"
+
+
+def test_liquidity_exactly_at_the_floor_passes():
+    s = Settings(liquidity_floor_usd=50_000.0)
+    out = _enforce(TradeIntent(action="BUY", percentage=10.0, symbol="BTC-USD"), s, liquidity=50_000.0)
+    assert out.action == "BUY"
+
+
+def test_liquidity_just_below_the_floor_holds_with_a_note():
+    s = Settings(liquidity_floor_usd=50_000.0)
+    out = _enforce(TradeIntent(action="SELL", percentage=10.0, symbol="BTC-USD"), s,
+                   qty=1.0, liquidity=49_999.99)
+    assert out.action == "HOLD"
+    assert "liquidity" in out.guard_note and "floor" in out.guard_note
+
+
+# --- effective price --------------------------------------------------------------
+def test_effective_price_marks_buys_up_and_sells_down_by_the_same_amount():
+    s = Settings(fee_pct=0.3, slippage_pct=0.5)
+    buy_px, buy_fee = effective_price(100.0, "BUY", s)
+    sell_px, sell_fee = effective_price(100.0, "SELL", s)
+    assert buy_px == pytest.approx(100.8)
+    assert sell_px == pytest.approx(99.2)
+    assert buy_fee == pytest.approx(sell_fee) == pytest.approx(0.8)
+
+
+def test_effective_price_is_the_identity_with_zero_costs():
+    s = Settings(fee_pct=0.0, slippage_pct=0.0)
+    for side in ("BUY", "SELL"):
+        px, fee = effective_price(123.45, side, s)
+        assert (px, fee) == (123.45, 0.0)
