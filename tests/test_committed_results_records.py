@@ -116,8 +116,12 @@ def test_long_history_records_hold_the_identity_over_twenty_years():
         assert set(report) == REPORT_KEYS, path.name
         acc = report["accuracy"]
         assert acc["hit_rate"] == acc["persistence_hit_rate"], path.name
-        assert acc["switch_attempts"] == 0, path.name
-        assert rec["summary"]["symbol"] == report["symbol"], path.name
+        assert acc["balanced_accuracy"] == acc["persistence_balanced"], path.name
+        # these records predate the switch-day metrics, so the identity is
+        # pinned through the edge fields of the summary row instead
+        row = rec["summary"]
+        assert row["symbol"] == report["symbol"], path.name
+        assert (row["edge_vs_persist_hit"], row["edge_vs_persist_bal"]) == (0.0, 0.0), path.name
 
 
 def test_long_history_summary_reports_zero_edge_and_zero_divergences():
@@ -132,3 +136,6 @@ def test_long_history_summary_reports_zero_edge_and_zero_divergences():
     for asset in assets:
         assert asset["edge_vs_persist_hit"] == 0.0, asset["symbol"]
         assert asset["edge_vs_persist_bal"] == 0.0, asset["symbol"]
+        assert asset["identity_check"]["divergences"] == 0, asset["symbol"]
+    # the per-asset pointwise checks add up to the aggregate the docs quote
+    assert sum(a["identity_check"]["n_predictions"] for a in assets) == agg["total_predictions"]
