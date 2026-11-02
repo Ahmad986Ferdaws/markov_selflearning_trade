@@ -41,3 +41,34 @@ def test_no_exchange_wallet_or_chain_sdk_is_imported_anywhere():
         if pattern.search(f.read_text(encoding="utf-8"))
     ]
     assert not offenders, f"out-of-scope SDK imported in: {offenders}"
+
+
+def _tracked_text_files() -> list[Path]:
+    out = subprocess.run(["git", "ls-files"], cwd=ROOT, capture_output=True, text=True, check=True)
+    suffixes = (".py", ".md", ".toml", ".yml", ".yaml", ".json", ".csv", ".html", ".js",
+                ".mjs", ".cff", ".txt", ".example", ".lock")
+    return [ROOT / p for p in out.stdout.split() if p.endswith(suffixes)]
+
+
+CREDENTIAL_SHAPES = (
+    r"sk-ant-[A-Za-z0-9_-]{20,}",                 # Anthropic API key
+    r"AKIA[0-9A-Z]{16}",                          # AWS access key id
+    r"gh[pousr]_[A-Za-z0-9]{36}",                 # GitHub token
+    r"-----BEGIN (?:RSA |EC |OPENSSH |PGP )?PRIVATE KEY-----",
+)
+
+
+def test_no_credential_shaped_literal_is_committed():
+    pattern = re.compile("|".join(CREDENTIAL_SHAPES))
+    hits = [
+        str(f.relative_to(ROOT)) for f in _tracked_text_files()
+        if pattern.search(f.read_text(encoding="utf-8", errors="replace"))
+    ]
+    assert not hits, f"credential-shaped literal committed in: {hits}"
+
+
+def test_dot_env_is_ignored_and_untracked():
+    ignored = subprocess.run(["git", "check-ignore", "-q", ".env"], cwd=ROOT)
+    assert ignored.returncode == 0, ".env must be git-ignored"
+    tracked = subprocess.run(["git", "ls-files", ".env"], cwd=ROOT, capture_output=True, text=True)
+    assert tracked.stdout.strip() == "", ".env must never be tracked"
