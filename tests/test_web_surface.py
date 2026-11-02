@@ -42,3 +42,22 @@ def test_health_answers_ok_as_json():
     assert resp.status_code == 200
     assert resp.headers["content-type"].startswith("application/json")
     assert resp.json() == {"status": "ok"}
+
+
+@pytest.mark.parametrize("method, path", [
+    ("GET", "/runs/999"),
+    ("GET", "/runs/999/trades"),
+    ("POST", "/runs/999/stop"),
+])
+def test_unknown_run_is_a_json_404_not_a_server_error(method, path):
+    resp = _client().request(method, path)
+    assert resp.status_code == 404
+    assert resp.json() == {"detail": "Run 999 not found"}
+
+
+def test_dexscreener_provider_is_refused_with_a_400():
+    resp = _client().post("/runs", json={"strategy": "baseline",
+                                        "ingestion_provider": "dexscreener",
+                                        "watchlist": ["BTC-USD"]})
+    assert resp.status_code == 400
+    assert "deferred" in resp.json()["detail"]
