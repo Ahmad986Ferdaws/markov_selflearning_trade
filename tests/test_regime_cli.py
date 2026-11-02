@@ -56,6 +56,10 @@ def test_a_single_override_leaves_the_others_on_their_settings(captured):
     ["--fee-pct", "100"],
     ["--slippage-pct", "-1"],
     ["--window", "ten"],
+    ["--k", "nan"],            # float() accepts these; a range check alone would not
+    ["--k", "inf"],
+    ["--fee-pct", "nan"],
+    ["--slippage-pct", "-inf"],
 ])
 def test_an_out_of_range_or_malformed_flag_is_a_usage_error_not_a_report(captured, argv):
     with pytest.raises(SystemExit) as exc:

@@ -12,6 +12,7 @@ reads the committed snapshot in data/snapshots/ when one exists.
 from __future__ import annotations
 
 import argparse
+import math
 from collections.abc import Sequence
 
 from app.config import get_settings
@@ -36,14 +37,17 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> None:
     parser = build_parser()
     args = parser.parse_args(argv)
+    # argparse's float() happily accepts "nan" and "inf"; neither survives a
+    # comparison, so each would slip past a plain range check and reach the
+    # labelling rule, where NaN makes every day sideways without a word.
     if args.window is not None and args.window < 2:
         parser.error("--window must be at least 2 (a rolling mean needs two bars)")
-    if args.k is not None and args.k < 0:
-        parser.error("--k must be non-negative (it multiplies a standard deviation)")
+    if args.k is not None and not (math.isfinite(args.k) and args.k >= 0):
+        parser.error("--k must be a finite, non-negative number (it multiplies a standard deviation)")
     for name in ("fee_pct", "slippage_pct"):
         value = getattr(args, name)
-        if value is not None and not 0 <= value < 100:
-            parser.error(f"--{name.replace('_', '-')} must be a percentage in [0, 100)")
+        if value is not None and not (math.isfinite(value) and 0 <= value < 100):
+            parser.error(f"--{name.replace('_', '-')} must be a finite percentage in [0, 100)")
     s = get_settings()
     print(
         run_phase0_report(
