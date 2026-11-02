@@ -63,3 +63,8 @@ packages = ["app", "kalman"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+
+[tool.ruff]
+# Formatting and target only; rule selection stays with the CI command line.
+target-version = "py311"
+line-length = 110
