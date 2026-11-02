@@ -60,8 +60,10 @@ def _asset_records(folder: Path) -> list[Path]:
     return sorted(p for p in folder.glob("*.json") if p.name != "summary.json")
 
 
-def test_every_robustness_record_is_a_full_report_tied_to_persistence():
-    records = _asset_records(ROBUSTNESS)
+def test_every_full_window_robustness_record_is_a_report_tied_to_persistence():
+    # 20 full-window assets; the 4 sub-period records (SYMBOL:early / :late) are
+    # the temporal set and are checked separately below.
+    records = [p for p in _asset_records(ROBUSTNESS) if ":" not in p.name]
     assert len(records) == 20
     for path in records:
         rec = _load(path)
@@ -69,6 +71,18 @@ def test_every_robustness_record_is_a_full_report_tied_to_persistence():
         acc = rec["accuracy"]
         assert acc["hit_rate"] == acc["persistence_hit_rate"], path.name
         assert acc["balanced_accuracy"] == acc["persistence_balanced"], path.name
+
+
+def test_the_sub_period_records_diverge_only_where_docs_16_says_they_do():
+    records = [p for p in _asset_records(ROBUSTNESS) if ":" in p.name]
+    assert {p.stem for p in records} == {"BTC-USD:early", "BTC-USD:late", "SPY:early", "SPY:late"}
+    diverging = []
+    for path in records:
+        acc = _load(path)["accuracy"]
+        if acc["hit_rate"] != acc["persistence_hit_rate"]:
+            diverging.append(path.stem)
+            assert acc["hit_rate"] < acc["persistence_hit_rate"], path.stem   # worse, never better
+    assert diverging == ["BTC-USD:early"]            # the one recorded firing of the fallback
 
 
 def test_robustness_summary_agrees_with_its_records_and_with_docs_16():
@@ -97,18 +111,24 @@ def test_long_history_records_hold_the_identity_over_twenty_years():
     assert len(records) == 8
     for path in records:
         rec = _load(path)
-        assert REPORT_KEYS <= set(rec), path.name
-        acc = rec["accuracy"]
+        assert set(rec) == {"report", "summary"}, path.name      # record = full report + its summary row
+        report = rec["report"]
+        assert set(report) == REPORT_KEYS, path.name
+        acc = report["accuracy"]
         assert acc["hit_rate"] == acc["persistence_hit_rate"], path.name
         assert acc["switch_attempts"] == 0, path.name
+        assert rec["summary"]["symbol"] == report["symbol"], path.name
 
 
-def test_long_history_summary_reports_zero_edge_on_every_asset():
+def test_long_history_summary_reports_zero_edge_and_zero_divergences():
     summary = _load(LONG_HISTORY / "summary.json")
+    agg = summary["aggregate"]
+    assert (agg["n_assets"], agg["n_failed"]) == (8, 0)
+    assert agg["assets_with_nonzero_hit_edge"] == 0
+    assert (agg["total_predictions"], agg["total_divergences"]) == (11348, 0)   # docs/18
+    assert agg["max_abs_edge_bal"] == 0.0
     assets = summary["assets"]
     assert len(assets) == 8
-    edge_keys = [k for k in assets[0] if k.startswith("edge_vs_persist")]
-    assert edge_keys, "summary assets carry no edge_vs_persist_* fields"
     for asset in assets:
-        for key in edge_keys:
-            assert asset[key] == 0.0, (asset.get("symbol"), key)
+        assert asset["edge_vs_persist_hit"] == 0.0, asset["symbol"]
+        assert asset["edge_vs_persist_bal"] == 0.0, asset["symbol"]
