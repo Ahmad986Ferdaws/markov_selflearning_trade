@@ -51,6 +51,18 @@ compare-cli <run_id>        # legacy intraday comparison
 
 ## Last session
 
+- **2026-11-02 — repository hygiene, three small fixes, and a test-coverage batch (a set of
+  one-concern pull requests from #32 onward, open for review).** Real fixes: the yfinance
+  provider collapsed a reported zero volume to `None`; `str(ApiError)` was blank; the OpenAPI
+  document advertised 0.1.0. Features: `regime-cli` flags; `--snapshot` on the independent
+  re-derivation. Hygiene: PR/issue templates, CODEOWNERS, Dependabot, CONTRIBUTING / SECURITY /
+  CITATION, editorconfig and gitattributes, opt-in pre-commit, a docs index and glossary,
+  pyproject metadata. CI: read-only token, cancel-in-progress, timeout, 3.11 + 3.12 matrix.
+  Tests: 16 new files (about 120 tests) that pin boundaries and read the committed records
+  back against the docs. Suite on `main` at the start: **252 passing**. Also: the local
+  `.venv` had lost its interpreter (miniforge removed); rebuilt on Homebrew Python 3.12.
+  The eleven earlier review PRs (#21–#31) are untouched and still open.
+
 - **Done — website design refinement pass (ui-design-brain skill).** `design/index.html`: accessibility + component-quality upgrade — semantic landmarks and strict h1→h2→h3 outline, scroll-spy nav with `aria-current`, keyboard-operable chart scrub, table caption/scope, ≥44 px touch targets, WCAG AA contrast (`--muted` darkened), ≥12 px micro-text, 375 px tie-band overflow fixed, dead footer link now points at the real results JSON. Brand language, GSAP/Lenis/Three.js stack, SRI pins, reduced-motion fallbacks, and the real 165-pt data series untouched. Verified in-browser at desktop and 375 px; `design/philosophy.md` documents the pass. Note: `design/media/` (proof media referenced in earlier notes) is absent from the repo; nothing on the page references it, but regenerate before deploy if `og:image` is wanted.
 
 ### Earlier session
