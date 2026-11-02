@@ -1,4 +1,4 @@
-# Reframed Plan — v1.1 (post-review)∏
+# Reframed Plan — v1.1 (post-review)
 
 **Status:** Accepted (planning) · **Date:** 2026-06-07
 **Category:** Portfolio / learning artifact (NOT a revenue product)
