@@ -75,3 +75,27 @@ def test_the_years_argument_selects_a_distinct_snapshot(tmp_path, monkeypatch):
     three, _ = load_or_fetch("BTC-USD", years=3, cache_dir=tmp_path)
     twelve, _ = load_or_fetch("BTC-USD", years=12, cache_dir=tmp_path)
     assert (len(three), len(twelve)) == (3, 12)
+
+
+# --- load_or_fetch: the pull-and-pin path -----------------------------------------
+def test_refresh_fetches_and_overwrites_the_snapshot(tmp_path, monkeypatch):
+    stale, fresh = _frame(3), _frame(5, start=200.0)
+    stale.to_pickle(tmp_path / "BTC-USD_3y.pkl")
+    monkeypatch.setattr(data_cache, "fetch_daily_history", lambda symbol, years: fresh)
+    out, source = load_or_fetch("BTC-USD", years=3, refresh=True, cache_dir=tmp_path)
+    pd.testing.assert_frame_equal(out, fresh)
+    assert source.startswith("fetched:")
+    pd.testing.assert_frame_equal(pd.read_pickle(tmp_path / "BTC-USD_3y.pkl"), fresh)
+
+
+def test_a_first_pull_creates_the_cache_directory_and_is_served_from_then_on(tmp_path, monkeypatch):
+    fresh = _frame()
+    monkeypatch.setattr(data_cache, "fetch_daily_history", lambda symbol, years: fresh)
+    cache_dir = tmp_path / "nested" / "snapshots"
+    out, source = load_or_fetch("EUR/USD", years=3, cache_dir=cache_dir)
+    assert source.startswith("fetched:")
+    assert (cache_dir / "EUR_USD_3y.pkl").exists()     # '/' in a symbol is not a path separator
+    monkeypatch.setattr(data_cache, "fetch_daily_history", _explode)
+    again, source_again = load_or_fetch("EUR/USD", years=3, cache_dir=cache_dir)
+    assert source_again.startswith("cache:")
+    pd.testing.assert_frame_equal(again, out)
