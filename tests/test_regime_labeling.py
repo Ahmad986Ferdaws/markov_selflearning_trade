@@ -75,3 +75,29 @@ def test_a_constant_return_series_is_sideways_in_zscore_mode():
     rets = pd.Series(0.01, index=pd.date_range("2024-01-01", periods=30, freq="D"))
     states = define_states(rets, window=5, k=0.5)
     assert set(states.unique()) == {"sideways"}
+
+
+# --- estimate_transition_matrix / forecast ---------------------------------------
+def test_an_unseen_state_gets_the_documented_uniform_row():
+    p = estimate_transition_matrix(pd.Series(["bull", "bull", "bull"]))
+    np.testing.assert_allclose(p[STATE_TO_IDX["bull"]], [1.0, 0.0, 0.0])
+    for state in ("bear", "sideways"):
+        np.testing.assert_allclose(p[STATE_TO_IDX[state]], np.ones(3) / 3)
+
+
+def test_labels_outside_the_state_set_are_skipped_not_counted():
+    # both adjacent pairs touch the junk label, so nothing is counted at all
+    p = estimate_transition_matrix(pd.Series(["bull", "junk", "bear"]))
+    np.testing.assert_allclose(p, np.ones((3, 3)) / 3)
+
+
+def test_a_two_step_forecast_is_the_squared_matrix_row():
+    p = np.array([[0.7, 0.2, 0.1], [0.3, 0.4, 0.3], [0.2, 0.2, 0.6]])
+    two = forecast(p, "bear", n_steps=2)
+    np.testing.assert_allclose(two, (p @ p)[STATE_TO_IDX["bear"]])
+    assert two.sum() == pytest.approx(1.0)
+
+
+def test_a_zero_step_forecast_is_the_current_state_itself():
+    p = np.full((3, 3), 1 / 3)
+    np.testing.assert_allclose(forecast(p, "sideways", n_steps=0), [0.0, 0.0, 1.0])
