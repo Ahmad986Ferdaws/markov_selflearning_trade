@@ -72,3 +72,11 @@ def test_dot_env_is_ignored_and_untracked():
     assert ignored.returncode == 0, ".env must be git-ignored"
     tracked = subprocess.run(["git", "ls-files", ".env"], cwd=ROOT, capture_output=True, text=True)
     assert tracked.stdout.strip() == "", ".env must never be tracked"
+
+
+def test_every_docs_link_in_the_readme_resolves():
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    links = re.findall(r"\]\((docs/[^)#]*)", readme)
+    assert links, "README no longer links into docs/?"
+    missing = [link for link in links if not (ROOT / link).exists()]
+    assert not missing, f"README links to missing docs: {missing}"
