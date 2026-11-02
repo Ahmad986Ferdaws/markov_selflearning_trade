@@ -141,7 +141,6 @@ def stationary_distribution(p: np.ndarray) -> np.ndarray:
 
 
 def sparse_cell_warnings(states: pd.Series, min_count: int = 20) -> list[str]:
-    p = estimate_transition_matrix(states)
     n = len(STATE_ORDER)
     counts = np.zeros((n, n))
     labels = states.astype(str).tolist()

@@ -9,7 +9,7 @@ from app.services.evaluation import (
     _accuracy,
     _policy_metrics,
 )
-from app.services.regime import STATE_TO_IDX, label_state
+from app.services.regime import label_state
 
 
 def _trending_history(periods: int = 600, seed: int = 0) -> pd.DataFrame:
