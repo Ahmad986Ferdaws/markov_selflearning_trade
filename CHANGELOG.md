@@ -4,6 +4,50 @@ All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/); the project is a portfolio /
 research artifact rather than a released package, so versions are snapshots.
 
+## [Unreleased] — repository hygiene, three small fixes, and a test-coverage batch
+
+Landed as a set of small pull requests (one concern each) opened 2026-11-02.
+
+### Fixed
+- The yfinance provider turned a reported volume of `0.0` into `None` ("not reported")
+  because it tested truthiness; it now keeps the zero, the same rule the price field
+  already followed.
+- `str(ApiError)` was an empty string (`Exception.__init__` was never called), so a
+  traceback or log line for an unhandled one showed no message.
+- The FastAPI app advertised version `0.1.0` in its OpenAPI document; it now reads
+  `app.__version__`, and a test keeps `pyproject.toml`, the newest CHANGELOG heading, and
+  the OpenAPI document in agreement.
+- A stray product-symbol character at the end of the docs/13 title.
+
+### Added
+- `regime-cli --symbol / --window / --k / --fee-pct / --slippage-pct`, each overriding one
+  setting for one invocation, with usage-error validation before any report runs.
+- `scripts/independent_rederivation.py --snapshot PATH`, documented exit codes
+  (0 reproduced, 1 mismatch, 2 snapshot changed), and a first output line naming the
+  snapshot it scored.
+- Repository files: pull-request and issue templates, `CODEOWNERS`, Dependabot for pip and
+  GitHub Actions, `CONTRIBUTING.md`, `SECURITY.md`, `CITATION.cff`, `.editorconfig`,
+  `.gitattributes` (binary pins and media, collapsed result diffs), an opt-in
+  `.pre-commit-config.yaml`, a docs index (`docs/README.md`) and glossary
+  (`docs/21-glossary.md`), project URLs / keywords / classifiers in `pyproject.toml`, and
+  `robots.txt` plus a favicon cache header for the static site.
+- CI: a read-only token, cancellation of superseded runs, a 15-minute job timeout, and a
+  Python 3.11 + 3.12 matrix (3.11 is the floor `requires-python` declares; it had never run).
+- Tests, 16 new files and roughly 120 tests, each pinning a boundary rather than re-running
+  a study: risk-guard thresholds, the web-surface inventory (OpenAPI path tripwire), schema
+  contracts, the baseline's three rules, data-hash sensitivity and the snapshot cache,
+  regime-labelling boundaries, the Kalman data layer, the provider's price fallback chain,
+  version consistency, scope tripwires (no exchange or wallet SDK imported, no
+  credential-shaped literal tracked, no dead README doc link), the committed run records
+  read back against the README/docs numbers (328 / 298 / 30 / 0; +0.000 on 20/20; 0 of
+  11,348 divergences), ledger accounting identities, `ApiError` and `app.db`, the
+  re-derivation script's exit codes, and the console-script entry points.
+
+### Changed
+- `.gitignore` covers the ruff, mypy, coverage, and hypothesis caches.
+- pytest-asyncio's fixture loop scope is explicit, which removes the deprecation warning
+  printed at the top of every run; ruff's target version is pinned to 3.11.
+
 ## [0.4.1] — 2026-09-08 — deep review: 24 verified findings fixed
 
 ### Security (fail-closed)
