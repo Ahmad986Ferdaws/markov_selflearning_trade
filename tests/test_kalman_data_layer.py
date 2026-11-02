@@ -83,3 +83,16 @@ def test_align_pair_inner_joins_the_calendar_and_enforces_the_minimum_overlap():
     assert pair.index.equals(a.index.intersection(b.index))
     with pytest.raises(ValueError, match="overlap too short"):
         align_pair(a, b, "A", "B", min_overlap=6)
+
+
+# --- the CSV adapter ----------------------------------------------------------------------
+def test_load_pair_csv_round_trips_a_synthetic_pair(tmp_path):
+    pair, _ = synthetic_pair(n=300, seed=3)
+    pair.p1.rename_axis("Date").to_csv(tmp_path / "p1.csv")
+    pair.p2.rename_axis("Date").to_csv(tmp_path / "p2.csv")
+    loaded = load_pair_csv(tmp_path / "p1.csv", tmp_path / "p2.csv", "SYN1", "SYN2")
+    assert (loaded.name1, loaded.name2) == ("SYN1", "SYN2")
+    assert len(loaded) == 300
+    assert loaded.index.equals(pair.index)
+    np.testing.assert_allclose(loaded.p1["Close"].to_numpy(), pair.p1["Close"].to_numpy())
+    np.testing.assert_allclose(loaded.p2["Open"].to_numpy(), pair.p2["Open"].to_numpy())
