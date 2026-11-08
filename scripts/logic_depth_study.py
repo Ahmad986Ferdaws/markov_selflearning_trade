@@ -49,7 +49,6 @@ from app.services.regime import STATE_ORDER, STATE_TO_IDX, estimate_transition_m
 from scripts.model_logic_study import _configs
 
 OUT = Path("results/logic_depth")
-OUT.mkdir(parents=True, exist_ok=True)
 MIN_OBS = 15
 TRAIN_FRAC = 0.7
 _EPS = 1e-12
@@ -243,6 +242,7 @@ def main() -> None:
         "best_m2_edge": max((r["m2"]["edge"] for r in rows
                              if r["m2"]["attempts"] > 0 and r["m2"]["edge"] is not None), default=None),
     }
+    OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "summary.json").write_text(json.dumps({"aggregate": agg, "runs": rows}, indent=2))
     print("\n=== AGGREGATE ===", flush=True)
     for kk, v in agg.items():
