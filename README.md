@@ -69,6 +69,20 @@ An **honest evaluation harness** that reports null when null is true
 
 It is explicitly **not** a money-maker, **not** self-learning, and makes **no** alpha claim.
 
+## Repository layout
+
+| Folder | What it holds |
+|---|---|
+| [`app/`](app/) | The engine (`services/`), the CLIs (`cli/`) and the quarantined legacy web API (`api/`, `models/`, `schemas/`). |
+| [`kalman/`](kalman/) | The Kalman pairs research harness (docs/20): filter, two-leg ledger, walk-forward, `kalman-cli`. |
+| [`scripts/`](scripts/) | The studies behind docs/16, 18 and 19, the independent re-derivation and the demo recorder. |
+| [`tests/`](tests/) | The offline suite: boundary pins, tripwires, positive controls. |
+| [`docs/`](docs/) | The numbered design and results docs, the status page and the glossary. |
+| [`design/`](design/) | The single-file static site, its headers and favicon. |
+| [`data/snapshots/`](data/snapshots/) | The pinned yfinance pulls every run reads, hashed into each record. |
+| [`results/`](results/) | The run records and study outputs the docs quote. |
+| [`media/`](media/) | Screenshots and the demo video of the site. |
+
 ## Safety & scope
 
 - **Simulation only.** Paper ledger. No real funds, no orders, no broker, no wallets, no keys, no on-chain execution — ever.
