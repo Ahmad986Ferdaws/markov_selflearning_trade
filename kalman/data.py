@@ -92,9 +92,10 @@ def load_pair_from_snapshots(sym1: str, sym2: str, years: int = 20,
     """Load a pair from this repo's pinned snapshots (offline, reproducible)."""
     d = Path(snap_dir)
     f1, f2 = d / f"{sym1}_{years}y.pkl", d / f"{sym2}_{years}y.pkl"
-    for f in (f1, f2):
-        if not f.exists():
-            raise FileNotFoundError(f"pinned snapshot missing: {f}")
+    missing = [str(f) for f in (f1, f2) if not f.exists()]
+    if missing:
+        # name every missing file at once, so one re-run fixes both
+        raise FileNotFoundError(f"pinned snapshot(s) missing: {', '.join(missing)}")
     return align_pair(pd.read_pickle(f1), pd.read_pickle(f2), sym1, sym2)
 
 
