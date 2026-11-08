@@ -4,6 +4,7 @@ Usage:
   regime-cli                          # settings from .env (REGIME_SYMBOL, REGIME_WINDOW, REGIME_K, ...)
   regime-cli --symbol ETH-USD         # one-off override; .env is untouched
   regime-cli --window 30 --k 0.2      # the headline's chosen config
+  regime-cli --symbol SPY --years 20  # the 20-year pinned snapshot
 
 Every flag overrides the matching setting for this invocation only. The report
 reads the committed snapshot in data/snapshots/ when one exists.
@@ -31,6 +32,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--fee-pct", type=float, help="one-way fee in percent (default: FEE_PCT)")
     parser.add_argument("--slippage-pct", type=float,
                         help="one-way slippage in percent (default: SLIPPAGE_PCT)")
+    parser.add_argument("--years", type=int,
+                        help="history length in years; selects the matching pinned snapshot "
+                             "(default: 3)")
     return parser
 
 
@@ -48,7 +52,11 @@ def main(argv: Sequence[str] | None = None) -> None:
         value = getattr(args, name)
         if value is not None and not (math.isfinite(value) and 0 <= value < 100):
             parser.error(f"--{name.replace('_', '-')} must be a finite percentage in [0, 100)")
+    if args.years is not None and args.years < 1:
+        parser.error("--years must be at least 1 (it names the pinned snapshot's history length)")
     s = get_settings()
+    # Only forwarded when given, so the report keeps its own default (3 years).
+    years = {} if args.years is None else {"years": args.years}
     print(
         run_phase0_report(
             symbol=args.symbol or s.regime_symbol,
@@ -58,6 +66,7 @@ def main(argv: Sequence[str] | None = None) -> None:
             bear_thresh=s.regime_bear_thresh,
             fee_pct=s.fee_pct if args.fee_pct is None else args.fee_pct,
             slippage_pct=s.slippage_pct if args.slippage_pct is None else args.slippage_pct,
+            **years,
         )
     )
 

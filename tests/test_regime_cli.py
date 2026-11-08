@@ -73,5 +73,5 @@ def test_help_lists_every_flag_and_exits_zero(capsys):
         cli.main(["--help"])
     assert exc.value.code == 0
     out = capsys.readouterr().out
-    for flag in ("--symbol", "--window", "--k", "--fee-pct", "--slippage-pct"):
+    for flag in ("--symbol", "--window", "--k", "--fee-pct", "--slippage-pct", "--years"):
         assert flag in out
