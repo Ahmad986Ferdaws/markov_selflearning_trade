@@ -42,7 +42,9 @@ def test_citation_license_is_mit():
 def test_citation_release_date_is_an_iso_date_not_in_the_future():
     released = _field("date-released")
     assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", released), released
-    assert dt.date.fromisoformat(released) <= dt.date.today()
+    # One day of slack: a release dated "today" in a zone ahead of UTC must not fail on a
+    # UTC runner during the hours before UTC catches up.
+    assert dt.date.fromisoformat(released) <= dt.date.today() + dt.timedelta(days=1)
 
 
 def test_citation_format_version_is_pinned():
