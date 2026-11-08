@@ -158,3 +158,5 @@ only (no intraday claim), Yahoo data only, and the LLM agent row is not yet meas
 ## License
 
 [MIT](LICENSE) © 2026 Ahmad Ferdaws Shafiq.
+
+Contributions follow the [code of conduct](CODE_OF_CONDUCT.md).
