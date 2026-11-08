@@ -203,12 +203,11 @@ def run_ledger(index: pd.DatetimeIndex,
             d = decisions[t - 1]
             b_signal = float(betas[t - 1])            # info from bar t-1 only
             want = d.target
-            retarget = False
-            if want is not cur_pos:
-                retarget = True
-            elif want is not Position.FLAT and cfg.hedge_mode is HedgeMode.REHEDGE \
-                    and abs(b_signal - beta_entry) > cfg.rehedge_threshold:
-                retarget = True
+            # re-target on a position change, or (REHEDGE only) once the hedge
+            # ratio has drifted past the threshold since the last fill
+            retarget = want is not cur_pos or (
+                want is not Position.FLAT and cfg.hedge_mode is HedgeMode.REHEDGE
+                and abs(b_signal - beta_entry) > cfg.rehedge_threshold)
             if retarget:
                 o1, o2 = float(open1[t]), float(open2[t])
                 if np.isfinite(o1) and np.isfinite(o2) and o1 > 0 and o2 > 0:
