@@ -23,7 +23,6 @@ from app.services.data_cache import load_or_fetch
 from app.services.evaluation import evaluate
 
 OUT = Path("results/robustness")
-OUT.mkdir(parents=True, exist_ok=True)
 
 # Liquid, Yahoo-available. Crypto + equities + indices + macro ETFs + FX, so the
 # test spans very different regime structures. (Binance/exchange APIs excluded by
@@ -81,6 +80,7 @@ def _summarize(symbol: str, rep) -> dict:
 
 
 def run_one(symbol: str, history=None) -> dict | None:
+    OUT.mkdir(parents=True, exist_ok=True)
     try:
         if history is None:
             history, src = load_or_fetch(symbol, years=3)
@@ -99,6 +99,7 @@ def run_one(symbol: str, history=None) -> dict | None:
 
 
 def main() -> None:
+    OUT.mkdir(parents=True, exist_ok=True)
     rows = []
     print(f"=== Cross-asset robustness: {len(SYMBOLS)} symbols ===", flush=True)
     for i, sym in enumerate(SYMBOLS, 1):
