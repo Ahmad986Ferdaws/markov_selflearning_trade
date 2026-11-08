@@ -51,6 +51,33 @@ compare-cli <run_id>        # legacy intraday comparison
 
 ## Last session
 
+- **2026-11-07 → 08 — one hundred one-concern pull requests (#174–#273), each closing one of
+  issues #64–#173.** The batch was planned from a full read of the codebase: every item carried a
+  file-and-line scope and the lines it must not touch so the eleven older review PRs (#21–#31) stay
+  mergeable. Real fixes: the duplicated Sharpe-annualization warning, cross-symbol pricing in
+  `GET /runs/{id}`, unknown fields and blank watchlist entries on run creation, `compare-cli`'s
+  traceback on a missing run, the Kalman report's false "positive Sharpe" verdict on zero folds and
+  its hidden zero z-std, import-time `results/` side effects in all five study scripts, whitespace in
+  `LLM_PROVIDER`, the missing `py.typed` markers, and the site's relative social-card image.
+  Features: `regime-cli --years`, a typed comparison response, `run_id` indexes, an OpenAPI
+  description, a corrupt-cache warning, all-missing-snapshots error. Performance: worker-thread
+  yfinance I/O in the legacy loop, a vectorised trailing z-score (byte-identical report), a
+  dtype-first pair validator. Hygiene and docs: folder READMEs for six directories, a feature-request
+  template, private-reporting link, code of conduct, extra pre-commit hooks, glossary terms, this
+  file's commands block, CONTRIBUTING lint notes. Tests: **58 new files** pinning boundaries (suite
+  387 → roughly 600 once all merge). Every PR: one commit off `origin/main`, full suite gated on the
+  captured exit code, labels, `Closes #N`. Review triage: CI green on 3.11 and 3.12 for all 100,
+  all MERGEABLE, zero findings from Codex; Cursor Bugbot hit its account usage limit part-way
+  through (about 04:13 UTC) so roughly 40 PRs have Codex-only coverage. One backlog item (#79,
+  "fee after cash clamp") was closed as not-a-bug: `TradeIntent.percentage` is validated `le=100`,
+  so the clamp is unreachable. Nine follow-ups stay open as issues #165–#173 (statsmodels floor,
+  ruff config, model id, the unused `Metric` table, `og:url`, Makefile targets, the lock count,
+  kalman-cli tests, `Annotated` dependencies). Merge note: sibling PRs that touch the same file in
+  different places (comparison.py ×4, research.py ×4, data.py ×3, the study scripts, README ×4)
+  merge cleanly in any order but GitHub may show the later ones as UNKNOWN for a minute after each
+  merge; `results/robustness/summary.csv` is stored CRLF and the new `mixed-line-ending` hook
+  would rewrite it under `--all-files`.
+
 - **2026-11-02 — repository hygiene, three small fixes, and a test-coverage batch (a set of
   one-concern pull requests from #32 onward, open for review).** Real fixes: the yfinance
   provider collapsed a reported zero volume to `None`; `str(ApiError)` was blank; the OpenAPI
