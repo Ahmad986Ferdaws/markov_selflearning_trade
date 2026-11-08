@@ -14,3 +14,4 @@
 - [ ] Honesty gates only *append* caveats; none was weakened, silenced, or removed
 - [ ] Simulation only: no broker, wallet, key, or on-chain code; credentials stay in `.env`
 - [ ] `CHANGELOG.md` / docs updated if behaviour changed
+- [ ] The automated review comments were read; each real finding is fixed and answered on its thread, each false positive is answered with why
