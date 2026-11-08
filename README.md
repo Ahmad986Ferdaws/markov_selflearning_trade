@@ -144,6 +144,8 @@ Current (post-reframe):
 - [docs/20 — Kalman pairs framework](docs/20-kalman-pairs.md) — dynamic-hedge Kalman research harness (`kalman/`): Joseph-form filter, two-leg ledger, walk-forward vs 5 baselines; verdict on SPY/QQQ: no edge after costs
 - [docs/12 — architecture review](docs/12-architecture-review.md) — headline-integrity fixes
 - [docs/STATUS.md](docs/STATUS.md) — living status / session handoff
+- [docs/21 — glossary](docs/21-glossary.md) — the terms the current docs use
+- [docs/README](docs/README.md) — the index, in reading order
 
 Legacy (pre-reframe build docs, the now-quarantined intraday path): [docs/01–11](docs/).
 
