@@ -38,7 +38,6 @@ from app.services.evaluation import causal_states
 from app.services.regime import STATE_ORDER, STATE_TO_IDX, estimate_transition_matrix
 
 OUT = Path("results/model_logic")
-OUT.mkdir(parents=True, exist_ok=True)
 MIN_OBS = 15          # minimum observations of (state, duration) before the
                       # hazard estimate is allowed to trigger a switch call
 TRAIN_FRAC = 0.7
@@ -222,6 +221,7 @@ def main() -> None:
         "worst_duration_edge": min((r["duration_model"]["edge"] or 0) for r in rows),
         "best_duration_edge": max((r["duration_model"]["edge"] or 0) for r in rows),
     }
+    OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "summary.json").write_text(json.dumps({"aggregate": agg, "runs": rows}, indent=2))
     print("\n=== AGGREGATE ===", flush=True)
     for kk, v in agg.items():
