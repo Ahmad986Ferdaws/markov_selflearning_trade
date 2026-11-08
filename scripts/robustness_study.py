@@ -83,7 +83,7 @@ def _summarize(symbol: str, rep) -> dict:
 def run_one(symbol: str, history=None) -> dict | None:
     try:
         if history is None:
-            history, src = load_or_fetch(symbol, years=3)
+            history, _ = load_or_fetch(symbol, years=3)
         rep = evaluate(
             history, symbol=symbol, train_frac=0.7,
             grid_windows=GRID_WINDOWS, grid_k=GRID_K,

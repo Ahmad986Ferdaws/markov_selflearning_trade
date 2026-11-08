@@ -69,7 +69,7 @@ def _count_divergences(history: pd.DataFrame, window: int, k: float) -> dict:
 
 def run_one(symbol: str, years: int) -> dict:
     try:
-        history, src = load_or_fetch(symbol, years=years)
+        history, _ = load_or_fetch(symbol, years=years)
         span = f"{history.index[0].date()} -> {history.index[-1].date()}"
         rep = evaluate(
             history, symbol=symbol, train_frac=0.7,
