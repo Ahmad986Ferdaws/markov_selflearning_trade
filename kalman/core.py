@@ -173,14 +173,14 @@ class PairFilter:
 
     @classmethod
     def diffuse(cls, q_beta: float, q_alpha: float, r: float,
-                prior_scale: float = 10.0, adaptive: AdaptiveQ | None = None) -> "PairFilter":
+                prior_scale: float = 10.0, adaptive: AdaptiveQ | None = None) -> PairFilter:
         return cls(q_beta, q_alpha, r, x0=np.zeros(2),
                    P0=np.diag([prior_scale, prior_scale]), adaptive=adaptive)
 
     @classmethod
     def from_ols(cls, y_train: np.ndarray, p2_train: np.ndarray,
                  q_beta: float, q_alpha: float, r: float,
-                 adaptive: AdaptiveQ | None = None) -> "PairFilter":
+                 adaptive: AdaptiveQ | None = None) -> PairFilter:
         """Training-only OLS initialization (state AND a data-scaled prior P)."""
         A = np.column_stack([p2_train, np.ones(len(p2_train))])
         coef, res, *_ = np.linalg.lstsq(A, y_train, rcond=None)
