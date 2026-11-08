@@ -38,10 +38,29 @@ Updated at the end of each dev session. New chats: read this file first—skip l
 
 ```bash
 source .venv/bin/activate   # Python 3.12 venv
-evaluate-cli                # Phase A daily eval (accuracy + trading) — current headline
-regime-cli                  # Phase 0 regime report
-uvicorn app.main:app --reload
-compare-cli <run_id>        # legacy intraday comparison
+
+# Console scripts (pyproject [project.scripts])
+evaluate-cli                # daily walk-forward evaluation on the pinned snapshot, the headline; --refresh, --provider, --cache-only
+regime-cli                  # Phase 0 regime report on the pinned snapshot; --symbol, --window, --k override .env for one run
+diagnose-cli [record.json]  # narrate a run record offline: edge vs the persistence bar, policy outcomes, every gate warning
+kalman-cli <demo|pairs|walkforward|trend|replay>   # Kalman pairs research harness (docs/20); SPY/QQQ from the 20y pins
+compare-cli <run_id>        # legacy intraday comparison of a stored run's snapshots
+uvicorn app.main:app --reload                      # legacy web API (/runs, /health); agent routes off by default
+
+# Make targets
+make eval                   # python -m app.cli.evaluate
+make regime                 # python -m app.cli.regime
+make robust                 # scripts/robustness_study.py -> results/robustness/
+make test                   # the offline suite
+make site                   # serve design/ at http://localhost:8000 (PORT=... to change)
+make demo                   # scripts/record_demo.mjs -> media/ (needs Node, Google Chrome, ffmpeg)
+
+# Studies and the re-derivation (from the repo root; pinned snapshots, network only if one is missing)
+python scripts/robustness_study.py          # 20 assets x 3y + BTC/SPY halves -> results/robustness/ (docs/16)
+python scripts/long_history_study.py        # 8 assets, up to 20y -> results/long_history/ (docs/18)
+python scripts/model_logic_study.py         # dominance, hazards, duration model -> results/model_logic/ (docs/19)
+python scripts/logic_depth_study.py         # divergence bound, memory-2, log-loss/Brier -> results/logic_depth/ (docs/19)
+python scripts/independent_rederivation.py  # the headline with zero app imports; exit 0 reproduced, 1 mismatch, 2 snapshot changed
 ```
 
 ## Open decisions
