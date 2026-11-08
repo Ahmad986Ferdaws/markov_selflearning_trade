@@ -38,13 +38,20 @@ BARS_PER_YEAR = 252
 # --------------------------------------------------------------------------- #
 def _causal_z(resid: np.ndarray, window: int = 60) -> np.ndarray:
     """Standardize residuals by TRAILING mean/std (ending at t-1). First
-    `window` values are NaN -> the state machine's stale-data gate holds flat."""
-    z = np.full(len(resid), np.nan)
-    for t in range(window, len(resid)):
-        past = resid[t - window:t]                  # ends at t-1: lagged
-        m, s = float(np.mean(past)), float(np.std(past, ddof=1))
-        if np.isfinite(resid[t]) and s > 0:
-            z[t] = (resid[t] - m) / s
+    `window` values are NaN -> the state machine's stale-data gate holds flat.
+
+    Vectorised with pandas rolling statistics; the shift(1) is what keeps it
+    causal: bar t is standardized against resid[t-window:t], never against
+    itself. NaN exactly where the per-bar loop this replaces was NaN: an
+    incomplete window, a window holding a non-finite value (pandas counts it
+    as missing, so min_periods is not met), a zero spread, or a non-finite
+    resid[t]."""
+    s = pd.Series(np.asarray(resid, dtype=float))
+    m = s.rolling(window).mean().shift(1)           # ends at t-1: lagged
+    sd = s.rolling(window).std(ddof=1).shift(1)
+    z = ((s - m) / sd).to_numpy(dtype=float, copy=True)
+    z[~(sd.to_numpy() > 0) | ~np.isfinite(s.to_numpy())] = np.nan
+    z[:window] = np.nan
     return z
 
 
