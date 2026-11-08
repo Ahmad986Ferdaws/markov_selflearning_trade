@@ -123,7 +123,7 @@ def test_no_env_file_is_tracked_except_the_example_and_dot_env_is_ignored():
         if p.name == ".env" or (p.name.startswith(".env.") and p.name != ".env.example")
     ]
     assert env_like == [], f".env files must never be tracked: {env_like}"
-    ignored = subprocess.run(["git", "check-ignore", "-q", ".env"], cwd=ROOT)
+    ignored = subprocess.run(["git", "check-ignore", "-q", ".env"], cwd=ROOT, check=False)
     assert ignored.returncode == 0, ".env must be git-ignored"
 
 
