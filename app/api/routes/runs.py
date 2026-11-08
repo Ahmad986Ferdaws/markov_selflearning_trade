@@ -140,9 +140,9 @@ def _last_price(db: Session, run: Run) -> float:
         .order_by(Snapshot.created_at.desc())
         .first()
     )
-    if snap:
-        return snap.price
-    snap = db.query(Snapshot).filter(Snapshot.run_id == run.id).order_by(Snapshot.created_at.desc()).first()
+    # No fallback to another symbol's snapshot: marking a BTC position to an
+    # ETH price is the same cross-symbol mixing the runner and the comparison
+    # replay already refuse. 0.0 means "no price" to every caller.
     return snap.price if snap else 0.0
 
 
