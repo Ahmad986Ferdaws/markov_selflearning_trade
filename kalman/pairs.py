@@ -80,7 +80,8 @@ def qualify_pair(pair: PairData, train_end: int, use_log: bool = True,
     rho1 = phi
     b1, _, _ = _ols(c1[: n // 2], c2[: n // 2])
     b2, _, _ = _ols(c1[n // 2:], c2[n // 2:])
-    sign_stable = np.sign(b1) == np.sign(b2) != 0
+    # same non-zero sign in both halves
+    sign_stable = bool(np.sign(b1) == np.sign(b2) and np.sign(b2) != 0)
     drift = abs(b1 - b2)
 
     notes = []
