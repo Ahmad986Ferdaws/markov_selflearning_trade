@@ -8,7 +8,7 @@ that promise, so no downstream code needs a defensive re-check.
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from pydantic import ValidationError
@@ -62,13 +62,13 @@ def test_agent_decision_coerces_an_integer_percentage_to_float():
 
 
 def test_snapshot_defaults_source_to_yfinance_and_volume_to_none():
-    ts = datetime(2026, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
+    ts = datetime(2026, 1, 2, 3, 4, 5, tzinfo=UTC)
     snap = NormalizedSnapshot(symbol="BTC-USD", price=1.0, timestamp=ts)
     assert (snap.source, snap.volume) == ("yfinance", None)
 
 
 def test_truncated_metrics_is_json_safe_and_keeps_a_real_zero_volume():
-    ts = datetime(2026, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
+    ts = datetime(2026, 1, 2, 3, 4, 5, tzinfo=UTC)
     snap = NormalizedSnapshot(symbol="BTC-USD", price=1.5, volume=0.0, timestamp=ts)
     metrics = snap.truncated_metrics()
     assert set(metrics) == {"symbol", "price", "volume", "timestamp"}
