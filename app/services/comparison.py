@@ -301,8 +301,8 @@ def _validate_report(report: ComparisonReport) -> list[str]:
             val = getattr(m, fieldname)
             if not math.isfinite(val):
                 warnings.append(f"{m.name}.{fieldname} is non-finite ({val}).")
-        if report.snapshot_count > 1 and report.sharpe_periods_per_year <= 0:
-            warnings.append("Sharpe annualization factor unresolved (check poll_interval_seconds).")
+    if report.snapshot_count > 1 and report.sharpe_periods_per_year <= 0:
+        warnings.append("Sharpe annualization factor unresolved (check poll_interval_seconds).")
     return warnings
 
 
