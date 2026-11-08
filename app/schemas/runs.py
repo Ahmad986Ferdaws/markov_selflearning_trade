@@ -35,3 +35,30 @@ class TradeRecordResponse(BaseModel):
     fees_paid: float
     guard_note: str | None
     created_at: str
+
+
+class StrategyMetricsResponse(BaseModel):
+    """One leg of the legacy comparison replay (mirrors comparison.StrategyMetrics)."""
+
+    name: str
+    total_return: float
+    annual_sharpe: float
+    max_drawdown: float
+    win_rate: float
+    num_trades: int
+    total_costs: float
+    guard_interventions: int
+    num_closes: int
+    regimes_seen: int
+
+
+class ComparisonResponse(BaseModel):
+    """GET /runs/{id}/comparison: baseline vs agent on identical snapshots."""
+
+    report_text: str
+    headline_agent_minus_baseline: float
+    baseline: StrategyMetricsResponse
+    agent: StrategyMetricsResponse
+    snapshot_count: int
+    sharpe_periods_per_year: float
+    warnings: list[str]

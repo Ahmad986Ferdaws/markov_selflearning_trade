@@ -1,3 +1,5 @@
+import dataclasses
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -5,7 +7,13 @@ from app.config import Settings
 from app.dependencies import get_db_dep, get_settings_dep
 from app.exceptions import ApiError
 from app.models.entities import Run, Trade
-from app.schemas.runs import CreateRunRequest, RunStatusResponse, TradeRecordResponse
+from app.schemas.runs import (
+    ComparisonResponse,
+    CreateRunRequest,
+    RunStatusResponse,
+    StrategyMetricsResponse,
+    TradeRecordResponse,
+)
 from app.services.comparison import format_report, run_comparison
 from app.services.ledger import mark_to_market
 from app.services.runner import request_stop, start_run_task
@@ -113,22 +121,22 @@ def stop_run(
     return _run_to_response(run, unrealized, settings)
 
 
-@router.get("/{run_id}/comparison")
+@router.get("/{run_id}/comparison", response_model=ComparisonResponse)
 def get_comparison(
     run_id: int,
     db: Session = Depends(get_db_dep),
     settings: Settings = Depends(get_settings_dep),
-) -> dict:
+) -> ComparisonResponse:
     report = run_comparison(db, run_id, settings)
-    return {
-        "report_text": format_report(report),
-        "headline_agent_minus_baseline": report.headline_agent_minus_baseline,
-        "baseline": report.baseline.__dict__,
-        "agent": report.agent.__dict__,
-        "snapshot_count": report.snapshot_count,
-        "sharpe_periods_per_year": report.sharpe_periods_per_year,
-        "warnings": report.warnings,
-    }
+    return ComparisonResponse(
+        report_text=format_report(report),
+        headline_agent_minus_baseline=report.headline_agent_minus_baseline,
+        baseline=StrategyMetricsResponse(**dataclasses.asdict(report.baseline)),
+        agent=StrategyMetricsResponse(**dataclasses.asdict(report.agent)),
+        snapshot_count=report.snapshot_count,
+        sharpe_periods_per_year=report.sharpe_periods_per_year,
+        warnings=report.warnings,
+    )
 
 
 def _last_price(db: Session, run: Run) -> float:
