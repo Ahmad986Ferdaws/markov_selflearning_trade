@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import math
 from dataclasses import dataclass, field
+from datetime import date
 
 import numpy as np
 import pandas as pd
@@ -24,7 +25,7 @@ from app.schemas.trade import TradeIntent
 from app.services import agent as agent_service
 from app.services.baseline import baseline_decision
 from app.services.guards import enforce_decision
-from app.services.regime import fetch_daily_history, regime_feature
+from app.services.regime import RegimeFeature, fetch_daily_history, regime_feature
 
 
 SECONDS_PER_YEAR = 365 * 24 * 60 * 60
@@ -70,13 +71,13 @@ def _build_regime_lookup(
     snapshots: list[Snapshot],
     benchmark_history: pd.DataFrame,
     settings: Settings,
-) -> dict[object, "object"]:
+) -> dict[date, RegimeFeature]:
     """Precompute one point-in-time regime feature per unique snapshot date.
 
     O(unique_days) instead of O(snapshots), and makes the replay point-in-time:
     each snapshot sees the regime as of its own timestamp, not the latest.
     """
-    lookup: dict[object, object] = {}
+    lookup: dict[date, RegimeFeature] = {}
     for snap_row in snapshots:
         key = snap_row.created_at.date()
         if key in lookup:
