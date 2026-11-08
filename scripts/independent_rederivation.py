@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import itertools
 import sys
 
 import numpy as np
@@ -51,7 +52,7 @@ def snapshot_hash(closes: pd.Series) -> str:
     return hashlib.sha256(blob.encode()).hexdigest()
 
 
-def labels_from_prices(closes: pd.Series) -> list:
+def labels_from_prices(closes: pd.Series) -> tuple[list[str | None], int]:
     """The documented rule, re-implemented: trailing 30d mean/std of daily
     returns; bull if mean > k*std, bear if mean < -k*std, else sideways."""
     rets = closes.pct_change().dropna()
@@ -109,7 +110,7 @@ def main(argv: list[str] | None = None) -> int:
         if len(obs) < 2:
             continue
         counts = np.zeros((3, 3))
-        for a, b in zip(obs, obs[1:]):
+        for a, b in itertools.pairwise(obs):
             counts[IDX[a], IDX[b]] += 1
         row = counts[IDX[cur]]
         dist = row / row.sum() if row.sum() > 0 else np.ones(3) / 3
