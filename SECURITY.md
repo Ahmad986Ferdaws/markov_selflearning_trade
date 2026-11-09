@@ -22,6 +22,15 @@ the *Methodology concern* template is fine unless the report includes a key or a
 Please include the command or request that demonstrates the problem. Expect an
 acknowledgement within a week; this is a one-maintainer project.
 
+## Dependencies
+
+Dependabot raises the `>=` floors in `pyproject.toml` and the GitHub Actions pins once a
+week (Monday). `requirements.lock` is the audited set: a reproduction installs from it, not
+from the floors. A vulnerable pin is reported like category 3, as an ordinary issue, unless
+exploiting it needs the API key; then use private reporting. A dependency bump cannot bring
+an exchange or wallet SDK into the code path: `tests/test_scope_tripwires.py` fails on any
+import of one in `app/`, `kalman/`, `scripts/` or `tests/`.
+
 ## Out of scope
 
 - Findings that require a modified `.env` (for example `ALLOW_LEGACY_AGENT_API=true`) and
