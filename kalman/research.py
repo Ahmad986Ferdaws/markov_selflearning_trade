@@ -138,6 +138,14 @@ def calibrate(y_train: np.ndarray, x_train: np.ndarray,
     """Positive log-space grid over (q_beta, r); q_alpha tied as a fraction of
     q_beta (different units — separately configurable, jointly gridding all
     three is left to the sensitivity surface). Returns best + full surface."""
+    n = len(y_train)
+    if len(x_train) != n:
+        raise ValueError("calibrate: y_train and x_train must align")
+    i0 = max(60, n // 5)                 # train_loglik's default OLS-init prefix
+    if i0 >= n - 10:
+        raise ValueError(
+            f"calibrate: training window of {n} bars is too short; the predictive "
+            f"likelihood needs more than {i0 + 10} bars ({i0} init + 10 scored)")
     rows = []
     best = (-np.inf, None)
     for qb, r in itertools.product(q_betas, rs):
