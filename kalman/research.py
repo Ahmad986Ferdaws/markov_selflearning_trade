@@ -415,7 +415,7 @@ def walk_forward(pair: PairData, wf: WalkForwardConfig,
             pooled = (np.concatenate(results["test_returns"][v])
                       if results["test_returns"][v] else np.array([]))
             lo, hi = sharpe_ci_block_bootstrap(pooled)
-            zs = [m["z_std_test"] for m in ms if m.get("z_std_test")]
+            zs = [m["z_std_test"] for m in ms if m.get("z_std_test") is not None]
             agg[v] = {
                 "folds": len(ms),
                 "mean_test_sharpe": float(np.mean([m.get("sharpe", 0.0) for m in ms])),
@@ -455,7 +455,7 @@ def format_report(res: dict, pair_name: str) -> str:
         zs = a.get("mean_z_std")
         lines.append(f"{v:<16} {a['folds']:>5} {a['mean_test_sharpe']:>12.2f} {ci_s:>14} "
                      f"{a['total_test_return']:>9.1%} {a['trades']:>7} "
-                     f"{a['gated_bars']:>6} {(f'{zs:.2f}' if zs else 'n/a'):>6} "
+                     f"{a['gated_bars']:>6} {(f'{zs:.2f}' if zs is not None else 'n/a'):>6} "
                      f"{a['total_costs']:>9.0f}")
     for v in ("kalman_fixed", "kalman_adaptive"):
         zs = res["aggregate"].get(v, {}).get("mean_z_std")
