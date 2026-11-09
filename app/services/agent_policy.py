@@ -177,7 +177,8 @@ class ResponseCache:
                 ):
                     raise ValueError("response cache must map strings to strings")
                 self._d = loaded
-            except Exception:  # noqa: BLE001 - corrupt cache shouldn't kill a run
+            except Exception as error:  # noqa: BLE001 - corrupt cache shouldn't kill a run
+                logger.warning("response cache %s unreadable (%s); starting empty", self.path, error)
                 self._d = {}
 
     def contains(self, key: str) -> bool:
