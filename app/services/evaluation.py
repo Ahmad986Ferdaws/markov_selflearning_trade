@@ -12,6 +12,7 @@ Two distinct questions are answered separately (R0):
 from __future__ import annotations
 
 import math
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from numbers import Real
 
@@ -74,7 +75,7 @@ class DailyReport:
     chosen_k: float
     train_size: int
     test_size: int
-    regime_mix: dict
+    regime_mix: dict[str, float]
     accuracy: AccuracyMetrics
     policies: list[PolicyResult]
     train_best_score: float
@@ -95,7 +96,7 @@ class PolicyContext:
 
 
 # A policy maps a context to a target position in [0, 1] (long/flat, v1).
-Policy = "callable[[PolicyContext], float]"
+Policy = Callable[[PolicyContext], float]
 
 
 def policy_buy_hold(ctx: PolicyContext) -> float:
@@ -113,7 +114,7 @@ def policy_regime_baseline(ctx: PolicyContext) -> float:
 
 # The one place policies are registered. Phase C adds the LLM agent here; it then
 # flows through the exact same fill/metrics path as every other policy.
-DEFAULT_POLICIES: dict = {
+DEFAULT_POLICIES: dict[str, Policy] = {
     "baseline": policy_regime_baseline,
     "buy_hold": policy_buy_hold,
 }
@@ -352,7 +353,7 @@ def evaluate(
     fee_pct: float = 0.3,
     slippage_pct: float = 0.5,
     min_train: int = 60,
-    policies: dict | None = None,
+    policies: dict[str, Policy] | None = None,
 ) -> DailyReport:
     """Daily walk-forward eval with a real train/test split (R1, R3-R6).
 
