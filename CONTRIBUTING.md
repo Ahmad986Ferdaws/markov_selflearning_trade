@@ -41,6 +41,18 @@ whole study. Run the suite unpiped so a failure stops you:
 .venv/bin/python -m pytest -q
 ```
 
+One file, or the whole suite with an unclosed file or socket made fatal; and the lint the
+project accepts, pyflakes only (`pip install ruff`). Files you add or change must be clean under it:
+
+```bash
+.venv/bin/python -m pytest -q tests/test_guards.py
+.venv/bin/python -m pytest -q -W error::ResourceWarning
+ruff check --select F .            # unused imports, undefined names
+```
+
+The pre-commit config pins the same `--select F`. ruff's full default rule set is not required
+to be clean.
+
 ## Branches and commits
 
 Branch prefixes in use: `fix/`, `perf/`, `chore/`, `test/`, `docs/`, `feat/`. Commit titles
