@@ -56,10 +56,25 @@ def _ols(y: np.ndarray, x: np.ndarray) -> tuple[float, float, np.ndarray]:
 def qualify_pair(pair: PairData, train_end: int, use_log: bool = True,
                  min_overlap: int = 500, train_start: int = 0) -> PairDiagnostics:
     """Diagnostics computed strictly on bars [train_start, train_end)."""
+    # A negative bound would silently count from the END of the series (Python
+    # slicing) -- lookahead in a training-only diagnostic -- and an over-long
+    # one would silently truncate; both are rejected before any bar is read.
+    for name, value in (("train_start", train_start), ("train_end", train_end)):
+        if (isinstance(value, (bool, np.bool_)) or not isinstance(value, (int, np.integer))
+                or value < 0):
+            raise ValueError(f"qualify_pair: {name} must be a non-negative int, got {value!r}")
+    n_bars = len(pair)
+    if not train_start < train_end:
+        raise ValueError(f"qualify_pair: empty training window "
+                         f"[{train_start}, {train_end}); need train_start < train_end")
+    if train_end > n_bars:
+        raise ValueError(f"qualify_pair: train_end={train_end} exceeds the {n_bars}-bar pair")
     c1 = pair.p1["Close"].to_numpy(float)[train_start:train_end]
     c2 = pair.p2["Close"].to_numpy(float)[train_start:train_end]
     mask = np.isfinite(c1) & np.isfinite(c2)
     c1, c2 = c1[mask], c2[mask]
+    if len(c1) < 4:   # the smallest sample statsmodels' coint/adfuller accept
+        raise ValueError(f"qualify_pair: only {len(c1)} finite training bars; need at least 4")
     if use_log:
         c1, c2 = np.log(c1), np.log(c2)
     n = len(c1)
