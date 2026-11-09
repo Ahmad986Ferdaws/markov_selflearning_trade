@@ -441,6 +441,12 @@ def format_report(res: dict, pair_name: str) -> str:
         lines.append(f"fold 0 diagnostics (train only): {fr['diagnostics']}")
         lines.append(f"fold 0 calibration: {fr['calibrated']}")
         lines.append("")
+    if not res["aggregate"]:
+        # No fold fitted -> no variant was ever run. Say so instead of falling
+        # through to the positive-Sharpe verdict on an empty table.
+        lines.append("VERDICT: no complete train/validation/test fold fits this "
+                     "history; nothing was evaluated.")
+        return "\n".join(lines)
     lines.append(f"{'variant':<16} {'folds':>5} {'test Sharpe':>12} {'CI90':>14} "
                  f"{'total ret':>10} {'trades':>7} {'gated':>6} {'z-std':>6} {'costs':>9}")
     for v, a in res["aggregate"].items():
