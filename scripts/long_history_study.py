@@ -32,7 +32,6 @@ from app.services.evaluation import _walk_forward, causal_states, evaluate
 from app.services.regime import STATE_TO_IDX
 
 OUT = Path("results/long_history")
-OUT.mkdir(parents=True, exist_ok=True)
 
 # (symbol, years requested) — years capped by Yahoo's actual coverage per asset.
 SYMBOLS = [
@@ -68,6 +67,7 @@ def _count_divergences(history: pd.DataFrame, window: int, k: float) -> dict:
 
 
 def run_one(symbol: str, years: int) -> dict:
+    OUT.mkdir(parents=True, exist_ok=True)
     try:
         history, src = load_or_fetch(symbol, years=years)
         span = f"{history.index[0].date()} -> {history.index[-1].date()}"
@@ -110,6 +110,7 @@ def run_one(symbol: str, years: int) -> dict:
 
 
 def main() -> None:
+    OUT.mkdir(parents=True, exist_ok=True)
     rows = []
     print(f"=== Long-history study: {len(SYMBOLS)} assets, max available span ===", flush=True)
     for i, (sym, yrs) in enumerate(SYMBOLS, 1):
