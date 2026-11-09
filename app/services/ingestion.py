@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 
@@ -19,7 +20,9 @@ class IngestionProvider(ABC):
 class YFinanceProvider(IngestionProvider):
     """Poll latest quotes for watchlist symbols."""
 
-    async def poll(self, watchlist: list[str]) -> list[NormalizedSnapshot]:
+    def _poll_sync(self, watchlist: list[str]) -> list[NormalizedSnapshot]:
+        """Blocking yfinance round trips for every symbol; `poll` runs this in a
+        worker thread so the event loop stays free for the other runs."""
         snapshots: list[NormalizedSnapshot] = []
         now = datetime.now(timezone.utc)
         for symbol in watchlist:
@@ -48,6 +51,9 @@ class YFinanceProvider(IngestionProvider):
                 )
             )
         return snapshots
+
+    async def poll(self, watchlist: list[str]) -> list[NormalizedSnapshot]:
+        return await asyncio.to_thread(self._poll_sync, watchlist)
 
 
 class DexScreenerProvider(IngestionProvider):
