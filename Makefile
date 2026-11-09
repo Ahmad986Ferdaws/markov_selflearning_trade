@@ -33,4 +33,4 @@ demo:
 	@node scripts/record_demo.mjs
 
 clean-media:
-	@rm -rf media && echo "removed media/"
+	@rm -f media/*.png media/*.mp4 media/*.gif && echo "removed the rendered media; media/README.md and anything else kept"
