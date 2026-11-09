@@ -205,10 +205,10 @@ def innovation_diagnostics(recs: list[StepRecord], start: int = 0) -> dict:
     z = np.array([r.z for r in recs[start:] if r.z is not None])
     nis = np.array([r.nis for r in recs[start:] if r.nis is not None])
     if len(z) < 10:
-        return {"n": int(len(z))}
+        return {"n": len(z)}
     ac1 = float(np.corrcoef(z[:-1], z[1:])[0, 1])
     return {
-        "n": int(len(z)),
+        "n": len(z),
         "z_mean": float(np.mean(z)),
         "z_std": float(np.std(z, ddof=1)),
         "z_autocorr_1": ac1,
