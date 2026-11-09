@@ -323,7 +323,7 @@ class AgentStats:
     cache_only_holds: int = 0        # cache-only mode, key absent -> held (no live call)
 
     def tally(self, tier: str) -> None:
-        if hasattr(self, tier):
+        if tier in self.__dataclass_fields__:
             setattr(self, tier, getattr(self, tier) + 1)
 
     @property
