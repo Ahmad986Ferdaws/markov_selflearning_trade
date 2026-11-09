@@ -27,7 +27,7 @@ from app.services.regime import fetch_daily_history, regime_feature
 
 logger = logging.getLogger(__name__)
 
-_active_tasks: dict[int, asyncio.Task] = {}
+_active_tasks: dict[int, asyncio.Task[None]] = {}
 _stop_flags: dict[int, bool] = {}
 
 
@@ -123,7 +123,7 @@ async def run_loop(run_id: int, settings: Settings) -> None:
     _stop_flags.pop(run_id, None)
 
 
-def start_run_task(run_id: int, settings: Settings) -> asyncio.Task:
+def start_run_task(run_id: int, settings: Settings) -> asyncio.Task[None]:
     _stop_flags[run_id] = False
     task = asyncio.create_task(run_loop(run_id, settings))
     _active_tasks[run_id] = task
