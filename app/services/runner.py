@@ -53,7 +53,17 @@ def request_stop(run_id: int) -> None:
 
 async def run_loop(run_id: int, settings: Settings) -> None:
     factory = get_session_factory()
-    benchmark_history = await asyncio.to_thread(fetch_daily_history, settings.benchmark_symbol, years=3)
+    benchmark_history = None
+    try:
+        benchmark_history = await asyncio.to_thread(fetch_daily_history, settings.benchmark_symbol, years=3)
+    except asyncio.CancelledError:
+        # request_stop cancelled us mid-download: skip the loop, still finalise
+        _stop_flags[run_id] = True
+    except Exception:
+        # A dead benchmark fetch used to kill the coroutine here, leaving the
+        # row "running" and both registries holding a finished task forever.
+        logger.exception("run_loop benchmark fetch failed run_id=%s; stopping run", run_id)
+        _stop_flags[run_id] = True
 
     while not _stop_flags.get(run_id, False):
         db: Session = factory()
