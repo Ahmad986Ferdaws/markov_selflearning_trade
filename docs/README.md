@@ -46,5 +46,7 @@ A short [glossary](21-glossary.md) defines the terms the current docs use.
 The folders that hold evidence or tooling have their own short README:
 [scripts](../scripts/README.md) (each study's inputs, outputs and network needs),
 [results](../results/README.md) (the two record-naming schemes and what each directory holds),
-[data](../data/README.md) (the pinned snapshots and the hash that names a run) and
-[design](../design/README.md) (how the site is served, deployed and kept pinned).
+[data](../data/README.md) (the pinned snapshots and the hash that names a run),
+[design](../design/README.md) (how the site is served, deployed and kept pinned),
+[media](../media/README.md) (the proof stills and demo video, and how to regenerate them) and
+[tests](../tests/README.md) (the suite's conventions and its tripwire families).
