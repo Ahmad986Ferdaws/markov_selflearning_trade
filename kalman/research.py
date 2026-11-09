@@ -323,6 +323,20 @@ class WalkForwardConfig:
     # small, PREDECLARED validation set (entry_z, exit_z):
     entry_exit_grid: tuple = ((1.5, 0.5), (2.0, 0.5), (2.5, 1.0))
 
+    def __post_init__(self) -> None:
+        # the fold loop advances by `test`, so a zero or negative window would
+        # never terminate; a float would silently produce float slice bounds
+        for name in ("train", "validation", "test"):
+            v = getattr(self, name)
+            if isinstance(v, bool) or not isinstance(v, int) or v < 1:
+                raise ValueError(
+                    f"WalkForwardConfig.{name} must be an int >= 1, got {v!r}")
+        g = self.entry_exit_grid
+        if (not isinstance(g, tuple) or len(g) == 0
+                or not all(isinstance(c, tuple) and len(c) == 2 for c in g)):
+            raise ValueError("WalkForwardConfig.entry_exit_grid must be a non-empty "
+                             "tuple of (entry_z, exit_z) 2-tuples")
+
 
 VARIANTS = ("static_ols", "rolling_ols", "ew_ols", "kalman_fixed", "kalman_adaptive", "cash")
 
