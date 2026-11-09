@@ -79,7 +79,7 @@ def analyze(symbol: str, years: int, window: int, k: float,
             "changed since (window, k) was chosen; refusing to mix them."
         )
     closes = history["Close"] if "Close" in history.columns else history.squeeze()
-    returns = closes.pct_change().dropna()
+    returns = closes.pct_change(fill_method=None).dropna()
     states = causal_states(returns, window, k)
     labeled = [(i, s) for i, s in enumerate(states) if s in STATE_TO_IDX]
     n = len(returns)

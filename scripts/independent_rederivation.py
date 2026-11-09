@@ -55,7 +55,7 @@ def snapshot_hash(closes: pd.Series) -> str:
 def labels_from_prices(closes: pd.Series) -> tuple[list[str | None], int]:
     """The documented rule, re-implemented: trailing 30d mean/std of daily
     returns; bull if mean > k*std, bear if mean < -k*std, else sideways."""
-    rets = closes.pct_change().dropna()
+    rets = closes.pct_change(fill_method=None).dropna()
     mean = rets.rolling(WINDOW, min_periods=WINDOW).mean()
     std = rets.rolling(WINDOW, min_periods=WINDOW).std()
     out = []

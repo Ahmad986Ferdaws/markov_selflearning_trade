@@ -54,7 +54,7 @@ def _count_divergences(history: pd.DataFrame, window: int, k: float) -> dict:
     """Pointwise identity check on the held-out region with the chosen config:
     how often does argmax(P[today]) differ from today's state?"""
     closes = history["Close"] if "Close" in history.columns else history.squeeze()
-    returns = closes.pct_change().dropna()
+    returns = closes.pct_change(fill_method=None).dropna()
     n = len(returns)
     split = int(n * 0.7)
     states = causal_states(returns, window, k)

@@ -66,7 +66,7 @@ def analyze(symbol: str, years: int, window: int, k: float,
     if expected_hash and history_hash(history) != expected_hash:
         raise ValueError(f"{symbol}: snapshot hash != run-record hash — refusing to mix.")
     closes = history["Close"] if "Close" in history.columns else history.squeeze()
-    returns = closes.pct_change().dropna()
+    returns = closes.pct_change(fill_method=None).dropna()
     states = causal_states(returns, window, k)
     n = len(returns)
     split = int(n * TRAIN_FRAC)
