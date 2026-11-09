@@ -90,7 +90,7 @@ def run_one(symbol: str, history=None) -> dict | None:
             fee_pct=0.3, slippage_pct=0.5,
         )
         (OUT / f"{symbol.replace('/', '_').replace('=', '_')}.json").write_text(
-            json.dumps(asdict(rep), indent=2, default=str)
+            json.dumps(asdict(rep), indent=2), encoding="utf-8"
         )
         return _summarize(symbol, rep)
     except Exception as e:  # noqa: BLE001
@@ -143,7 +143,7 @@ def main() -> None:
         "max_edge_vs_persist_bal": max((r["edge_vs_persist_bal"] for r in ok), default=None),
     }
     summary = {"aggregate": agg, "assets": rows, "temporal": temporal}
-    (OUT / "summary.json").write_text(json.dumps(summary, indent=2, default=str))
+    (OUT / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
     print("\n=== AGGREGATE ===", flush=True)
     for k, v in agg.items():
