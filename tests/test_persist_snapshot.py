@@ -78,12 +78,13 @@ def test_a_reported_zero_volume_is_stored_as_zero_not_null(db, run):
     assert json.loads(row.payload_json)["volume"] == 0.0
 
 
-def test_each_call_commits_one_row_that_survives_expiring_the_session(db, run):
+def test_each_call_commits_one_row_that_survives_a_rollback(db, run):
     persist_snapshot(db, run.id, _snap(volume=None))
+    db.rollback()                           # a flushed-but-uncommitted row would vanish here
     persist_snapshot(db, run.id, _snap(volume=0.0))
+    db.rollback()
     assert db.query(Snapshot).count() == 2
 
-    db.expire_all()                                           # reload from the database
-    rows = db.query(Snapshot).order_by(Snapshot.id).all()
+    rows = db.query(Snapshot).order_by(Snapshot.id).all()     # fresh load after the rollbacks
     assert [r.volume for r in rows] == [None, 0.0]
     assert all(r.run_id == run.id for r in rows)
