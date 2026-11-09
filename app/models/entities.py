@@ -35,7 +35,10 @@ class Snapshot(Base):
     __tablename__ = "snapshots"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    run_id: Mapped[int] = mapped_column(ForeignKey("runs.id"))
+    # Indexed: every legacy query filters by run_id and SQLite does not index
+    # foreign keys on its own. No migration: paper_trading.db is regenerable
+    # (delete it once and init_db recreates the tables with the indexes).
+    run_id: Mapped[int] = mapped_column(ForeignKey("runs.id"), index=True)
     symbol: Mapped[str] = mapped_column(String(64))
     price: Mapped[float] = mapped_column(Float)
     volume: Mapped[float | None] = mapped_column(Float, nullable=True)
@@ -50,7 +53,7 @@ class Trade(Base):
     __tablename__ = "trades"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    run_id: Mapped[int] = mapped_column(ForeignKey("runs.id"))
+    run_id: Mapped[int] = mapped_column(ForeignKey("runs.id"), index=True)
     symbol: Mapped[str] = mapped_column(String(64))
     intent_action: Mapped[str] = mapped_column(String(16))
     intent_percentage: Mapped[float] = mapped_column(Float)
@@ -69,7 +72,7 @@ class Metric(Base):
     __tablename__ = "metrics"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    run_id: Mapped[int] = mapped_column(ForeignKey("runs.id"))
+    run_id: Mapped[int] = mapped_column(ForeignKey("runs.id"), index=True)
     name: Mapped[str] = mapped_column(String(64))
     value: Mapped[float] = mapped_column(Float)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
