@@ -88,6 +88,12 @@ def align_pair(p1: pd.DataFrame, p2: pd.DataFrame, name1: str, name2: str,
     dropped by the join — that is calendar alignment, not imputation."""
     a = _validate_frame(p1, name1)
     b = _validate_frame(p2, name2)
+    if (a.index.tz is None) != (b.index.tz is None):
+        # pandas intersects a naive and an aware index to nothing, which would
+        # surface below as 'overlap too short' although the calendars may match
+        raise ValueError(f"{name1}/{name2}: one leg has a tz-aware index and the other a "
+                         f"naive one ({a.index.tz} vs {b.index.tz}); localize both the same "
+                         f"way before aligning")
     idx = a.index.intersection(b.index)
     if len(idx) < min_overlap:
         raise ValueError(f"pair overlap too short: {len(idx)} < {min_overlap}")
