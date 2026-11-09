@@ -28,8 +28,8 @@ def captured(monkeypatch):
 
 def test_no_flags_means_every_value_comes_from_settings(captured, capsys):
     cli.main([])
-    assert captured == [dict(symbol="BTC-USD", window=20, k=0.5, bull_thresh=0.02,
-                             bear_thresh=-0.02, fee_pct=0.3, slippage_pct=0.5)]
+    assert captured == [{"symbol": "BTC-USD", "window": 20, "k": 0.5, "bull_thresh": 0.02,
+                         "bear_thresh": -0.02, "fee_pct": 0.3, "slippage_pct": 0.5}]
     assert capsys.readouterr().out.strip() == "REPORT"
 
 
