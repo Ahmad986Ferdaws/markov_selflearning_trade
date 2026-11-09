@@ -1,4 +1,5 @@
 import dataclasses
+from typing import Annotated
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
@@ -6,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.config import Settings
 from app.dependencies import get_db_dep, get_settings_dep
 from app.exceptions import ApiError
-from app.models.entities import Run, Trade
+from app.models.entities import Run, Snapshot, Trade
 from app.schemas.runs import (
     ComparisonResponse,
     CreateRunRequest,
@@ -18,14 +19,17 @@ from app.services.comparison import format_report, run_comparison
 from app.services.ledger import mark_to_market
 from app.services.runner import request_stop, start_run_task
 
+DbSession = Annotated[Session, Depends(get_db_dep)]
+AppSettings = Annotated[Settings, Depends(get_settings_dep)]
+
 router = APIRouter(prefix="/runs", tags=["runs"])
 
 
 @router.post("", response_model=RunStatusResponse)
 async def create_run(
     body: CreateRunRequest,
-    db: Session = Depends(get_db_dep),
-    settings: Settings = Depends(get_settings_dep),
+    db: DbSession,
+    settings: AppSettings,
 ) -> RunStatusResponse:
     if body.ingestion_provider == "dexscreener":
         raise ApiError("dexscreener provider deferred until after Phase 1 gate", 400)
@@ -62,25 +66,24 @@ async def create_run(
     # run with the same id, and frees this request instead of pinning it on an
     # infinite loop (review findings 5+6).
     start_run_task(run.id, settings)
-    return _run_to_response(run, 0.0, settings)
+    return _run_to_response(run, 0.0)
 
 
 @router.get("/{run_id}", response_model=RunStatusResponse)
 def get_run(
     run_id: int,
-    db: Session = Depends(get_db_dep),
-    settings: Settings = Depends(get_settings_dep),
+    db: DbSession,
 ) -> RunStatusResponse:
     run = db.get(Run, run_id)
     if not run:
         raise ApiError(f"Run {run_id} not found", 404)
     last_price = _last_price(db, run)
     unrealized = mark_to_market(run, last_price) if last_price else 0.0
-    return _run_to_response(run, unrealized, settings)
+    return _run_to_response(run, unrealized)
 
 
 @router.get("/{run_id}/trades", response_model=list[TradeRecordResponse])
-def list_trades(run_id: int, db: Session = Depends(get_db_dep)) -> list[TradeRecordResponse]:
+def list_trades(run_id: int, db: DbSession) -> list[TradeRecordResponse]:
     run = db.get(Run, run_id)
     if not run:
         raise ApiError(f"Run {run_id} not found", 404)
@@ -106,8 +109,7 @@ def list_trades(run_id: int, db: Session = Depends(get_db_dep)) -> list[TradeRec
 @router.post("/{run_id}/stop", response_model=RunStatusResponse)
 def stop_run(
     run_id: int,
-    db: Session = Depends(get_db_dep),
-    settings: Settings = Depends(get_settings_dep),
+    db: DbSession,
 ) -> RunStatusResponse:
     run = db.get(Run, run_id)
     if not run:
@@ -118,14 +120,14 @@ def stop_run(
     db.refresh(run)
     last_price = _last_price(db, run)
     unrealized = mark_to_market(run, last_price) if last_price else 0.0
-    return _run_to_response(run, unrealized, settings)
+    return _run_to_response(run, unrealized)
 
 
 @router.get("/{run_id}/comparison", response_model=ComparisonResponse)
 def get_comparison(
     run_id: int,
-    db: Session = Depends(get_db_dep),
-    settings: Settings = Depends(get_settings_dep),
+    db: DbSession,
+    settings: AppSettings,
 ) -> ComparisonResponse:
     report = run_comparison(db, run_id, settings)
     return ComparisonResponse(
@@ -140,8 +142,6 @@ def get_comparison(
 
 
 def _last_price(db: Session, run: Run) -> float:
-    from app.models.entities import Snapshot
-
     snap = (
         db.query(Snapshot)
         .filter(Snapshot.run_id == run.id, Snapshot.symbol == run.trade_symbol)
@@ -154,7 +154,7 @@ def _last_price(db: Session, run: Run) -> float:
     return snap.price if snap else 0.0
 
 
-def _run_to_response(run: Run, unrealized: float, settings: Settings) -> RunStatusResponse:
+def _run_to_response(run: Run, unrealized: float) -> RunStatusResponse:
     return RunStatusResponse(
         id=run.id,
         strategy=run.strategy,
