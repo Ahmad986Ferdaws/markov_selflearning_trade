@@ -54,12 +54,16 @@ def main(argv: Sequence[str] | None = None) -> None:
             parser.error(f"--{name.replace('_', '-')} must be a finite percentage in [0, 100)")
     if args.years is not None and args.years < 1:
         parser.error("--years must be at least 1 (it names the pinned snapshot's history length)")
+    # "" or "   " would otherwise fall through `or` to REGIME_SYMBOL (reporting
+    # on a symbol nobody asked for) or name a snapshot path "   _3y.pkl".
+    if args.symbol is not None and not args.symbol.strip():
+        parser.error("--symbol must not be blank")
     s = get_settings()
     # Only forwarded when given, so the report keeps its own default (3 years).
     years = {} if args.years is None else {"years": args.years}
     print(
         run_phase0_report(
-            symbol=args.symbol or s.regime_symbol,
+            symbol=args.symbol.strip() if args.symbol is not None else s.regime_symbol,
             window=s.regime_window if args.window is None else args.window,
             k=s.regime_k if args.k is None else args.k,
             bull_thresh=s.regime_bull_thresh,
