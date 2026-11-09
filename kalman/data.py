@@ -136,9 +136,13 @@ def synthetic_pair(n: int = 1500, seed: int = 7,
     p1 = beta * p2 + alpha + rng.normal(0.0, obs_noise_sd, n)
     p1 = np.maximum(p1, 1e-3)
     idx = pd.bdate_range("2015-01-01", periods=n)
-    mk = lambda px: pd.DataFrame(
-        {"Open": px * (1 + rng.normal(0, 0.0005, n)), "Close": px}, index=idx)
-    pair = align_pair(mk(p1), mk(p2), "SYN1", "SYN2", min_overlap=10)
+
+    def _frame(px: np.ndarray) -> pd.DataFrame:
+        # draws the Open noise from the shared rng: p1 first, then p2, as before
+        return pd.DataFrame(
+            {"Open": px * (1 + rng.normal(0, 0.0005, n)), "Close": px}, index=idx)
+
+    pair = align_pair(_frame(p1), _frame(p2), "SYN1", "SYN2", min_overlap=10)
     truth = pd.DataFrame({"beta": beta, "alpha": alpha}, index=idx)
     return pair, truth
 
