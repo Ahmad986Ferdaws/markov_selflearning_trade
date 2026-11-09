@@ -348,11 +348,21 @@ def run_phase0_report(
         f"Current regime feature: state={feat.state}, p_next={feat.p_next}",
         "",
         "--- Backtest (walk-forward, no lookahead) ---",
+    ]
+    if len(bt_cost.returns) < 2:
+        # Fewer than two scored steps: walk_forward_backtest returned its
+        # all-zero result. Say so, instead of printing Sharpe 0.000 and the
+        # cost NOTE (0.0 >= 0.0) for a backtest that never ran.
+        lines.append(f"Backtest: no scored day — {len(returns)} daily returns; "
+                     "the walk-forward needs more than min_train=60")
+        lines.append("")
+        return "\n".join(lines)
+    lines.extend([
         f"No cost  — Sharpe: {bt_no_cost.annual_sharpe:.3f}, Return: {bt_no_cost.annual_return:.2%}, MaxDD: {bt_no_cost.max_drawdown:.2%}",
         f"With cost — Sharpe: {bt_cost.annual_sharpe:.3f}, Return: {bt_cost.annual_return:.2%}, MaxDD: {bt_cost.max_drawdown:.2%}",
         f"Regime mix: {bt_cost.regime_mix}",
         "",
-    ]
+    ])
     if bt_cost.sparse_warnings:
         lines.append("Sparse cell warnings:")
         lines.extend(f"  - {w}" for w in bt_cost.sparse_warnings[:10])
