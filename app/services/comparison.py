@@ -239,6 +239,23 @@ def _trade_snapshots_for_run(run: Run, snapshots: list[Snapshot]) -> list[Snapsh
     return [snapshot for snapshot in snapshots if snapshot.symbol == run.trade_symbol]
 
 
+def _empty_report(warning: str) -> ComparisonReport:
+    """An all-zero report carrying one warning, for runs with nothing to replay."""
+    def _zero(name: str) -> StrategyMetrics:
+        return StrategyMetrics(
+            name=name, total_return=0.0, annual_sharpe=0.0, max_drawdown=0.0,
+            win_rate=0.0, num_trades=0, total_costs=0.0, guard_interventions=0,
+        )
+
+    return ComparisonReport(
+        baseline=_zero("baseline"),
+        agent=_zero("agent"),
+        headline_agent_minus_baseline=0.0,
+        snapshot_count=0,
+        warnings=[warning],
+    )
+
+
 def run_comparison(db: Session, run_id: int, settings: Settings) -> ComparisonReport:
     run = db.get(Run, run_id)
     if run is None:
@@ -247,26 +264,12 @@ def run_comparison(db: Session, run_id: int, settings: Settings) -> ComparisonRe
         db.query(Snapshot).filter(Snapshot.run_id == run_id).order_by(Snapshot.created_at).all()
     )
     if not snapshots:
-        empty = StrategyMetrics("baseline", 0, 0, 0, 0, 0, 0, 0)
-        return ComparisonReport(
-            empty,
-            StrategyMetrics("agent", 0, 0, 0, 0, 0, 0, 0),
-            0.0,
-            0,
-            warnings=["No snapshots for run; nothing to compare."],
-        )
+        return _empty_report("No snapshots for run; nothing to compare.")
 
     trade_snapshots = _trade_snapshots_for_run(run, snapshots)
     if not trade_snapshots:
-        empty = StrategyMetrics("baseline", 0, 0, 0, 0, 0, 0, 0)
-        return ComparisonReport(
-            empty,
-            StrategyMetrics("agent", 0, 0, 0, 0, 0, 0, 0),
-            0.0,
-            0,
-            warnings=[f"No snapshots for trade symbol {run.trade_symbol!r}; "
-                      "refusing to compare across mixed symbols."],
-        )
+        return _empty_report(f"No snapshots for trade symbol {run.trade_symbol!r}; "
+                             "refusing to compare across mixed symbols.")
     history = fetch_daily_history(settings.benchmark_symbol, years=3)
     regime_lookup = _build_regime_lookup(trade_snapshots, history, settings)
     base_cash = getattr(run, "starting_cash", None) or settings.starting_cash
