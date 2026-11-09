@@ -4,8 +4,10 @@ Cost and sizing parameters usually arrive from numpy grids (np.int64,
 np.float64), and kalman.core already accepts them (_finite_real, AdaptiveQ's
 window). The ledger used to reject them as 'must be a real number' /
 'must be a positive integer'. bool and np.bool_ stay rejected, non-finite
-values stay rejected, and bars_per_year is normalised to a plain int exactly
-as AdaptiveQ normalises `window`.
+values stay rejected, bars_per_year is normalised to a plain int exactly as
+AdaptiveQ normalises `window`, and every other accepted scalar is stored as a
+plain float (as kalman.core._finite_real returns one) so numpy's fixed-width
+arithmetic never reaches the accounting.
 """
 
 from __future__ import annotations
@@ -42,6 +44,25 @@ def test_numpy_float64_cost_fields_are_accepted():
 def test_numpy_int64_capital_constructs_a_ledger_config():
     cfg = LedgerConfig(capital=np.int64(100_000))
     assert cfg.capital == 100_000
+
+
+def test_narrow_numpy_integers_do_not_wrap_in_per_side_bps():
+    # np.int8(100) + np.int8(100) + np.int8(100) wraps to 44 in numpy; the
+    # config must sum Python floats and charge the full 300 bps per side.
+    cfg = CostConfig(commission_bps=np.int8(100), half_spread_bps=np.int8(100),
+                     slippage_bps=np.int8(100))
+    assert cfg.per_side_bps == 300.0
+
+
+def test_accepted_numpy_scalars_are_stored_as_plain_floats():
+    cfg = LedgerConfig(capital=np.float32(100_000.0), gross_target=np.int64(100_000),
+                       costs=CostConfig(commission_bps=np.float32(1.0),
+                                        borrow_bps_pa=np.int64(25)))
+    for value in (cfg.capital, cfg.gross_target, cfg.max_gross, cfg.rehedge_threshold,
+                  cfg.costs.commission_bps, cfg.costs.half_spread_bps,
+                  cfg.costs.slippage_bps, cfg.costs.borrow_bps_pa,
+                  cfg.costs.financing_bps_pa):
+        assert type(value) is float
 
 
 @pytest.mark.parametrize("kwargs", [
