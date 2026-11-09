@@ -20,3 +20,8 @@ repos:
       - id: check-added-large-files
         args: [--maxkb=2048]
       - id: detect-private-key
+      - id: check-merge-conflict
+      - id: check-json
+      # .gitattributes normalises to LF on checkout; this catches a CRLF file before it is committed.
+      - id: mixed-line-ending
+        args: [--fix=lf]
