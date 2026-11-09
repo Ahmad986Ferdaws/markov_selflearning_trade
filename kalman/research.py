@@ -356,6 +356,13 @@ def walk_forward(pair: PairData, wf: WalkForwardConfig,
     entry/exit from the predeclared grid by net Sharpe) -> test (once)."""
     c1 = pair.p1["Close"].to_numpy(float)
     c2 = pair.p2["Close"].to_numpy(float)
+    bad = ~(np.isfinite(c1) & np.isfinite(c2))
+    if bad.any():
+        raise ValueError(
+            f"walk_forward: {int(bad.sum())} bar(s) have a missing close on at least "
+            "one leg; the static-OLS and EW baselines cannot fit through NaN (their "
+            "z-stream becomes all-NaN, i.e. permanently flat) and from_ols rejects "
+            "it - drop or re-pin those bars first")
     y = np.log(c1) if use_log else c1
     x = np.log(c2) if use_log else c2
     n = len(y)
