@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import numpy as np
 import pandas as pd
@@ -37,7 +37,7 @@ def test_comparison_on_snapshots(monkeypatch: pytest.MonkeyPatch):
                 price=price,
                 source="yfinance",
                 payload_json=json.dumps({"symbol": "BTC-USD", "price": price}),
-                created_at=datetime(2024, 1, 1 + i, tzinfo=timezone.utc),
+                created_at=datetime(2024, 1, 1 + i, tzinfo=UTC),
             )
         )
     db.commit()
@@ -88,7 +88,7 @@ def test_comparison_replays_only_trade_symbol_snapshots(monkeypatch: pytest.Monk
                 price=price,
                 source="yfinance",
                 payload_json=json.dumps({"symbol": symbol, "price": price}),
-                created_at=datetime(2024, 1, 1 + i, tzinfo=timezone.utc),
+                created_at=datetime(2024, 1, 1 + i, tzinfo=UTC),
             )
         )
     db.commit()
