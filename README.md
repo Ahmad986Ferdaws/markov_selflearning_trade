@@ -89,7 +89,7 @@ python scripts/long_history_study.py   # reproduce the 20-year / +0.000 result
 diagnose-cli                  # narrate the latest run record (offline, no model)
 python scripts/independent_rederivation.py   # re-derive the headline with ZERO app imports
 kalman-cli walkforward        # Kalman pairs walk-forward on SPY/QQQ (docs/20)
-make test                     # 90 tests
+make test                     # the offline suite (no network, pinned snapshots)
 make site                     # serve the website at http://localhost:8000
 ```
 
