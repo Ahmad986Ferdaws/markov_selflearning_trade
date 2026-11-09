@@ -19,7 +19,7 @@ PINNED = ROOT / "data" / "snapshots" / "BTC-USD_3y.pkl"
 
 def _run(*args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run([sys.executable, str(SCRIPT), *args],
-                          cwd=ROOT, capture_output=True, text=True, timeout=120)
+                          cwd=ROOT, capture_output=True, text=True, timeout=120, check=False)
 
 
 def test_the_pinned_snapshot_reproduces_the_headline():
