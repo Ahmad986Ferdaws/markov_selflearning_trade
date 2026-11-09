@@ -86,3 +86,11 @@ def test_the_page_diagonal_is_the_matrix_diag_model_logic_publishes_for_btc_3y()
 def test_the_scene_label_still_reads_the_diagonal_as_a_stay_percentage():
     page = INDEX.read_text(encoding="utf-8")
     assert "${(M[k][k]*100|0)}% stay" in page
+
+
+def test_zero_probability_edges_carry_no_particles():
+    # the engine matrix has exact zeros (bull->bear, bear->bull). The faint arcs are the graph's
+    # skeleton and never encoded odds; the moving particles do, so a zero cell must draw none.
+    assert any(v == 0 for row in _page_matrix().values() for v in row.values()), "no zero cell left to guard"
+    page = INDEX.read_text(encoding="utf-8")
+    assert "edges.forEach(e=>{ if(e.p<=0) return; const cnt=Math.round(e.p*7)+1;" in page

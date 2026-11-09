@@ -666,7 +666,8 @@ function setActive(i){
   });
 
   const parts=[];
-  edges.forEach(e=>{ const cnt=Math.round(e.p*7)+1; for(let i=0;i<cnt;i++){
+  // a zero cell is a transition the engine never observed: keep the arc, draw no flow along it
+  edges.forEach(e=>{ if(e.p<=0) return; const cnt=Math.round(e.p*7)+1; for(let i=0;i<cnt;i++){
     const m=new THREE.Mesh(new THREE.CircleGeometry(0.05,18), new THREE.MeshBasicMaterial({color:col(C[e.a])}));
     group.add(m); parts.push({m,e,t:i/cnt, sp:0.0018+e.p*0.004}); } });
 
