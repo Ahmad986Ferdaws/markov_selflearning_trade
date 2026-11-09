@@ -14,6 +14,7 @@ set, and poll_interval_seconds=0.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 
 import pandas as pd
 import pytest
@@ -47,16 +48,16 @@ def factory(monkeypatch):
 
 
 class _ParkedProvider:
-    """poll reports that it is waiting, then awaits an Event nobody sets."""
+    """poll signals that it is waiting, then awaits an Event nobody sets."""
 
     def __init__(self) -> None:
-        self.waiting = False
+        self.waiting = asyncio.Event()
         self.polls: list[list[str]] = []
         self._never = asyncio.Event()
 
     async def poll(self, watchlist):
         self.polls.append(list(watchlist))
-        self.waiting = True
+        self.waiting.set()
         await self._never.wait()
         return []                                           # unreachable: cancelled first
 
@@ -66,11 +67,15 @@ async def test_request_stop_cancels_a_loop_parked_inside_the_provider_poll(facto
     monkeypatch.setattr(runner, "get_provider", lambda name: provider)
 
     task = runner.start_run_task(RUN_ID, Settings(poll_interval_seconds=0))
-    for _ in range(200):                                    # yield until poll is awaiting
-        if provider.waiting:
-            break
-        await asyncio.sleep(0)
-    assert provider.waiting, "the loop never reached provider.poll"
+    try:
+        # run_loop first awaits the benchmark fetch in a worker thread, so wait
+        # for poll to signal readiness on the clock, not by counting loop passes.
+        await asyncio.wait_for(provider.waiting.wait(), 2.0)
+    except TimeoutError:
+        task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await task
+        pytest.fail("the loop never reached provider.poll")
     assert not task.done()
     assert runner._active_tasks[RUN_ID] is task
 
