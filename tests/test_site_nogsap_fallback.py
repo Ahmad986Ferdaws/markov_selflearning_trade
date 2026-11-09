@@ -27,7 +27,9 @@ def _page() -> str:
 
 
 def _stylesheet() -> str:
-    blocks = re.findall(r"<style>(.*?)</style>", _page(), re.DOTALL)
+    """The main stylesheet, ignoring any <noscript> fallback sheet the head may carry."""
+    page = re.sub(r"<noscript>.*?</noscript>", "", _page(), flags=re.DOTALL)
+    blocks = re.findall(r"<style>(.*?)</style>", page, re.DOTALL)
     assert len(blocks) == 1, f"expected exactly one <style> block, found {len(blocks)}"
     return blocks[0]
 
