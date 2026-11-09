@@ -71,7 +71,7 @@ async def get_agent_decision(
             )
             return parse_decision(repair.content[0].text)
     except Exception as e:
-        logger.exception("agent call failed: %s", e)
+        logger.exception("agent call failed")
         return AgentDecision(action="HOLD", percentage=0, reasoning=f"agent error: {e}")
 
 
@@ -116,5 +116,5 @@ def get_agent_decision_sync(
             )
             return parse_decision(repair.content[0].text)
     except Exception as e:
-        logger.exception("agent sync call failed: %s", e)
+        logger.exception("agent sync call failed")
         return AgentDecision(action="HOLD", percentage=0, reasoning=f"agent error: {e}")
