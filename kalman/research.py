@@ -296,13 +296,17 @@ def sharpe_ci_block_bootstrap(rets: np.ndarray, n_boot: int = 500,
                               block: int = 20, seed: int = 0,
                               bars_per_year: int = BARS_PER_YEAR) -> tuple[float, float]:
     """Moving-block bootstrap 90% CI for the annualized Sharpe."""
+    if isinstance(block, bool) or not isinstance(block, int) or block < 1:
+        raise ValueError(f"sharpe_ci_block_bootstrap: block must be an int >= 1, got {block!r}")
+    if isinstance(n_boot, bool) or not isinstance(n_boot, int) or n_boot < 1:
+        raise ValueError(f"sharpe_ci_block_bootstrap: n_boot must be an int >= 1, got {n_boot!r}")
     rng = np.random.default_rng(seed)
     n = len(rets)
     if n < block * 2:
         return (float("nan"), float("nan"))
+    k = int(np.ceil(n / block))             # blocks per resample; loop-invariant
     sharpes = []
     for _ in range(n_boot):
-        k = int(np.ceil(n / block))
         starts = rng.integers(0, n - block + 1, size=k)   # final block included
         sample = np.concatenate([rets[s:s + block] for s in starts])[:n]
         sd = np.std(sample, ddof=1)
