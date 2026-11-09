@@ -16,6 +16,7 @@ you want the evidence, and [STATUS.md](STATUS.md) if you want to know what is do
 | [18 — Long-history study](18-long-history.md) | Up to 20 years per asset: still +0.000 on 8/8, 0 divergences across 16,773 predictions. |
 | [19 — The anatomy of zero](19-anatomy-of-zero.md) | Why the zero is structural: positive controls, the dominance bound, switch-day decomposition, what the model *does* know. |
 | [20 — Kalman pairs framework](20-kalman-pairs.md) | The `kalman/` research harness: Joseph-form filter, two-leg ledger, walk-forward vs five baselines; no edge after costs on SPY/QQQ. |
+| [21 — Glossary](21-glossary.md) | The terms the current docs use, each pointing at the code or doc that defines it. |
 | [12 — Architecture review](12-architecture-review.md) | The review that triggered the reframe; headline-integrity fixes. |
 | [STATUS.md](STATUS.md) | Living status and session handoff. Updated at the end of each working session. |
 
@@ -39,3 +40,11 @@ These describe the original 15-second intraday paper-trading loop, now quarantin
 | [11 — API comparison](11-api-comparison.md) | Survey of paper-trading and backtest APIs. |
 
 A short [glossary](21-glossary.md) defines the terms the current docs use.
+
+## Folder notes
+
+The folders that hold evidence or tooling have their own short README:
+[scripts](../scripts/README.md) (each study's inputs, outputs and network needs),
+[results](../results/README.md) (the two record-naming schemes and what each directory holds),
+[data](../data/README.md) (the pinned snapshots and the hash that names a run) and
+[design](../design/README.md) (how the site is served, deployed and kept pinned).
