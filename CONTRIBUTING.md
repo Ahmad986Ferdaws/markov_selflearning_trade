@@ -55,7 +55,7 @@ to be clean.
 
 ## Branches and commits
 
-Branch prefixes in use: `fix/`, `perf/`, `chore/`, `test/`, `docs/`, `feat/`. Commit titles
+Branch prefixes in use: `fix/`, `perf/`, `chore/`, `test/`, `docs/`, `feat/`, `site/` (changes under `design/`) and `ci/` (`.github/workflows`). Commit titles
 are imperative sentences that say what changed and why it matters
 ("Flatten on non-finite strategy signals"), not labels ("update evaluation.py").
 
