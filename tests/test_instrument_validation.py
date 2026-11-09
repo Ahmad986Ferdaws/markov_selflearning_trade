@@ -15,6 +15,8 @@ argmax forecast IS persistence — divergence requires a fast-flipping state.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 
@@ -136,7 +138,7 @@ def test_uniform_fallback_never_fired_on_published_runs():
     uniform row (1/3) would have shown up here. Keep the receipt pinned."""
     import json
 
-    agg = json.loads(open("results/logic_depth/summary.json").read())["aggregate"]
+    agg = json.loads(Path("results/logic_depth/summary.json").read_text(encoding="utf-8"))["aggregate"]
     assert agg["pooled_predictions"] == 16773
     assert agg["global_min_prefix_self_prob"] > 0.5
     assert agg["runs_prefix_dominant_throughout"] == 28
