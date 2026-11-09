@@ -129,7 +129,7 @@ class OllamaProvider(LLMProvider):
 
 def make_provider(settings) -> LLMProvider | None:
     """Build the configured provider, or None if disabled/unconfigured."""
-    name = (getattr(settings, "llm_provider", "none") or "none").lower()
+    name = (getattr(settings, "llm_provider", "none") or "none").strip().lower()
     temp = float(getattr(settings, "agent_temperature", 0.0))
     if name == "anthropic":
         key = getattr(settings, "anthropic_api_key", "") or ""
