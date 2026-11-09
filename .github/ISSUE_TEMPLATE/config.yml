@@ -3,3 +3,6 @@ contact_links:
   - name: Project status and session handoff
     url: https://github.com/Ahmad986Ferdaws/markov_selflearning_trade/blob/main/docs/STATUS.md
     about: Read the living status doc first; it records what is done, what is pending, and the current verdict.
+  - name: Report a security problem privately
+    url: https://github.com/Ahmad986Ferdaws/markov_selflearning_trade/security/advisories/new
+    about: "Credential exposure or a path that could spend the API key: use private reporting, not a public issue (see SECURITY.md)."
