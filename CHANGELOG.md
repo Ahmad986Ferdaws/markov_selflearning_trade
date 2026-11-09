@@ -4,9 +4,11 @@ All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/); the project is a portfolio /
 research artifact rather than a released package, so versions are snapshots.
 
-## [Unreleased] — repository hygiene, three small fixes, and a test-coverage batch
+## [Unreleased] — repository hygiene, three small fixes, and a test-coverage batch, then a second batch of one hundred one-concern pull requests
 
-Landed as a set of small pull requests (one concern each) opened 2026-11-02.
+The first set of small pull requests (one concern each) was opened 2026-11-02; the second,
+one hundred pull requests #174–#273 each closing one of issues #64–#173, was opened 2026-11-07.
+Entries below are grouped by batch.
 
 ### Fixed
 - The yfinance provider turned a reported volume of `0.0` into `None` ("not reported")
@@ -47,6 +49,68 @@ Landed as a set of small pull requests (one concern each) opened 2026-11-02.
 - `.gitignore` covers the ruff, mypy, coverage, and hypothesis caches.
 - pytest-asyncio's fixture loop scope is explicit, which removes the deprecation warning
   printed at the top of every run; ruff's target version is pinned to 3.11.
+
+### Fixed (2026-11-07 batch)
+- The legacy comparison appended its "Sharpe annualization factor unresolved" warning once per
+  strategy; it now appears once per report (#175).
+- `GET /runs/{id}` priced a position with the newest snapshot of *any* symbol when the trade
+  symbol had none; it now reports no price (unrealized 0.0) instead of mixing instruments (#193).
+- `CreateRunRequest` silently ignored unknown fields (a typo such as `stratgy` created a baseline
+  run) and accepted blank or duplicate watchlist entries; both are now 422s (#202).
+- `compare-cli <unknown id>` printed a traceback; it is now a usage error with the message on
+  stderr and exit code 2 (#243).
+- The Kalman walk-forward report claimed "test Sharpe is positive" when no complete fold fit the
+  history; it now says that nothing was evaluated (#178). A test z-std of exactly 0.0 was treated as
+  missing and hidden from the report; it is now shown and the far-from-1 caveat fires on it (#186).
+- The four study scripts created `results/` directories as a side effect of being imported
+  (#181, #184, #187, #192); `scripts/_verify_divergence.py` ran a 20-asset study on import
+  and is now behind a `main()` guard (#203).
+- `LLM_PROVIDER=" ollama"` (stray whitespace) disabled the agent as an unknown provider (#206).
+- The `Typing :: Typed` classifier was declared without the `py.typed` markers it promises (#266).
+- The static site's social-card image was a relative path that escaped the deploy root, so link
+  previews rendered no image; it is now an absolute URL (#209).
+
+### Added (2026-11-07 batch)
+- `regime-cli --years N` selects the matching pinned snapshot, so the 20-year pins are reachable
+  from the CLI (#224).
+- A typed `ComparisonResponse` model on `GET /runs/{id}/comparison` (#198); indexes on the
+  `run_id` foreign keys the legacy queries filter on (#226); an OpenAPI description and licence for
+  the legacy app (#229).
+- A warning when a corrupt agent response cache is discarded (#214); `load_pair_from_snapshots`
+  names every missing pickle at once (#242).
+- Repository files: folder READMEs for `design/`, `scripts/`, `results/`, `data/`, `media/` and
+  `tests/` (#233, #244, #249, #254, #257, #259); a feature-request issue template (#176); a
+  private-reporting link in the issue chooser (#179); `CODE_OF_CONDUCT.md` (#185); indentation
+  rules for web files (#196); merge-conflict, JSON and line-ending pre-commit hooks (#201);
+  `object-src 'none'` in the site's CSP (#213); glossary entries for data hash, stay-day credit,
+  decision provenance, diagonal dominance, sub-period and positive control (#262); a complete
+  commands block in `docs/STATUS.md` (#264); lint and single-file instructions in CONTRIBUTING
+  (#267); a bot-review checkbox in the PR template (#273).
+- Tests, 58 new files, each pinning a boundary: the accuracy and metric helpers,
+  `evaluate()`'s size and control edges, stationary distributions, the sparse-cell threshold,
+  `regime_feature` fallbacks, the runner lifecycle and its worker-thread fetch, the LLM provider
+  layer, `AgentStats` and the forecast bucketing, fail-closed `Settings` defaults, `.env.example`
+  keys, the Kalman filter's adaptive Q, process noise, state intervals, strategy config edges, exit
+  precedence, two-leg sizing, degenerate metrics and health gates, the fold layout and pair
+  qualification, the re-derivation script's hash and label rules against the engine, the committed
+  snapshots and study configs, every Markdown link, `CITATION.cff`, the site's SRI pins, and the
+  legacy `/runs` lifecycle offline.
+
+### Changed (2026-11-07 batch)
+- yfinance polling and the runner's benchmark download run in a worker thread so the legacy loop
+  no longer blocks the event loop (#182, #189). The Kalman trailing z-score is vectorised with
+  pandas rolling statistics (byte-identical report, pinned by an equivalence test, #218) and the
+  pair-data validator scans cells only in object-dtype columns (#238).
+- `Policy` is a real `Callable` alias and the policy registry is typed with it (#174); the regime
+  lookup, `app.db` accessors and two Kalman forward references carry their real types (#180,
+  #234, #222); redundant casts, a lambda, a chained comparison, duplicated helpers and a
+  recomputed fee rate are tidied (#190, #230, #252, #188, #183, #245, #177, #240).
+- Every `pct_change` in the study scripts and the Kalman ledger passes `fill_method=None`
+  explicitly, matching the engine (#212, #250).
+- README stops quoting a test count, gains a repository-layout table and links the docs index and
+  glossary (#268, #269, #270); SECURITY describes dependency updates (#272).
+- Issues #64–#173 record every item of this batch (nine remain open as follow-ups: #165–#173);
+  #79 was closed as not-a-bug because the percentage schema already caps buys at 100 %.
 
 ## [0.4.1] — 2026-09-08 — deep review: 24 verified findings fixed
 
