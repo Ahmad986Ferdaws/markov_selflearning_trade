@@ -51,7 +51,7 @@ SQLite first (see [stack](02-stack-and-layout.md)):
 
 **Trade ledger** — timestamp, instrument id, `BUY`/`SELL`, amount, execution price, fees.
 
-Maps to SQLAlchemy: `Run`, `Snapshot`, `Trade`, `Metric`.
+Maps to SQLAlchemy: `Run`, `Snapshot`, `Trade`.
 
 ### Execution logic flow
 

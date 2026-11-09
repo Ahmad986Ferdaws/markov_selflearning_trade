@@ -51,7 +51,7 @@ def test_get_engine_is_built_once_from_settings_with_sqlite_thread_args(fresh_db
 def test_init_db_creates_every_mapped_table(fresh_db):
     db_module.init_db()
     tables = set(inspect(db_module.get_engine()).get_table_names())
-    assert {"runs", "snapshots", "trades", "metrics"} <= tables
+    assert tables == {"runs", "snapshots", "trades"}
 
 
 def test_get_db_yields_a_session_and_closes_it_afterwards(fresh_db):
