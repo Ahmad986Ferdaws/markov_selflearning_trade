@@ -18,6 +18,7 @@ from app.config import Settings
 from app.db import get_session_factory
 from app.models.entities import Run
 from app.schemas.snapshot import NormalizedSnapshot
+from app.schemas.trade import TradeIntent
 from app.services import agent as agent_service
 from app.services.baseline import baseline_decision
 from app.services.ingestion import get_provider
@@ -52,7 +53,7 @@ def request_stop(run_id: int) -> None:
 
 async def run_loop(run_id: int, settings: Settings) -> None:
     factory = get_session_factory()
-    benchmark_history = fetch_daily_history(settings.benchmark_symbol, years=3)
+    benchmark_history = await asyncio.to_thread(fetch_daily_history, settings.benchmark_symbol, years=3)
 
     while not _stop_flags.get(run_id, False):
         db: Session = factory()
@@ -91,8 +92,6 @@ async def run_loop(run_id: int, settings: Settings) -> None:
                     trade_symbol,
                     settings,
                 )
-                from app.schemas.trade import TradeIntent
-
                 intent = TradeIntent(
                     action=decision.action,
                     percentage=decision.percentage,
