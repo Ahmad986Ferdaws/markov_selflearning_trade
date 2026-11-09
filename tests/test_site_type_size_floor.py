@@ -24,7 +24,9 @@ MIN_EXPECTED_RULES = 20
 
 
 def _stylesheet() -> str:
+    """The main stylesheet, ignoring any <noscript> fallback sheet the head may carry."""
     page = INDEX.read_text(encoding="utf-8")
+    page = re.sub(r"<noscript>.*?</noscript>", "", page, flags=re.DOTALL)
     blocks = re.findall(r"<style>(.*?)</style>", page, re.DOTALL)
     assert len(blocks) == 1, f"expected exactly one <style> block, found {len(blocks)}"
     return blocks[0]
