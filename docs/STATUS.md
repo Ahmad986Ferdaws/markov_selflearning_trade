@@ -88,8 +88,9 @@ python scripts/independent_rederivation.py  # the headline with zero app imports
   scalars in the ledger config, and a timezone mismatch reported as "overlap too short". The site now
   draws the engine's BTC transition matrix instead of invented odds, quotes the record's warning
   verbatim, keeps its 12 px label floor and reads without JavaScript. 38 new test files. Automated
-  review: Codex raised three real findings (a racy stop test, narrow-integer wraparound in the ledger
-  config, particles on zero-probability Markov edges), all fixed on their branches and answered;
+  review: Codex raised four real findings (a racy stop test, narrow-integer wraparound in the ledger
+  config, particles on zero-probability Markov edges, a persist test that could not tell a flush from a
+  commit), all fixed on their branches and answered;
   Cursor Bugbot stayed out of quota for the whole round, so every PR has Codex-only coverage. Merge
   notes: #373 (Annotated route dependencies) rewrites every signature in `app/api/routes/runs.py`
   and must merge after #331 and #335; #332 and #339 carry two commits each (a follow-up that made
