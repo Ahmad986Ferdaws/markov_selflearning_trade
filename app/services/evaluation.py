@@ -467,7 +467,7 @@ def evaluate(
             f"Possible overfit: train balanced-acc {train_best_score:.1%} vs test "
             f"{accuracy.balanced_accuracy:.1%} (gap > 10pp)."
         )
-    if len({s for s in traded}) <= 1:
+    if len(set(traded)) <= 1:
         warnings.append("Constant-regime test window: comparison not meaningful.")
 
     # Gate 7 — all accuracy is stay-day credit. The only days any predictor can
