@@ -117,6 +117,7 @@ def _simulate_strategy(
     prev_equity = cash
     states_seen: set[str] = set()
     _, ann_factor = _annualization_factor(settings)
+    fee_rate = (settings.fee_pct + settings.slippage_pct) / 100.0
 
     for snap_row in snapshots:
         metrics = _snapshot_metrics(snap_row)
@@ -149,7 +150,6 @@ def _simulate_strategy(
         price = snap_row.price
         if enforced.action == "BUY" and enforced.percentage > 0 and cash > 0:
             notional = cash * (enforced.percentage / 100.0)
-            fee_rate = (settings.fee_pct + settings.slippage_pct) / 100.0
             exec_p = price * (1 + fee_rate)
             buy_qty = notional / exec_p
             fee = notional - buy_qty * price
@@ -161,7 +161,6 @@ def _simulate_strategy(
             trades += 1
         elif enforced.action == "SELL" and enforced.percentage > 0 and qty > 0:
             sell_qty = qty * (enforced.percentage / 100.0)
-            fee_rate = (settings.fee_pct + settings.slippage_pct) / 100.0
             exec_p = price * (1 - fee_rate)
             proceeds = sell_qty * exec_p
             fee = sell_qty * price - proceeds
