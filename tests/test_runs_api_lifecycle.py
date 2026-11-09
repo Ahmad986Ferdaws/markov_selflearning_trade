@@ -71,10 +71,12 @@ def test_creating_a_baseline_run_starts_it_once_with_the_settings_cash(api):
     assert api.started[0][1] is api.settings
 
 
-def test_an_empty_watchlist_trades_the_benchmark_symbol(api):
-    body = _create(api, watchlist=[]).json()
-    assert body["watchlist"] == []
-    assert body["trade_symbol"] == api.settings.benchmark_symbol
+def test_an_empty_watchlist_is_a_422_and_starts_nothing(api):
+    # An accepted empty watchlist polled nothing, so the run sat in "running"
+    # forever without a snapshot; the schema now refuses it up front.
+    resp = _create(api, watchlist=[])
+    assert resp.status_code == 422
+    assert api.started == []
 
 
 def test_reading_a_run_mirrors_the_stored_row(api):
