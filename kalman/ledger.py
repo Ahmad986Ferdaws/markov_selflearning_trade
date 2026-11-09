@@ -243,5 +243,5 @@ def run_ledger(index: pd.DatetimeIndex,
                               gross, s1 * c1 + s2 * c2, turnover, costs, reason))
 
     df = pd.DataFrame([r.__dict__ for r in rows]).set_index("obs_ts")
-    df["ret"] = df["equity"].pct_change().fillna(0.0)
+    df["ret"] = df["equity"].pct_change(fill_method=None).fillna(0.0)
     return df
