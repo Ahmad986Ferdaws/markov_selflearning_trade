@@ -22,6 +22,9 @@ repos:
       - id: detect-private-key
       - id: check-merge-conflict
       - id: check-json
-      # .gitattributes normalises to LF on checkout; this catches a CRLF file before it is committed.
+      # .gitattributes normalises to LF when a file is added or committed (not on
+      # checkout); this catches a CRLF file before it is committed. The one tracked
+      # CRLF file is frozen evidence (see .gitattributes) and is left alone.
       - id: mixed-line-ending
         args: [--fix=lf]
+        exclude: ^results/robustness/summary\.csv$
