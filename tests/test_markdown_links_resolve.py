@@ -2,7 +2,9 @@
 
 tests/test_scope_tripwires.py::test_every_docs_link_in_the_readme_resolves
 covers README -> docs/. This generalises it: README.md, CONTRIBUTING.md,
-SECURITY.md, CHANGELOG.md, design/philosophy.md and every docs/*.md are
+SECURITY.md, CHANGELOG.md, CODE_OF_CONDUCT.md, design/philosophy.md, every
+docs/*.md, the pull-request and issue templates under .github/ and every
+folder README (data/, design/, media/, results/, scripts/, tests/) are
 scanned for `](target)` links; http(s), mailto and pure-anchor targets are
 skipped, a trailing #fragment is stripped, and the rest must exist relative
 to the file that links to it. One parametrised case per link, so a failure
@@ -21,8 +23,12 @@ import app
 ROOT = Path(app.__file__).resolve().parent.parent
 MARKDOWN = [
     ROOT / "README.md", ROOT / "CONTRIBUTING.md", ROOT / "SECURITY.md", ROOT / "CHANGELOG.md",
+    ROOT / "CODE_OF_CONDUCT.md",
     ROOT / "design" / "philosophy.md",
     *sorted((ROOT / "docs").glob("*.md")),
+    ROOT / ".github" / "PULL_REQUEST_TEMPLATE.md",
+    *sorted((ROOT / ".github" / "ISSUE_TEMPLATE").glob("*.md")),
+    *sorted(p for p in ROOT.glob("*/README.md") if p.parent.name != "docs"),   # docs/ is above
 ]
 LINK = re.compile(r"\]\(([^)\s]+)[^)]*\)")          # ](target) or ](target "title")
 EXTERNAL = ("http://", "https://", "mailto:")
@@ -38,7 +44,7 @@ CASES = [(path, link) for path in MARKDOWN for link in _relative_links(path)]
 
 def test_the_scan_covers_every_named_file_and_finds_links():
     assert all(path.is_file() for path in MARKDOWN)
-    assert len(MARKDOWN) >= 20                      # 5 top-level files + the docs/ set
+    assert len(MARKDOWN) >= 30                      # top-level files, docs/, templates, folder READMEs
     assert len(CASES) > 50
 
 
