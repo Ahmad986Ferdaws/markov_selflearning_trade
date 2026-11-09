@@ -16,7 +16,7 @@ not design sources.
 
 ```bash
 make demo          # node scripts/record_demo.mjs, writes into media/
-make clean-media   # removes the folder
+make clean-media   # deletes the rendered png/mp4/gif files; this README stays
 ```
 
 [`scripts/record_demo.mjs`](../scripts/record_demo.mjs) needs Node (it uses the built-in
