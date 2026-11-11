@@ -48,6 +48,7 @@ def test_health_answers_ok_as_json():
     ("GET", "/runs/999"),
     ("GET", "/runs/999/trades"),
     ("POST", "/runs/999/stop"),
+    ("GET", "/runs/999/comparison"),
 ])
 def test_unknown_run_is_a_json_404_not_a_server_error(method, path):
     resp = _client().request(method, path)

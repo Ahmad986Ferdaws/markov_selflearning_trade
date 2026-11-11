@@ -127,6 +127,8 @@ def get_comparison(
     db: Session = Depends(get_db_dep),
     settings: Settings = Depends(get_settings_dep),
 ) -> ComparisonResponse:
+    if db.get(Run, run_id) is None:
+        raise ApiError(f"Run {run_id} not found", 404)
     report = run_comparison(db, run_id, settings)
     return ComparisonResponse(
         report_text=format_report(report),
