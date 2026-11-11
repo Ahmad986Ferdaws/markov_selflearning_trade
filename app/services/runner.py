@@ -2,9 +2,8 @@
 
 DEPRECATED (legacy 15-second intraday loop). Superseded by the daily evaluation
 path (app/services/evaluation.py + evaluate-cli). Retained only for the legacy
-/runs API. Known limits: blocking yfinance I/O in async paths, in-memory run
-registry that orphans runs on restart, inert request_stop cancel path. Not the
-integration point for the Phase-C LLM agent. See docs/13-reframed-plan.md.
+/runs API. Known limit: the in-memory run registry orphans runs on restart. Not
+the integration point for the Phase-C LLM agent. See docs/13-reframed-plan.md.
 """
 
 from __future__ import annotations
