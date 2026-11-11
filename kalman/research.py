@@ -221,7 +221,10 @@ def innovation_diagnostics(recs: list[StepRecord], start: int = 0) -> dict:
     nis = np.array([r.nis for r in recs[start:] if r.nis is not None])
     if len(z) < 10:
         return {"n": len(z)}
-    ac1 = float(np.corrcoef(z[:-1], z[1:])[0, 1])
+    if np.std(z[:-1]) == 0 or np.std(z[1:]) == 0:
+        ac1 = float("nan")                  # undefined for a constant stream; no divide warning
+    else:
+        ac1 = float(np.corrcoef(z[:-1], z[1:])[0, 1])
     return {
         "n": len(z),
         "z_mean": float(np.mean(z)),
