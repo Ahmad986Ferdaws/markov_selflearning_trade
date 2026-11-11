@@ -6,7 +6,7 @@ This project is a simulation-only research harness. It holds no funds, places no
 and talks to no broker, wallet, or exchange. The things that *are* security-relevant here:
 
 1. **Credential exposure.** An `ANTHROPIC_API_KEY` must only ever be read from `.env`
-   (never committed; `.env` is git-ignored and `.env.example` ships empty values).
+   (never committed; `.env` is git-ignored and `.env.example` ships offline defaults and an empty `ANTHROPIC_API_KEY`).
 2. **A publicly triggerable agent.** The LLM agent is CLI-only by policy. Any path that
    lets an unauthenticated request spend the key (the legacy web API, a hosted demo) is
    a vulnerability, not a feature. `ALLOW_LEGACY_AGENT_API` defaults to off for this reason.

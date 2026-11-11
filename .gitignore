@@ -1,5 +1,6 @@
 # Secrets — never commit the real .env or any variant of it (.env.local,
-# .env.production, ...); only the empty-valued .env.example is tracked.
+# .env.production, ...); only the key-less .env.example is tracked: it holds
+# offline defaults and an empty ANTHROPIC_API_KEY.
 .env
 .env.*
 !.env.example
