@@ -1,6 +1,6 @@
 """The run_id foreign keys the legacy queries filter on carry an index.
 
-Every /runs query filters snapshots, trades and metrics by run_id, and
+Every /runs query filters snapshots and trades by run_id, and
 SQLite does not index a foreign key on its own. create_all on an in-memory
 engine must therefore produce a single-column run_id index on each table.
 """
@@ -20,7 +20,7 @@ def inspector():
     return inspect(engine)
 
 
-@pytest.mark.parametrize("table", ["snapshots", "trades", "metrics"])
+@pytest.mark.parametrize("table", ["snapshots", "trades"])
 def test_each_child_table_has_an_index_on_run_id_alone(inspector, table):
     indexes = inspector.get_indexes(table)
     run_id_indexes = [ix for ix in indexes if ix["column_names"] == ["run_id"]]

@@ -37,7 +37,6 @@ Pluggable provider (config / run body). **Default: `yfinance`.** Optional: `dexs
 - `Run` — includes `ingestion_provider` (`yfinance` | `dexscreener`)
 - `Snapshot` — a polled metric set
 - `Trade` — both **intent** and **enforced** action
-- `Metric`
 
 ## `api/routes/runs.py`
 

@@ -28,7 +28,6 @@ class Run(Base):
 
     snapshots: Mapped[list["Snapshot"]] = relationship(back_populates="run")
     trades: Mapped[list["Trade"]] = relationship(back_populates="run")
-    metrics: Mapped[list["Metric"]] = relationship(back_populates="run")
 
 
 class Snapshot(Base):
@@ -66,15 +65,3 @@ class Trade(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     run: Mapped["Run"] = relationship(back_populates="trades")
-
-
-class Metric(Base):
-    __tablename__ = "metrics"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    run_id: Mapped[int] = mapped_column(ForeignKey("runs.id"), index=True)
-    name: Mapped[str] = mapped_column(String(64))
-    value: Mapped[float] = mapped_column(Float)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-
-    run: Mapped["Run"] = relationship(back_populates="metrics")
