@@ -4,11 +4,12 @@ All notable changes to this project are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/); the project is a portfolio /
 research artifact rather than a released package, so versions are snapshots.
 
-## [Unreleased] — repository hygiene, three small fixes, and a test-coverage batch, then a second batch of one hundred one-concern pull requests
+## [Unreleased] — repository hygiene, three small fixes, and a test-coverage batch, then a second batch of one hundred one-concern pull requests, and a third batch of fifty
 
 The first set of small pull requests (one concern each) was opened 2026-11-02; the second,
-one hundred pull requests #174–#273 each closing one of issues #64–#173, was opened 2026-11-07.
-Entries below are grouped by batch.
+one hundred pull requests #174–#273 each closing one of issues #64–#173, was opened 2026-11-07
+and merged 2026-11-09; the third, fifty pull requests #331–#381 each closing one of issues
+#277–#326, was opened 2026-11-09 on the merged tree. Entries below are grouped by batch.
 
 ### Fixed
 - The yfinance provider turned a reported volume of `0.0` into `None` ("not reported")
@@ -111,6 +112,59 @@ Entries below are grouped by batch.
   glossary (#268, #269, #270); SECURITY describes dependency updates (#272).
 - Issues #64–#173 record every item of this batch (nine remain open as follow-ups: #165–#173);
   #79 was closed as not-a-bug because the percentage schema already caps buys at 100 %.
+
+### Fixed (2026-11-09 batch)
+- `GET /runs/{id}/comparison` returned a 500 for an unknown run while its sibling routes returned a
+  JSON 404; it now 404s the same way (#331). Creating a run with an empty watchlist (which polled
+  nothing) or a blank `trade_symbol` is now a 422 (#335).
+- The legacy runner left a run "running" forever when the benchmark download failed or was
+  cancelled mid-fetch; it now finalises the run (#336). One failing yfinance ticker no longer loses
+  the whole poll (#352). `AgentStats.tally` raised on names that were not counters (#341).
+- `evaluate()` now validates its `policies` mapping like every other control instead of returning
+  an empty table or dying on a bare `TypeError` (#348). `regime-cli --symbol ""` reported on the
+  settings symbol as if asked; it is now a usage error (#366). The Phase 0 report printed zero
+  Sharpe plus the cost NOTE for a backtest that scored no day; it now says so (#361).
+- Kalman: `PairFilter.from_ols` refuses unusable training data (constant leg, fewer than three rows,
+  NaNs) with a clear `ValueError` instead of a numpy error or a misleading covariance message
+  (#334); `qualify_pair` rejects empty, negative or over-long windows, one of which silently read
+  from the end of the series (#342); `calibrate` names a too-short window instead of "all
+  likelihoods -inf" (#333); a zero `test` window can no longer hang `walk_forward` (#337);
+  missing closes are refused instead of silently flattening the baselines (#343); a constant
+  innovation stream returns NaN without a `RuntimeWarning` (#345); the Sharpe bootstrap validates
+  `block` and `n_boot` (#349); the ledger accepts numpy scalars and stores them as plain floats so
+  narrow integers cannot wrap (#347); `align_pair` names a naive-vs-aware timezone mismatch
+  (#351).
+- Scripts: a missing snapshot is reported as exit 2 by the re-derivation script, not as a
+  "MISMATCH" exit 1 with a traceback (#380); the logic-depth study's self-checks survive
+  `python -O` (#381).
+- Site: lane values and all three method steps show when GSAP is blocked (#339).
+
+### Added (2026-11-09 batch)
+- Tests, 38 new files: the legacy agent's key-less, repair and error fallbacks
+  (#350), the Gate 6 low-confidence warning (#354), `/runs/{id}/trades` (#359),
+  `regime_feature` across timezones (#368), the partial-sell ledger path (#372), the exact history
+  refusal messages (#375), the Kalman report verdicts (#377), `persist_snapshot` (#369),
+  `health_series`' gates (#363), the OLS signal producers (#370), the divergence verifier against
+  the engine (#379), AdaptiveQ after a NaN (#356), and relative links in every folder README
+  (#358).
+- A `<noscript>` stylesheet keeps the site readable without JavaScript (#346); the chart's
+  keyboard scrub announces its values to screen readers (#365).
+
+### Changed (2026-11-09 batch)
+- The unused `Metric` table and `Run.metrics` relationship are gone (#338); the legacy routes
+  declare their dependencies as `Annotated` parameters and drop an unused `settings` parameter
+  (#373); typing gaps in the agent, runner and lifespan signatures are filled (#344); the runner
+  docstring no longer lists two limits the code fixed (#340).
+- The yfinance study records are written as strict UTF-8 JSON (#353); `pre-commit run
+  --all-files` leaves the committed tree untouched (#355).
+- Site content now matches the engine: the Markov scene draws the BTC transition matrix the engine
+  estimates instead of invented odds (#360), the pull-quote cites the record's warning verbatim
+  (#367), the meta description no longer calls the zero edge a net-of-costs result (#371), and
+  the micro-labels meet the 12 px floor the refinement notes claim (#332).
+- Docs: `make clean-media` wording (#374), the `site/` and `ci/` branch prefixes in CONTRIBUTING
+  (#362), the media and tests folder notes in the docs index (#364), the test that reads
+  `results/model_logic` (#376), and what `.env.example` actually ships (#378).
+- Issues #277–#330 record every item of this round; four remain open as follow-ups (#327–#330).
 
 ## [0.4.1] — 2026-09-08 — deep review: 24 verified findings fixed
 

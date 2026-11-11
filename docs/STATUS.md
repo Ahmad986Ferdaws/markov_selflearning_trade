@@ -71,6 +71,31 @@ python scripts/independent_rederivation.py  # the headline with zero app imports
 
 ## Last session
 
+- **2026-11-08 → 09 — the second batch merged, then fifty more one-concern pull requests
+  (#331–#381, no #357), each closing one of issues #277–#326.** All 102 PRs of the 2026-11-07 batch
+  were merged into `main` one at a time with merge commits (no conflicts; main went from 387 to 872
+  passing tests, CI green on 3.11 and 3.12). The third round was planned from a locally pre-merged
+  preview of that tree by four read-only survey passes (app, kalman + scripts, docs + site, tests):
+  66 candidates, 50 kept, four filed as follow-ups (#327–#330: pin the site's inline script by CSP
+  hash once this round's `design/index.html` edits merge, decide `kalman.__version__`, pin the
+  regime lookup after #30 lands, break `created_at` ties by id). Real fixes: a 500 on
+  `GET /runs/{id}/comparison` for an unknown run, runs left "running" when the benchmark download
+  failed, one bad ticker starving a whole poll, an empty watchlist accepted on run creation,
+  `evaluate()` not validating `policies`, `regime-cli --symbol ""`, the Phase 0 report printing zero
+  Sharpe for a backtest that scored nothing, and in `kalman/` unusable OLS training data, negative or
+  empty `qualify_pair` windows (one read from the end of the series), a zero test window hanging
+  `walk_forward`, missing closes silently flattening baselines, bootstrap argument crashes, numpy
+  scalars in the ledger config, and a timezone mismatch reported as "overlap too short". The site now
+  draws the engine's BTC transition matrix instead of invented odds, quotes the record's warning
+  verbatim, keeps its 12 px label floor and reads without JavaScript. 38 new test files. Automated
+  review: Codex raised four real findings (a racy stop test, narrow-integer wraparound in the ledger
+  config, particles on zero-probability Markov edges, a persist test that could not tell a flush from a
+  commit), all fixed on their branches and answered;
+  Cursor Bugbot stayed out of quota for the whole round, so every PR has Codex-only coverage. Merge
+  notes: #373 (Annotated route dependencies) rewrites every signature in `app/api/routes/runs.py`
+  and must merge after #331 and #335; #332 and #339 carry two commits each (a follow-up that made
+  their tests tolerate the `<noscript>` block from #346). The older review PRs #21–#31 and the
+  Dependabot PRs #58–#63 are untouched and still mergeable.
 - **2026-11-07 → 08 — one hundred one-concern pull requests (#174–#273), each closing one of
   issues #64–#173.** The batch was planned from a full read of the codebase: every item carried a
   file-and-line scope and the lines it must not touch so the eleven older review PRs (#21–#31) stay
