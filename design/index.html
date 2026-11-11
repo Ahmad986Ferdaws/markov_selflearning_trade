@@ -633,7 +633,8 @@ function setActive(i){
   const col=h=>new THREE.Color(h);
   const keys=['bull','side','bear'];
   const P={bull:0.137,side:0.720,bear:0.143};
-  const M={bull:{bull:.70,side:.22,bear:.08},side:{bull:.09,side:.82,bear:.09},bear:{bull:.08,side:.24,bear:.68}};
+  // full-sample MLE on the pinned BTC-USD 3y snapshot (window 30 / k 0.2, data 4a150b23); diagonal = results/model_logic/summary.json
+  const M={bull:{bull:.88,side:.12,bear:0},side:{bull:.03,side:.94,bear:.02},bear:{bull:0,side:.18,bear:.82}};
   const labelTxt={bull:'BULL',side:'SIDE',bear:'BEAR'};
 
   const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
@@ -676,7 +677,8 @@ function setActive(i){
   });
 
   const parts=[];
-  edges.forEach(e=>{ const cnt=Math.round(e.p*7)+1; for(let i=0;i<cnt;i++){
+  // a zero cell is a transition the engine never observed: keep the arc, draw no flow along it
+  edges.forEach(e=>{ if(e.p<=0) return; const cnt=Math.round(e.p*7)+1; for(let i=0;i<cnt;i++){
     const m=new THREE.Mesh(new THREE.CircleGeometry(0.05,18), new THREE.MeshBasicMaterial({color:col(C[e.a])}));
     group.add(m); parts.push({m,e,t:i/cnt, sp:0.0018+e.p*0.004}); } });
 
