@@ -102,7 +102,7 @@ def run_one(symbol: str, years: int) -> dict:
             "warnings": rep.warnings,
         }
         (OUT / f"{symbol.replace('/', '_').replace('=', '_')}.json").write_text(
-            json.dumps({"summary": row, "report": asdict(rep)}, indent=2, default=str)
+            json.dumps({"summary": row, "report": asdict(rep)}, indent=2), encoding="utf-8"
         )
         return row
     except Exception as e:  # noqa: BLE001
@@ -141,7 +141,8 @@ def main() -> None:
             (r["baseline_return"] or 0) > (r["buyhold_return"] or 0) for r in ok
         ),
     }
-    (OUT / "summary.json").write_text(json.dumps({"aggregate": agg, "assets": rows}, indent=2, default=str))
+    (OUT / "summary.json").write_text(json.dumps({"aggregate": agg, "assets": rows}, indent=2),
+                                      encoding="utf-8")
     print("\n=== AGGREGATE ===", flush=True)
     for k, v in agg.items():
         print(f"  {k}: {v}", flush=True)
