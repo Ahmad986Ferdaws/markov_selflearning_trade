@@ -10,7 +10,7 @@ class CreateRunRequest(BaseModel):
 
     strategy: Literal["baseline", "agent"] = "baseline"
     ingestion_provider: Literal["yfinance", "dexscreener"] = "yfinance"
-    watchlist: list[str] = Field(default_factory=lambda: ["BTC-USD"])
+    watchlist: list[str] = Field(default_factory=lambda: ["BTC-USD"], min_length=1)
     trade_symbol: str | None = None
 
     @field_validator("watchlist")
@@ -29,7 +29,12 @@ class CreateRunRequest(BaseModel):
     @field_validator("trade_symbol")
     @classmethod
     def _strip_trade_symbol(cls, value: str | None) -> str | None:
-        return value.strip() if value is not None else None
+        if value is None:
+            return None
+        symbol = value.strip()
+        if not symbol:
+            raise ValueError("trade_symbol must not be blank")
+        return symbol
 
 
 class RunStatusResponse(BaseModel):

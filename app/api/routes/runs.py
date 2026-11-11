@@ -37,7 +37,7 @@ async def create_run(
             "ALLOW_LEGACY_AGENT_API=true for local experimentation.",
             400,
         )
-    trade_symbol = body.trade_symbol or (body.watchlist[0] if body.watchlist else settings.benchmark_symbol)
+    trade_symbol = body.trade_symbol or body.watchlist[0]
     if body.trade_symbol and body.watchlist and body.trade_symbol not in body.watchlist:
         raise ApiError(
             f"trade_symbol {body.trade_symbol!r} is not in the watchlist — the run "
