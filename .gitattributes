@@ -1,6 +1,12 @@
-# Normalise line endings on checkout so the data hashes and the pre-commit
-# whitespace hooks behave the same on every platform.
+# Normalise line endings to LF when a file is added or committed (not on
+# checkout) so the data hashes and the pre-commit whitespace hooks behave the
+# same on every platform.
 * text=auto eol=lf
+
+# The robustness study wrote this table CRLF and the script no longer writes
+# the CSV at all (results/README.md); it is frozen as evidence, so it is
+# exempt from the rule above and its bytes stay exactly as published.
+results/robustness/summary.csv -text
 
 # Pinned snapshots, proof media, and the demo video are binary evidence: never
 # diffed, never line-ending converted.
