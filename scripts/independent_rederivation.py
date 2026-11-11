@@ -23,7 +23,7 @@ Run:  python scripts/independent_rederivation.py [--snapshot PATH]
 Exit codes:
   0  REPRODUCED: every expected number matched
   1  MISMATCH: the snapshot is the pinned one but the numbers differ (engine or rule bug)
-  2  SNAPSHOT CHANGED: the pickle is not the pinned data; re-pin before re-deriving
+  2  SNAPSHOT CHANGED or missing: the pickle is not the pinned data (or does not exist); re-pin before re-deriving
 """
 
 from __future__ import annotations
@@ -89,7 +89,13 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
-    hist = pd.read_pickle(args.snapshot)
+    try:
+        hist = pd.read_pickle(args.snapshot)
+    except FileNotFoundError:
+        # an uncaught exception would exit 1, which this script defines as MISMATCH
+        print(f"SNAPSHOT MISSING — {args.snapshot} does not exist; re-pin it "
+              "(evaluate-cli --refresh) before re-deriving.")
+        return 2
     closes = hist["Close"] if "Close" in hist.columns else hist.squeeze()
     digest = snapshot_hash(closes)
     print(f"snapshot={args.snapshot}  rows={len(closes)}  hash={digest[:12]}")
