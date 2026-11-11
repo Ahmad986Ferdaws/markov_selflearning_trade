@@ -54,7 +54,7 @@ make robust                 # scripts/robustness_study.py -> results/robustness/
 make test                   # the offline suite
 make site                   # serve design/ at http://localhost:8000 (PORT=... to change)
 make demo                   # scripts/record_demo.mjs -> media/ (needs Node, Google Chrome, ffmpeg)
-make clean-media            # delete the rendered png/mp4 files in media/ (keeps the README once #257 lands)
+make clean-media            # delete the rendered png/mp4 files in media/ (keeps media/README.md)
 
 # Studies and the re-derivation (from the repo root; pinned snapshots, network only if one is missing)
 python scripts/robustness_study.py          # 20 assets x 3y + BTC/SPY halves -> results/robustness/ (docs/16)
