@@ -182,6 +182,17 @@ class PairFilter:
                  q_beta: float, q_alpha: float, r: float,
                  adaptive: AdaptiveQ | None = None) -> PairFilter:
         """Training-only OLS initialization (state AND a data-scaled prior P)."""
+        y_train = np.asarray(y_train, float)
+        p2_train = np.asarray(p2_train, float)
+        if y_train.ndim != 1 or p2_train.ndim != 1 or len(y_train) != len(p2_train):
+            raise ValueError("from_ols: training arrays must align")
+        if len(y_train) < 3:   # ddof=2 below needs one degree of freedom
+            raise ValueError(f"from_ols: need at least 3 training bars, got {len(y_train)}")
+        if not (np.all(np.isfinite(y_train)) and np.all(np.isfinite(p2_train))):
+            raise ValueError("from_ols: training data contains non-finite values")
+        if np.ptp(p2_train) == 0:   # A.T @ A would be singular
+            raise ValueError("from_ols: hedge leg is constant over the training window; "
+                             "the OLS prior is undefined")
         A = np.column_stack([p2_train, np.ones(len(p2_train))])
         coef, res, *_ = np.linalg.lstsq(A, y_train, rcond=None)
         resid_var = float(res[0] / max(len(y_train) - 2, 1)) if len(res) else float(
