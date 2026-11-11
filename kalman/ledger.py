@@ -48,15 +48,25 @@ class HedgeMode(Enum):
     REHEDGE = "rehedge"
 
 
-def _nonnegative(value, name, *, positive=False):
-    if isinstance(value, (bool, np.bool_)) or not isinstance(value, (int, float)):
+def _nonnegative(value: object, name: str, *, positive: bool = False) -> float:
+    """Validate a cost or sizing scalar and return it as a plain Python float.
+
+    numpy scalars are accepted but never kept (same pattern as
+    kalman.core._finite_real): a narrow integer such as np.int8 wraps when
+    the three per-side costs are summed, and a np.float32 capital would keep
+    the whole cash series in float32 under NEP 50.
+    """
+    if (isinstance(value, (bool, np.bool_))
+            or not isinstance(value, (int, float, np.integer, np.floating))):
         raise ValueError(f"{name} must be a real number")
     try:
-        valid = np.isfinite(float(value)) and (value > 0 if positive else value >= 0)
+        number = float(value)
+        valid = np.isfinite(number) and (number > 0 if positive else number >= 0)
     except OverflowError:
         valid = False
     if not valid:
         raise ValueError(f"{name} must be finite and {'positive' if positive else 'nonnegative'}")
+    return number
 
 
 @dataclass
@@ -71,10 +81,12 @@ class CostConfig:
     def __post_init__(self):
         for name in ("commission_bps", "half_spread_bps", "slippage_bps",
                      "borrow_bps_pa", "financing_bps_pa"):
-            _nonnegative(getattr(self, name), name)
-        if (isinstance(self.bars_per_year, bool) or not isinstance(self.bars_per_year, int)
+            setattr(self, name, _nonnegative(getattr(self, name), name))
+        if (isinstance(self.bars_per_year, (bool, np.bool_))
+                or not isinstance(self.bars_per_year, (int, np.integer))
                 or self.bars_per_year <= 0):
             raise ValueError("bars_per_year must be a positive integer")
+        self.bars_per_year = int(self.bars_per_year)   # a grid's np.int64 becomes a plain int
         _nonnegative(self.per_side_bps, "total per-side cost")
 
     @property
@@ -94,9 +106,9 @@ class LedgerConfig:
 
     def __post_init__(self):
         for name in ("capital", "max_gross"):
-            _nonnegative(getattr(self, name), name, positive=True)
+            setattr(self, name, _nonnegative(getattr(self, name), name, positive=True))
         for name in ("gross_target", "rehedge_threshold"):
-            _nonnegative(getattr(self, name), name)
+            setattr(self, name, _nonnegative(getattr(self, name), name))
         if not isinstance(self.price_model, PriceModel) or not isinstance(self.hedge_mode, HedgeMode):
             raise ValueError("price_model and hedge_mode must use their enum values")
         if not isinstance(self.costs, CostConfig):
