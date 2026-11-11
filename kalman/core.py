@@ -139,7 +139,10 @@ class AdaptiveQ:
         self.window = int(self.window)
 
     def multiplier(self, past_returns: np.ndarray) -> float:
-        """past_returns must END at t-1 (caller guarantees the lag)."""
+        """past_returns must END at t-1 (caller guarantees the lag).
+
+        A non-finite value anywhere in the trailing window returns 1.0: after a
+        missing observation adaptive Q is neutral for `window` bars."""
         if len(past_returns) < self.window or self.sigma_ref <= 0:
             return 1.0
         sig = float(np.std(past_returns[-self.window:], ddof=1))
