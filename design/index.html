@@ -297,6 +297,7 @@
   .nogsap .hi{background-size:100% 34%!important}
   .nogsap .lane.m .fill{width:90.9%}.nogsap .lane.p .fill{width:90.9%}.nogsap .lane.n .fill{width:72%}
   .nogsap .arow[data-w="90.9"] .afill{width:90.9%}.nogsap .arow[data-w="9.1"] .afill{width:9.1%}
+  .nogsap .steps .step{opacity:1}
 </style>
 </head>
 <body>
@@ -350,17 +351,17 @@
         <div class="lane m" data-w="90.9">
           <div class="name">Markov model<small>transition matrix</small></div>
           <div class="meter"><div class="fill"></div></div>
-          <div class="val" data-to="90.9" data-suf="%">0.0%</div>
+          <div class="val" data-to="90.9" data-suf="%">90.9%</div>
         </div>
         <div class="lane p" data-w="90.9">
           <div class="name">Persistence<small>t = t − 1</small></div>
           <div class="meter"><div class="fill"></div></div>
-          <div class="val" data-to="90.9" data-suf="%">0.0%</div>
+          <div class="val" data-to="90.9" data-suf="%">90.9%</div>
         </div>
         <div class="lane n" data-w="72.0">
           <div class="name">Naive<small>always majority</small></div>
           <div class="meter"><div class="fill"></div></div>
-          <div class="val" data-to="72.0" data-suf="%">0.0%</div>
+          <div class="val" data-to="72.0" data-suf="%">72.0%</div>
         </div>
       </div>
       <div class="tieband">
@@ -908,6 +909,7 @@ gsap.from('.cav .c',{y:24,autoAlpha:0,duration:.7,ease:'power3.out',stagger:.12,
 const raceEl=$('#race');
 if(raceEl){
   gsap.set('.tieband .big,.tieband .eqv,.stamp',{autoAlpha:0});
+  $$('.val',raceEl).forEach(v=>v.textContent=(0).toFixed(1)+v.dataset.suf);
   ScrollTrigger.create({trigger:raceEl,start:'top 78%',once:true,onEnter:()=>{
     const tl=gsap.timeline();
     $$('.lane',raceEl).forEach((lane,i)=>{
