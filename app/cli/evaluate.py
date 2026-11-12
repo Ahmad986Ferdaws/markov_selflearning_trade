@@ -6,15 +6,22 @@ Usage:
   evaluate-cli --provider ollama     # add the LLM agent as a third policy (local)
   evaluate-cli --provider anthropic  # add the LLM agent (hosted; needs ANTHROPIC_API_KEY)
   evaluate-cli --provider X --cache-only  # replay the agent from its on-disk cache; NO live calls
+  evaluate-cli --symbol SPY --years 20    # another pinned snapshot (data/snapshots/SPY_20y.pkl)
+  evaluate-cli --help
+
+Only --refresh touches the network: any (symbol, years) that is not already
+pinned under data/snapshots/ is refused otherwise.
 
 The provider can also be set once via LLM_PROVIDER in .env. The agent's responses
 are cached to data/agent_cache/, so a re-run is free and reproducible.
 """
 
+import argparse
 import sys
+from typing import NoReturn
 
 from app.config import get_settings
-from app.services.data_cache import load_or_fetch, save_run_record
+from app.services.data_cache import load_or_fetch, save_run_record, snapshot_path
 from app.services.evaluation import DEFAULT_POLICIES, evaluate, format_daily_report
 
 
@@ -26,12 +33,31 @@ def _parse_ints(s: str) -> tuple[int, ...]:
     return tuple(int(x) for x in s.split(",") if x.strip())
 
 
-def _arg_value(flag: str) -> str | None:
-    if flag in sys.argv:
-        i = sys.argv.index(flag)
-        if i + 1 < len(sys.argv):
-            return sys.argv[i + 1]
-    return None
+def build_parser() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(
+        prog="evaluate-cli",
+        allow_abbrev=False,   # `--ref` must not silently mean --refresh (a live fetch)
+        description="Daily walk-forward evaluation on the pinned snapshot: regime "
+                    "prediction accuracy vs persistence, and trading vs buy-and-hold "
+                    "net of costs. Optionally adds the LLM agent as a third policy.",
+    )
+    p.add_argument("--provider", choices=("anthropic", "ollama", "none"), type=str.lower,
+                   help="add the LLM agent as a third policy (overrides LLM_PROVIDER)")
+    p.add_argument("--cache-only", action="store_true",
+                   help="replay the agent from its on-disk response cache; never make a live call")
+    p.add_argument("--refresh", action="store_true",
+                   help="pull data from yfinance and (re-)pin the snapshot; the ONLY way "
+                        "this command touches the network")
+    p.add_argument("--symbol", help="ticker to evaluate (default: REGIME_SYMBOL from .env); "
+                                    "must already be pinned under data/snapshots unless --refresh")
+    p.add_argument("--years", type=int, default=3,
+                   help="history span in years; selects data/snapshots/<symbol>_<years>y.pkl (default 3)")
+    return p
+
+
+def _fail(message: str) -> NoReturn:
+    print(f"evaluate-cli: {message}", file=sys.stderr)
+    raise SystemExit(2)
 
 
 def _build_policies(settings, cache_only: bool = False):
@@ -68,28 +94,50 @@ def _build_policies(settings, cache_only: bool = False):
     return policies, agent
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
+    args = build_parser().parse_args(argv)
+    if args.years < 1:
+        _fail("--years must be a positive integer")
     s = get_settings()
-    override = _arg_value("--provider")
-    if override:
-        s = s.model_copy(update={"llm_provider": override})
+    if args.provider:
+        s = s.model_copy(update={"llm_provider": args.provider})
+    if args.symbol is not None and not args.symbol.strip():
+        _fail("--symbol must not be empty")
+    # Yahoo tickers are upper-case; a lower-case spelling would only "work" on a
+    # case-insensitive filesystem and then write a second record family.
+    symbol = args.symbol.strip().upper() if args.symbol is not None else s.regime_symbol
+    # Never reach the network by accident: without --refresh the (symbol, years)
+    # pair must already be pinned, whatever flags got it here.
+    if not args.refresh and not snapshot_path(symbol, args.years).exists():
+        _fail(f"no pinned snapshot for {symbol} ({args.years}y) at "
+              f"{snapshot_path(symbol, args.years)}; pass --refresh to fetch and pin it")
 
-    refresh = "--refresh" in sys.argv
-    history, source = load_or_fetch(s.regime_symbol, years=3, refresh=refresh)
+    # A typo in a .env knob used to surface as a raw traceback after the data
+    # load; validate the grid before touching data or a provider.
+    try:
+        grid_windows = _parse_ints(s.eval_grid_windows)
+        grid_k = _parse_floats(s.eval_grid_k)
+    except ValueError as error:
+        _fail(f"invalid EVAL_GRID_WINDOWS / EVAL_GRID_K in the environment ({error})")
+
+    history, source = load_or_fetch(symbol, years=args.years, refresh=args.refresh)
     print(f"[data] {source}")
 
-    policies, agent = _build_policies(s, cache_only="--cache-only" in sys.argv)
+    policies, agent = _build_policies(s, cache_only=args.cache_only)
 
-    report = evaluate(
-        history,
-        symbol=s.regime_symbol,
-        train_frac=s.eval_train_frac,
-        grid_windows=_parse_ints(s.eval_grid_windows),
-        grid_k=_parse_floats(s.eval_grid_k),
-        fee_pct=s.fee_pct,
-        slippage_pct=s.slippage_pct,
-        policies=policies,
-    )
+    try:
+        report = evaluate(
+            history,
+            symbol=symbol,
+            train_frac=s.eval_train_frac,
+            grid_windows=grid_windows,
+            grid_k=grid_k,
+            fee_pct=s.fee_pct,
+            slippage_pct=s.slippage_pct,
+            policies=policies,
+        )
+    except ValueError as error:
+        _fail(str(error))
     print(format_daily_report(report))
 
     if agent is not None:
