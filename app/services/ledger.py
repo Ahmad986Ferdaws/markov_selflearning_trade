@@ -10,7 +10,7 @@ from app.config import Settings
 from app.models.entities import Run, Snapshot, Trade
 from app.schemas.snapshot import NormalizedSnapshot
 from app.schemas.trade import TradeIntent
-from app.services.guards import EnforcedDecision, effective_price, enforce_decision
+from app.services.guards import effective_price, enforce_decision
 
 
 def persist_snapshot(db: Session, run_id: int, snap: NormalizedSnapshot) -> Snapshot:
