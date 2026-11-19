@@ -4,8 +4,9 @@ next regime below 1/3 + 0.15, a caveat is appended saying the agent acted on
 low-confidence forecasts. Like every honesty gate it only appends — the agent
 row is never dropped — and it keys on the literal policy name.
 
-Offline and deterministic: a seeded random walk, and the transition-matrix
-estimator monkeypatched to a uniform 3x3 so every forecast is exactly 1/3.
+Offline and deterministic: a seeded random walk, and the walk-forward's
+incremental transition counter monkeypatched to return a uniform row, so every
+forecast is exactly 1/3.
 """
 
 from __future__ import annotations
@@ -30,8 +31,8 @@ def _half_long_agent(ctx) -> float:
     return 0.5
 
 
-def _uniform_matrix(states) -> np.ndarray:
-    return np.full((3, 3), 1 / 3)
+def _uniform_row(self, idx: int) -> np.ndarray:
+    return np.full(3, 1 / 3)
 
 
 def _gate_hits(report) -> list[str]:
@@ -39,7 +40,7 @@ def _gate_hits(report) -> list[str]:
 
 
 def test_uniform_forecasts_trip_gate_6_once_and_keep_the_agent_row(monkeypatch):
-    monkeypatch.setattr(evaluation, "estimate_transition_matrix", _uniform_matrix)
+    monkeypatch.setattr(evaluation._TransitionCounter, "row", _uniform_row)
 
     rep = evaluate(_frame(), policies={"agent": _half_long_agent, "baseline": policy_regime_baseline})
 
@@ -51,7 +52,7 @@ def test_uniform_forecasts_trip_gate_6_once_and_keep_the_agent_row(monkeypatch):
 
 
 def test_gate_6_keys_on_the_literal_policy_name_agent(monkeypatch):
-    monkeypatch.setattr(evaluation, "estimate_transition_matrix", _uniform_matrix)
+    monkeypatch.setattr(evaluation._TransitionCounter, "row", _uniform_row)
 
     rep = evaluate(_frame(), policies={"llm": _half_long_agent, "baseline": policy_regime_baseline})
 
