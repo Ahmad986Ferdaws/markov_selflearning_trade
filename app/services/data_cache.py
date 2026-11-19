@@ -31,6 +31,11 @@ def history_hash(history: pd.DataFrame) -> str:
     return hashlib.sha256(blob.encode()).hexdigest()
 
 
+def snapshot_path(symbol: str, years: int = 3, cache_dir: Path | str = CACHE_DIR) -> Path:
+    """Where the pinned history for (symbol, years) lives — the one naming rule."""
+    return Path(cache_dir) / f"{symbol.replace('/', '_')}_{years}y.pkl"
+
+
 def load_or_fetch(
     symbol: str,
     years: int = 3,
@@ -43,7 +48,7 @@ def load_or_fetch(
     refresh=True (or delete the snapshot) to re-pull fresh data.
     """
     cache_dir = Path(cache_dir)
-    path = cache_dir / f"{symbol.replace('/', '_')}_{years}y.pkl"
+    path = snapshot_path(symbol, years, cache_dir)
     if path.exists() and not refresh:
         return pd.read_pickle(path), f"cache:{path}"
     history = fetch_daily_history(symbol, years=years)
