@@ -74,7 +74,7 @@ def test_keys_are_env_only_never_arguments():
 def test_agent_output_invariant_to_day_index():
     p = _FakeProvider('{"position": 0.6}')
     fn = build_agent_policy(p, ResponseCache())
-    base = dict(state="bull", prev_pos=0.0, p_next=np.array([0.6, 0.2, 0.2]))
+    base = {"state": "bull", "prev_pos": 0.0, "p_next": np.array([0.6, 0.2, 0.2])}
     early = fn(PolicyContext(**base, day_index=0))
     late = fn(PolicyContext(**base, day_index=999))
     assert early == late == 0.6

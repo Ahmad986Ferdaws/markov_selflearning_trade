@@ -18,12 +18,19 @@ Expected (from results/BTC-USD_4a150b23.json and docs/19):
   328 held-out predictions · 30 switch days · 0 switch attempts ·
   298 hits (90.85%) · model hit-rate == persistence hit-rate exactly.
 
-Run:  python scripts/independent_rederivation.py   (exit 0 iff all reproduce)
+Run:  python scripts/independent_rederivation.py [--snapshot PATH]
+
+Exit codes:
+  0  REPRODUCED: every expected number matched
+  1  MISMATCH: the snapshot is the pinned one but the numbers differ (engine or rule bug)
+  2  SNAPSHOT CHANGED or missing: the pickle is not the pinned data (or does not exist); re-pin before re-deriving
 """
 
 from __future__ import annotations
 
+import argparse
 import hashlib
+import itertools
 import sys
 
 import numpy as np
@@ -45,10 +52,10 @@ def snapshot_hash(closes: pd.Series) -> str:
     return hashlib.sha256(blob.encode()).hexdigest()
 
 
-def labels_from_prices(closes: pd.Series) -> list:
+def labels_from_prices(closes: pd.Series) -> tuple[list[str | None], int]:
     """The documented rule, re-implemented: trailing 30d mean/std of daily
     returns; bull if mean > k*std, bear if mean < -k*std, else sideways."""
-    rets = closes.pct_change().dropna()
+    rets = closes.pct_change(fill_method=None).dropna()
     mean = rets.rolling(WINDOW, min_periods=WINDOW).mean()
     std = rets.rolling(WINDOW, min_periods=WINDOW).std()
     out = []
@@ -66,10 +73,33 @@ def labels_from_prices(closes: pd.Series) -> list:
     return out, len(rets)
 
 
-def main() -> int:
-    hist = pd.read_pickle("data/snapshots/BTC-USD_3y.pkl")
+DEFAULT_SNAPSHOT = "data/snapshots/BTC-USD_3y.pkl"
+
+
+def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Re-derive the BTC-USD headline from the pinned snapshot with zero app imports.",
+        epilog="exit codes: 0 reproduced, 1 mismatch, 2 snapshot changed",
+        allow_abbrev=False,
+    )
+    parser.add_argument("--snapshot", default=DEFAULT_SNAPSHOT,
+                        help="pickle to re-derive from (default: %(default)s)")
+    return parser.parse_args(argv)
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = _parse_args(argv)
+    try:
+        hist = pd.read_pickle(args.snapshot)
+    except FileNotFoundError:
+        # an uncaught exception would exit 1, which this script defines as MISMATCH
+        print(f"SNAPSHOT MISSING — {args.snapshot} does not exist; re-pin it "
+              "(evaluate-cli --refresh) before re-deriving.")
+        return 2
     closes = hist["Close"] if "Close" in hist.columns else hist.squeeze()
-    if snapshot_hash(closes) != EXPECTED_HASH:
+    digest = snapshot_hash(closes)
+    print(f"snapshot={args.snapshot}  rows={len(closes)}  hash={digest[:12]}")
+    if digest != EXPECTED_HASH:
         print("SNAPSHOT CHANGED — the pickle on disk is not the pinned data the "
               "headline was computed on; re-pin before re-deriving.")
         return 2
@@ -86,7 +116,7 @@ def main() -> int:
         if len(obs) < 2:
             continue
         counts = np.zeros((3, 3))
-        for a, b in zip(obs, obs[1:]):
+        for a, b in itertools.pairwise(obs):
             counts[IDX[a], IDX[b]] += 1
         row = counts[IDX[cur]]
         dist = row / row.sum() if row.sum() > 0 else np.ones(3) / 3

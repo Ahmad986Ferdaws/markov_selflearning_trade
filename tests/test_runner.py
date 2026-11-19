@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from app.schemas.snapshot import NormalizedSnapshot
 from app.services.runner import _select_trade_snapshot
@@ -8,7 +8,7 @@ def _snapshot(symbol: str, price: float) -> NormalizedSnapshot:
     return NormalizedSnapshot(
         symbol=symbol,
         price=price,
-        timestamp=datetime(2024, 1, 1, tzinfo=timezone.utc),
+        timestamp=datetime(2024, 1, 1, tzinfo=UTC),
     )
 
 

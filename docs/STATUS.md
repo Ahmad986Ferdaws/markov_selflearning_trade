@@ -38,10 +38,30 @@ Updated at the end of each dev session. New chats: read this file first—skip l
 
 ```bash
 source .venv/bin/activate   # Python 3.12 venv
-evaluate-cli                # Phase A daily eval (accuracy + trading) — current headline
-regime-cli                  # Phase 0 regime report
-uvicorn app.main:app --reload
-compare-cli <run_id>        # legacy intraday comparison
+
+# Console scripts (pyproject [project.scripts])
+evaluate-cli                # daily walk-forward evaluation on the pinned snapshot, the headline; --refresh, --provider, --cache-only
+regime-cli                  # Phase 0 regime report on the pinned snapshot; --symbol, --window, --k override .env for one run
+diagnose-cli [record.json]  # narrate a run record offline: edge vs the persistence bar, policy outcomes, every gate warning
+kalman-cli <demo|pairs|walkforward|trend|replay>   # Kalman pairs research harness (docs/20); SPY/QQQ from the 20y pins
+compare-cli <run_id>        # legacy intraday comparison of a stored run's snapshots
+uvicorn app.main:app --reload                      # legacy web API (/runs, /health); agent routes off by default
+
+# Make targets
+make eval                   # python -m app.cli.evaluate
+make regime                 # python -m app.cli.regime
+make robust                 # scripts/robustness_study.py -> results/robustness/
+make test                   # the offline suite
+make site                   # serve design/ at http://localhost:8000 (PORT=... to change)
+make demo                   # scripts/record_demo.mjs -> media/ (needs Node, Google Chrome, ffmpeg)
+make clean-media            # delete the rendered png/mp4 files in media/ (keeps media/README.md)
+
+# Studies and the re-derivation (from the repo root; pinned snapshots, network only if one is missing)
+python scripts/robustness_study.py          # 20 assets x 3y + BTC/SPY halves -> results/robustness/ (docs/16)
+python scripts/long_history_study.py        # 8 assets, up to 20y -> results/long_history/ (docs/18)
+python scripts/model_logic_study.py         # dominance, hazards, duration model -> results/model_logic/ (docs/19)
+python scripts/logic_depth_study.py         # divergence bound, memory-2, log-loss/Brier -> results/logic_depth/ (docs/19)
+python scripts/independent_rederivation.py  # the headline with zero app imports; exit 0 reproduced, 1 mismatch, 2 snapshot changed
 ```
 
 ## Open decisions
@@ -50,6 +70,70 @@ compare-cli <run_id>        # legacy intraday comparison
 - **Regime `window`:** default 20; tune via `REGIME_WINDOW` in `.env`.
 
 ## Last session
+
+- **2026-11-08 → 09 — the second batch merged, then fifty more one-concern pull requests
+  (#331–#381, no #357), each closing one of issues #277–#326.** All 102 PRs of the 2026-11-07 batch
+  were merged into `main` one at a time with merge commits (no conflicts; main went from 387 to 872
+  passing tests, CI green on 3.11 and 3.12). The third round was planned from a locally pre-merged
+  preview of that tree by four read-only survey passes (app, kalman + scripts, docs + site, tests):
+  66 candidates, 50 kept, four filed as follow-ups (#327–#330: pin the site's inline script by CSP
+  hash once this round's `design/index.html` edits merge, decide `kalman.__version__`, pin the
+  regime lookup after #30 lands, break `created_at` ties by id). Real fixes: a 500 on
+  `GET /runs/{id}/comparison` for an unknown run, runs left "running" when the benchmark download
+  failed, one bad ticker starving a whole poll, an empty watchlist accepted on run creation,
+  `evaluate()` not validating `policies`, `regime-cli --symbol ""`, the Phase 0 report printing zero
+  Sharpe for a backtest that scored nothing, and in `kalman/` unusable OLS training data, negative or
+  empty `qualify_pair` windows (one read from the end of the series), a zero test window hanging
+  `walk_forward`, missing closes silently flattening baselines, bootstrap argument crashes, numpy
+  scalars in the ledger config, and a timezone mismatch reported as "overlap too short". The site now
+  draws the engine's BTC transition matrix instead of invented odds, quotes the record's warning
+  verbatim, keeps its 12 px label floor and reads without JavaScript. 38 new test files. Automated
+  review: Codex raised four real findings (a racy stop test, narrow-integer wraparound in the ledger
+  config, particles on zero-probability Markov edges, a persist test that could not tell a flush from a
+  commit), all fixed on their branches and answered;
+  Cursor Bugbot stayed out of quota for the whole round, so every PR has Codex-only coverage. Merge
+  notes: #373 (Annotated route dependencies) rewrites every signature in `app/api/routes/runs.py`
+  and must merge after #331 and #335; #332 and #339 carry two commits each (a follow-up that made
+  their tests tolerate the `<noscript>` block from #346). The older review PRs #21–#31 and the
+  Dependabot PRs #58–#63 are untouched and still mergeable.
+- **2026-11-07 → 08 — one hundred one-concern pull requests (#174–#273), each closing one of
+  issues #64–#173.** The batch was planned from a full read of the codebase: every item carried a
+  file-and-line scope and the lines it must not touch so the eleven older review PRs (#21–#31) stay
+  mergeable. Real fixes: the duplicated Sharpe-annualization warning, cross-symbol pricing in
+  `GET /runs/{id}`, unknown fields and blank watchlist entries on run creation, `compare-cli`'s
+  traceback on a missing run, the Kalman report's false "positive Sharpe" verdict on zero folds and
+  its hidden zero z-std, import-time `results/` side effects in all five study scripts, whitespace in
+  `LLM_PROVIDER`, the missing `py.typed` markers, and the site's relative social-card image.
+  Features: `regime-cli --years`, a typed comparison response, `run_id` indexes, an OpenAPI
+  description, a corrupt-cache warning, all-missing-snapshots error. Performance: worker-thread
+  yfinance I/O in the legacy loop, a vectorised trailing z-score (byte-identical report), a
+  dtype-first pair validator. Hygiene and docs: folder READMEs for six directories, a feature-request
+  template, private-reporting link, code of conduct, extra pre-commit hooks, glossary terms, this
+  file's commands block, CONTRIBUTING lint notes. Tests: **58 new files** pinning boundaries (suite
+  387 → roughly 600 once all merge). Every PR: one commit off `origin/main`, full suite gated on the
+  captured exit code, labels, `Closes #N`. Review triage: CI green on 3.11 and 3.12 for all 100,
+  all MERGEABLE, zero findings from Codex; Cursor Bugbot hit its account usage limit part-way
+  through (about 04:13 UTC) so roughly 40 PRs have Codex-only coverage. One backlog item (#79,
+  "fee after cash clamp") was closed as not-a-bug: `TradeIntent.percentage` is validated `le=100`,
+  so the clamp is unreachable. Nine follow-ups stay open as issues #165–#173 (statsmodels floor,
+  ruff config, model id, the unused `Metric` table, `og:url`, Makefile targets, the lock count,
+  kalman-cli tests, `Annotated` dependencies). Merge note: sibling PRs that touch the same file in
+  different places (comparison.py ×4, research.py ×4, data.py ×3, the study scripts, README ×4)
+  merge cleanly in any order but GitHub may show the later ones as UNKNOWN for a minute after each
+  merge; `results/robustness/summary.csv` is stored CRLF and the new `mixed-line-ending` hook
+  would rewrite it under `--all-files`.
+
+- **2026-11-02 — repository hygiene, three small fixes, and a test-coverage batch (a set of
+  one-concern pull requests from #32 onward, open for review).** Real fixes: the yfinance
+  provider collapsed a reported zero volume to `None`; `str(ApiError)` was blank; the OpenAPI
+  document advertised 0.1.0. Features: `regime-cli` flags; `--snapshot` on the independent
+  re-derivation. Hygiene: PR/issue templates, CODEOWNERS, Dependabot, CONTRIBUTING / SECURITY /
+  CITATION, editorconfig and gitattributes, opt-in pre-commit, a docs index and glossary,
+  pyproject metadata. CI: read-only token, cancel-in-progress, timeout, 3.11 + 3.12 matrix.
+  Tests: 16 new files (about 120 tests) that pin boundaries and read the committed records
+  back against the docs. Suite on `main` at the start: **252 passing**. Also: the local
+  `.venv` had lost its interpreter (miniforge removed); rebuilt on Homebrew Python 3.12.
+  The eleven earlier review PRs (#21–#31) are untouched and still open.
 
 - **Done — website design refinement pass (ui-design-brain skill).** `design/index.html`: accessibility + component-quality upgrade — semantic landmarks and strict h1→h2→h3 outline, scroll-spy nav with `aria-current`, keyboard-operable chart scrub, table caption/scope, ≥44 px touch targets, WCAG AA contrast (`--muted` darkened), ≥12 px micro-text, 375 px tie-band overflow fixed, dead footer link now points at the real results JSON. Brand language, GSAP/Lenis/Three.js stack, SRI pins, reduced-motion fallbacks, and the real 165-pt data series untouched. Verified in-browser at desktop and 375 px; `design/philosophy.md` documents the pass. Note: `design/media/` (proof media referenced in earlier notes) is absent from the repo; nothing on the page references it, but regenerate before deploy if `og:image` is wanted.
 

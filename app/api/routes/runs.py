@@ -1,14 +1,26 @@
+import dataclasses
+from typing import Annotated
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.config import Settings
 from app.dependencies import get_db_dep, get_settings_dep
 from app.exceptions import ApiError
-from app.models.entities import Run, Trade
-from app.schemas.runs import CreateRunRequest, RunStatusResponse, TradeRecordResponse
+from app.models.entities import Run, Snapshot, Trade
+from app.schemas.runs import (
+    ComparisonResponse,
+    CreateRunRequest,
+    RunStatusResponse,
+    StrategyMetricsResponse,
+    TradeRecordResponse,
+)
 from app.services.comparison import format_report, run_comparison
 from app.services.ledger import mark_to_market
 from app.services.runner import request_stop, start_run_task
+
+DbSession = Annotated[Session, Depends(get_db_dep)]
+AppSettings = Annotated[Settings, Depends(get_settings_dep)]
 
 router = APIRouter(prefix="/runs", tags=["runs"])
 
@@ -16,8 +28,8 @@ router = APIRouter(prefix="/runs", tags=["runs"])
 @router.post("", response_model=RunStatusResponse)
 async def create_run(
     body: CreateRunRequest,
-    db: Session = Depends(get_db_dep),
-    settings: Settings = Depends(get_settings_dep),
+    db: DbSession,
+    settings: AppSettings,
 ) -> RunStatusResponse:
     if body.ingestion_provider == "dexscreener":
         raise ApiError("dexscreener provider deferred until after Phase 1 gate", 400)
@@ -29,7 +41,7 @@ async def create_run(
             "ALLOW_LEGACY_AGENT_API=true for local experimentation.",
             400,
         )
-    trade_symbol = body.trade_symbol or (body.watchlist[0] if body.watchlist else settings.benchmark_symbol)
+    trade_symbol = body.trade_symbol or body.watchlist[0]
     if body.trade_symbol and body.watchlist and body.trade_symbol not in body.watchlist:
         raise ApiError(
             f"trade_symbol {body.trade_symbol!r} is not in the watchlist — the run "
@@ -54,25 +66,24 @@ async def create_run(
     # run with the same id, and frees this request instead of pinning it on an
     # infinite loop (review findings 5+6).
     start_run_task(run.id, settings)
-    return _run_to_response(run, 0.0, settings)
+    return _run_to_response(run, 0.0)
 
 
 @router.get("/{run_id}", response_model=RunStatusResponse)
 def get_run(
     run_id: int,
-    db: Session = Depends(get_db_dep),
-    settings: Settings = Depends(get_settings_dep),
+    db: DbSession,
 ) -> RunStatusResponse:
     run = db.get(Run, run_id)
     if not run:
         raise ApiError(f"Run {run_id} not found", 404)
     last_price = _last_price(db, run)
     unrealized = mark_to_market(run, last_price) if last_price else 0.0
-    return _run_to_response(run, unrealized, settings)
+    return _run_to_response(run, unrealized)
 
 
 @router.get("/{run_id}/trades", response_model=list[TradeRecordResponse])
-def list_trades(run_id: int, db: Session = Depends(get_db_dep)) -> list[TradeRecordResponse]:
+def list_trades(run_id: int, db: DbSession) -> list[TradeRecordResponse]:
     run = db.get(Run, run_id)
     if not run:
         raise ApiError(f"Run {run_id} not found", 404)
@@ -98,8 +109,7 @@ def list_trades(run_id: int, db: Session = Depends(get_db_dep)) -> list[TradeRec
 @router.post("/{run_id}/stop", response_model=RunStatusResponse)
 def stop_run(
     run_id: int,
-    db: Session = Depends(get_db_dep),
-    settings: Settings = Depends(get_settings_dep),
+    db: DbSession,
 ) -> RunStatusResponse:
     run = db.get(Run, run_id)
     if not run:
@@ -110,43 +120,43 @@ def stop_run(
     db.refresh(run)
     last_price = _last_price(db, run)
     unrealized = mark_to_market(run, last_price) if last_price else 0.0
-    return _run_to_response(run, unrealized, settings)
+    return _run_to_response(run, unrealized)
 
 
-@router.get("/{run_id}/comparison")
+@router.get("/{run_id}/comparison", response_model=ComparisonResponse)
 def get_comparison(
     run_id: int,
-    db: Session = Depends(get_db_dep),
-    settings: Settings = Depends(get_settings_dep),
-) -> dict:
+    db: DbSession,
+    settings: AppSettings,
+) -> ComparisonResponse:
+    if db.get(Run, run_id) is None:
+        raise ApiError(f"Run {run_id} not found", 404)
     report = run_comparison(db, run_id, settings)
-    return {
-        "report_text": format_report(report),
-        "headline_agent_minus_baseline": report.headline_agent_minus_baseline,
-        "baseline": report.baseline.__dict__,
-        "agent": report.agent.__dict__,
-        "snapshot_count": report.snapshot_count,
-        "sharpe_periods_per_year": report.sharpe_periods_per_year,
-        "warnings": report.warnings,
-    }
+    return ComparisonResponse(
+        report_text=format_report(report),
+        headline_agent_minus_baseline=report.headline_agent_minus_baseline,
+        baseline=StrategyMetricsResponse(**dataclasses.asdict(report.baseline)),
+        agent=StrategyMetricsResponse(**dataclasses.asdict(report.agent)),
+        snapshot_count=report.snapshot_count,
+        sharpe_periods_per_year=report.sharpe_periods_per_year,
+        warnings=report.warnings,
+    )
 
 
 def _last_price(db: Session, run: Run) -> float:
-    from app.models.entities import Snapshot
-
     snap = (
         db.query(Snapshot)
         .filter(Snapshot.run_id == run.id, Snapshot.symbol == run.trade_symbol)
         .order_by(Snapshot.created_at.desc())
         .first()
     )
-    if snap:
-        return snap.price
-    snap = db.query(Snapshot).filter(Snapshot.run_id == run.id).order_by(Snapshot.created_at.desc()).first()
+    # No fallback to another symbol's snapshot: marking a BTC position to an
+    # ETH price is the same cross-symbol mixing the runner and the comparison
+    # replay already refuse. 0.0 means "no price" to every caller.
     return snap.price if snap else 0.0
 
 
-def _run_to_response(run: Run, unrealized: float, settings: Settings) -> RunStatusResponse:
+def _run_to_response(run: Run, unrealized: float) -> RunStatusResponse:
     return RunStatusResponse(
         id=run.id,
         strategy=run.strategy,

@@ -1,0 +1,23 @@
+# Dependabot keeps the lower bounds in pyproject.toml current. The package has
+# a name and description, so Dependabot would otherwise treat it as a library
+# and widen ranges instead of raising the >= floors; "increase" raises them.
+# Minor and patch bumps are grouped into one PR a week so the inbox stays
+# readable; a major bump arrives on its own so it can be judged alone.
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    versioning-strategy: increase
+    groups:
+      python-minor-and-patch:
+        update-types: ["minor", "patch"]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 2

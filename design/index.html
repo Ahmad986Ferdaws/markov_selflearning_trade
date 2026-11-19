@@ -4,21 +4,32 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>REGIME — the model has no edge</title>
-<meta name="description" content="A Markov regime model tested honestly against finance's dumbest baseline. Across 20 markets, net of costs, the edge is exactly zero. This page is the receipt.">
+<meta name="description" content="A Markov regime model tested honestly against finance's dumbest baseline. Across 20 markets its edge over persistence is exactly zero. This page is the receipt.">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <meta name="theme-color" content="#FAFAF7">
 <!-- Social cards. Set og:url and absolute image URLs at deploy time — Twitter/Slack/iMessage need absolute URLs to render the card. -->
 <meta property="og:type" content="website">
 <meta property="og:title" content="REGIME — the model has no edge">
 <meta property="og:description" content="Tested honestly against finance's dumbest baseline, across 20 markets, the edge is exactly zero. This page is the receipt.">
-<meta property="og:image" content="../media/02-verdict.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/Ahmad986Ferdaws/markov_selflearning_trade/main/media/02-verdict.png">
+<meta property="og:image:alt" content="The verdict: on held-out BTC-USD the Markov model scores 90.9% and the persistence baseline scores 90.9%. The edge is exactly zero.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="REGIME — the model has no edge">
 <meta name="twitter:description" content="Tested honestly against finance's dumbest baseline, across 20 markets, the edge is exactly zero. This page is the receipt.">
-<meta name="twitter:image" content="../media/02-verdict.png">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/Ahmad986Ferdaws/markov_selflearning_trade/main/media/02-verdict.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<noscript><style>
+  /* no JavaScript: mirror the .nogsap fallback so every section renders static */
+  html .rv,html .hero .eyebrow,html .hsub,html .hcta,html .hmeta,html .hmeta .cell,html .lane .val{opacity:1!important;transform:none!important;visibility:visible!important}
+  html .hl .ln > span{transform:none!important}
+  html .hi{background-size:100% 34%!important}
+  html .lane.m .fill{width:90.9%}html .lane.p .fill{width:90.9%}html .lane.n .fill{width:72%}
+  html .arow[data-w="90.9"] .afill{width:90.9%}html .arow[data-w="9.1"] .afill{width:9.1%}
+  html .steps .step{opacity:1!important}
+  html .scene[data-i="0"]{opacity:1;transform:none}
+</style></noscript>
 <style>
   :root{
     /* Black, white, neutrals — one neon pop. Data keeps green/red. */
@@ -162,7 +173,7 @@
   .anat-rows{display:grid;gap:24px;max-width:920px}
   .arow{display:grid;grid-template-columns:150px 1fr 150px;align-items:center;gap:24px}
   .arow .ak{font-family:var(--sans);font-weight:600;font-size:14px;color:#F4F4F0}
-  .arow .ak small,.arow .av small{display:block;font-family:var(--mono);font-weight:400;font-size:11px;color:#8B8C84;margin-top:3px;letter-spacing:.04em}
+  .arow .ak small,.arow .av small{display:block;font-family:var(--mono);font-weight:400;font-size:12px;color:#8B8C84;margin-top:3px;letter-spacing:.04em}
   .abar{position:relative;height:34px;background:var(--black2);border:1px solid var(--wline);border-radius:6px;overflow:hidden}
   .afill{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:5px}
   .afill.stay{background:#F4F4F0}
@@ -229,7 +240,7 @@
   .rtable .neg{color:var(--loss-text)}
   .rtable .pend td{color:var(--muted)}
   .rtable .pend td:first-child{color:var(--muted)}
-  .rtable .pend .badge{font-family:var(--mono);font-weight:500;font-size:11px;color:var(--black);background:var(--neon);
+  .rtable .pend .badge{font-family:var(--mono);font-weight:500;font-size:12px;color:var(--black);background:var(--neon);
     padding:3px 10px;margin-left:10px;letter-spacing:.08em;border-radius:999px;text-transform:uppercase;white-space:nowrap}
 
   /* ---- quote (dark) ---- */
@@ -256,7 +267,7 @@
   .disc{margin-top:36px;font-family:var(--sans);font-size:13px;line-height:1.7;color:#8B8C84;max-width:100ch}
   .disc b{color:#F4F4F0}
   .dchips{margin-top:28px;display:flex;gap:10px;flex-wrap:wrap}
-  .dchips span{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:#8B8C84;border:1px solid var(--wline);
+  .dchips span{font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:#8B8C84;border:1px solid var(--wline);
     padding:6px 12px;border-radius:999px}
   .fcopy{margin-top:32px;font-family:var(--mono);font-size:12px;color:#8B8C84}
 
@@ -296,6 +307,7 @@
   .nogsap .hi{background-size:100% 34%!important}
   .nogsap .lane.m .fill{width:90.9%}.nogsap .lane.p .fill{width:90.9%}.nogsap .lane.n .fill{width:72%}
   .nogsap .arow[data-w="90.9"] .afill{width:90.9%}.nogsap .arow[data-w="9.1"] .afill{width:9.1%}
+  .nogsap .steps .step{opacity:1}
 </style>
 </head>
 <body>
@@ -349,17 +361,17 @@
         <div class="lane m" data-w="90.9">
           <div class="name">Markov model<small>transition matrix</small></div>
           <div class="meter"><div class="fill"></div></div>
-          <div class="val" data-to="90.9" data-suf="%">0.0%</div>
+          <div class="val" data-to="90.9" data-suf="%">90.9%</div>
         </div>
         <div class="lane p" data-w="90.9">
           <div class="name">Persistence<small>t = t − 1</small></div>
           <div class="meter"><div class="fill"></div></div>
-          <div class="val" data-to="90.9" data-suf="%">0.0%</div>
+          <div class="val" data-to="90.9" data-suf="%">90.9%</div>
         </div>
         <div class="lane n" data-w="72.0">
           <div class="name">Naive<small>always majority</small></div>
           <div class="meter"><div class="fill"></div></div>
-          <div class="val" data-to="72.0" data-suf="%">0.0%</div>
+          <div class="val" data-to="72.0" data-suf="%">72.0%</div>
         </div>
       </div>
       <div class="tieband">
@@ -441,7 +453,7 @@
           <span class="b"><i></i>Regime baseline <b>−41.1%</b></span>
           <span class="h"><i></i>Buy &amp; hold <b>−47.7%</b></span>
         </div>
-        <div class="scrub" id="scrub">hover, drag, or press ← → · <b>—</b></div>
+        <div class="scrub" id="scrub" aria-live="polite" aria-atomic="true">hover, drag, or press ← → · <b>—</b></div>
       </div>
       <svg id="equity" viewBox="0 0 1000 380" role="img" tabindex="0" aria-label="Held-out equity curves: regime baseline −41.1%, buy &amp; hold −47.7% over 328 days. Use left and right arrow keys to read values along the curves."></svg>
     </div>
@@ -463,7 +475,7 @@
 <section class="dark band">
   <div class="wrap">
     <blockquote class="quote rv">
-      <p>“The transition matrix is adding little beyond regime autocorrelation. High accuracy here is mostly <span class="mk">persistence</span>, not skill.”</p>
+      <p>“The transition matrix is adding little beyond regime autocorrelation — high accuracy here is mostly <span class="mk">persistence</span>, not skill.”</p>
       <cite>— the instrument, flagging itself · warnings[0] · results/BTC-USD_4a150b23.json</cite>
     </blockquote>
   </div>
@@ -621,7 +633,8 @@ function setActive(i){
   const col=h=>new THREE.Color(h);
   const keys=['bull','side','bear'];
   const P={bull:0.137,side:0.720,bear:0.143};
-  const M={bull:{bull:.70,side:.22,bear:.08},side:{bull:.09,side:.82,bear:.09},bear:{bull:.08,side:.24,bear:.68}};
+  // full-sample MLE on the pinned BTC-USD 3y snapshot (window 30 / k 0.2, data 4a150b23); diagonal = results/model_logic/summary.json
+  const M={bull:{bull:.88,side:.12,bear:0},side:{bull:.03,side:.94,bear:.02},bear:{bull:0,side:.18,bear:.82}};
   const labelTxt={bull:'BULL',side:'SIDE',bear:'BEAR'};
 
   const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
@@ -664,7 +677,8 @@ function setActive(i){
   });
 
   const parts=[];
-  edges.forEach(e=>{ const cnt=Math.round(e.p*7)+1; for(let i=0;i<cnt;i++){
+  // a zero cell is a transition the engine never observed: keep the arc, draw no flow along it
+  edges.forEach(e=>{ if(e.p<=0) return; const cnt=Math.round(e.p*7)+1; for(let i=0;i<cnt;i++){
     const m=new THREE.Mesh(new THREE.CircleGeometry(0.05,18), new THREE.MeshBasicMaterial({color:col(C[e.a])}));
     group.add(m); parts.push({m,e,t:i/cnt, sp:0.0018+e.p*0.004}); } });
 
@@ -907,6 +921,7 @@ gsap.from('.cav .c',{y:24,autoAlpha:0,duration:.7,ease:'power3.out',stagger:.12,
 const raceEl=$('#race');
 if(raceEl){
   gsap.set('.tieband .big,.tieband .eqv,.stamp',{autoAlpha:0});
+  $$('.val',raceEl).forEach(v=>v.textContent=(0).toFixed(1)+v.dataset.suf);
   ScrollTrigger.create({trigger:raceEl,start:'top 78%',once:true,onEnter:()=>{
     const tl=gsap.timeline();
     $$('.lane',raceEl).forEach((lane,i)=>{

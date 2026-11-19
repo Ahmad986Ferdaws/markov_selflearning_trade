@@ -1,13 +1,40 @@
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class CreateRunRequest(BaseModel):
+    # extra="forbid": a typo such as "stratgy" used to be ignored and quietly
+    # created a baseline run instead of the one asked for.
+    model_config = ConfigDict(extra="forbid")
+
     strategy: Literal["baseline", "agent"] = "baseline"
     ingestion_provider: Literal["yfinance", "dexscreener"] = "yfinance"
-    watchlist: list[str] = Field(default_factory=lambda: ["BTC-USD"])
+    watchlist: list[str] = Field(default_factory=lambda: ["BTC-USD"], min_length=1)
     trade_symbol: str | None = None
+
+    @field_validator("watchlist")
+    @classmethod
+    def _strip_and_reject_blank_or_duplicate_symbols(cls, value: list[str]) -> list[str]:
+        cleaned: list[str] = []
+        for entry in value:
+            symbol = entry.strip()
+            if not symbol:
+                raise ValueError("watchlist entries must not be blank")
+            if symbol in cleaned:
+                raise ValueError(f"watchlist entry {symbol!r} is duplicated")
+            cleaned.append(symbol)
+        return cleaned
+
+    @field_validator("trade_symbol")
+    @classmethod
+    def _strip_trade_symbol(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        symbol = value.strip()
+        if not symbol:
+            raise ValueError("trade_symbol must not be blank")
+        return symbol
 
 
 class RunStatusResponse(BaseModel):
@@ -35,3 +62,30 @@ class TradeRecordResponse(BaseModel):
     fees_paid: float
     guard_note: str | None
     created_at: str
+
+
+class StrategyMetricsResponse(BaseModel):
+    """One leg of the legacy comparison replay (mirrors comparison.StrategyMetrics)."""
+
+    name: str
+    total_return: float
+    annual_sharpe: float
+    max_drawdown: float
+    win_rate: float
+    num_trades: int
+    total_costs: float
+    guard_interventions: int
+    num_closes: int
+    regimes_seen: int
+
+
+class ComparisonResponse(BaseModel):
+    """GET /runs/{id}/comparison: baseline vs agent on identical snapshots."""
+
+    report_text: str
+    headline_agent_minus_baseline: float
+    baseline: StrategyMetricsResponse
+    agent: StrategyMetricsResponse
+    snapshot_count: int
+    sharpe_periods_per_year: float
+    warnings: list[str]

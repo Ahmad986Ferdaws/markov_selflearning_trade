@@ -58,9 +58,16 @@ def _validate_frame(df: pd.DataFrame, name: str) -> pd.DataFrame:
     if missing:
         raise ValueError(f"{name}: missing columns {missing}")
     raw = df[list(REQUIRED_COLS)]
-    if any(np.iscomplexobj(v) or isinstance(v, (bool, np.bool_))
-           for v in raw.to_numpy().flat):
-        raise ValueError(f"{name}: prices must be real numeric values")
+    for col in REQUIRED_COLS:
+        kind = raw[col].dtype.kind
+        if kind in "bc":                  # a bool or complex column is never a price
+            raise ValueError(f"{name}: prices must be real numeric values")
+        # A numeric dtype ('i', 'u', 'f') cannot hide a bool or complex cell, so only
+        # object columns get the per-cell scan: Decimal stays accepted, an
+        # object-wrapped complex or bool is still rejected.
+        if kind == "O" and any(np.iscomplexobj(v) or isinstance(v, (bool, np.bool_))
+                               for v in raw[col].to_numpy()):
+            raise ValueError(f"{name}: prices must be real numeric values")
     try:
         sub = raw.astype(float)
     except (TypeError, ValueError, OverflowError) as error:
@@ -81,6 +88,12 @@ def align_pair(p1: pd.DataFrame, p2: pd.DataFrame, name1: str, name2: str,
     dropped by the join — that is calendar alignment, not imputation."""
     a = _validate_frame(p1, name1)
     b = _validate_frame(p2, name2)
+    if (a.index.tz is None) != (b.index.tz is None):
+        # pandas intersects a naive and an aware index to nothing, which would
+        # surface below as 'overlap too short' although the calendars may match
+        raise ValueError(f"{name1}/{name2}: one leg has a tz-aware index and the other a "
+                         f"naive one ({a.index.tz} vs {b.index.tz}); localize both the same "
+                         f"way before aligning")
     idx = a.index.intersection(b.index)
     if len(idx) < min_overlap:
         raise ValueError(f"pair overlap too short: {len(idx)} < {min_overlap}")
@@ -92,9 +105,10 @@ def load_pair_from_snapshots(sym1: str, sym2: str, years: int = 20,
     """Load a pair from this repo's pinned snapshots (offline, reproducible)."""
     d = Path(snap_dir)
     f1, f2 = d / f"{sym1}_{years}y.pkl", d / f"{sym2}_{years}y.pkl"
-    for f in (f1, f2):
-        if not f.exists():
-            raise FileNotFoundError(f"pinned snapshot missing: {f}")
+    missing = [str(f) for f in (f1, f2) if not f.exists()]
+    if missing:
+        # name every missing file at once, so one re-run fixes both
+        raise FileNotFoundError(f"pinned snapshot(s) missing: {', '.join(missing)}")
     return align_pair(pd.read_pickle(f1), pd.read_pickle(f2), sym1, sym2)
 
 
@@ -136,9 +150,13 @@ def synthetic_pair(n: int = 1500, seed: int = 7,
     p1 = beta * p2 + alpha + rng.normal(0.0, obs_noise_sd, n)
     p1 = np.maximum(p1, 1e-3)
     idx = pd.bdate_range("2015-01-01", periods=n)
-    mk = lambda px: pd.DataFrame(
-        {"Open": px * (1 + rng.normal(0, 0.0005, n)), "Close": px}, index=idx)
-    pair = align_pair(mk(p1), mk(p2), "SYN1", "SYN2", min_overlap=10)
+
+    def _frame(px: np.ndarray) -> pd.DataFrame:
+        # draws the Open noise from the shared rng: p1 first, then p2, as before
+        return pd.DataFrame(
+            {"Open": px * (1 + rng.normal(0, 0.0005, n)), "Close": px}, index=idx)
+
+    pair = align_pair(_frame(p1), _frame(p2), "SYN1", "SYN2", min_overlap=10)
     truth = pd.DataFrame({"beta": beta, "alpha": alpha}, index=idx)
     return pair, truth
 

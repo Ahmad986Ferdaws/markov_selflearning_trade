@@ -1,5 +1,9 @@
-# Secrets — never commit the real .env (only .env.example is tracked)
+# Secrets — never commit the real .env or any variant of it (.env.local,
+# .env.production, ...); only the key-less .env.example is tracked: it holds
+# offline defaults and an empty ANTHROPIC_API_KEY.
 .env
+.env.*
+!.env.example
 
 # Python / virtualenv
 .venv/
@@ -9,6 +13,12 @@ __pycache__/
 dist/
 build/
 .pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+.hypothesis/
 
 # Runtime state (regenerable)
 paper_trading.db

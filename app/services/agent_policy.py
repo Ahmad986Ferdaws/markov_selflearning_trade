@@ -129,7 +129,7 @@ class OllamaProvider(LLMProvider):
 
 def make_provider(settings) -> LLMProvider | None:
     """Build the configured provider, or None if disabled/unconfigured."""
-    name = (getattr(settings, "llm_provider", "none") or "none").lower()
+    name = (getattr(settings, "llm_provider", "none") or "none").strip().lower()
     temp = float(getattr(settings, "agent_temperature", 0.0))
     if name == "anthropic":
         key = getattr(settings, "anthropic_api_key", "") or ""
@@ -177,7 +177,8 @@ class ResponseCache:
                 ):
                     raise ValueError("response cache must map strings to strings")
                 self._d = loaded
-            except Exception:  # noqa: BLE001 - corrupt cache shouldn't kill a run
+            except Exception as error:  # noqa: BLE001 - corrupt cache shouldn't kill a run
+                logger.warning("response cache %s unreadable (%s); starting empty", self.path, error)
                 self._d = {}
 
     def contains(self, key: str) -> bool:
@@ -322,7 +323,7 @@ class AgentStats:
     cache_only_holds: int = 0        # cache-only mode, key absent -> held (no live call)
 
     def tally(self, tier: str) -> None:
-        if hasattr(self, tier):
+        if tier in self.__dataclass_fields__:
             setattr(self, tier, getattr(self, tier) + 1)
 
     @property

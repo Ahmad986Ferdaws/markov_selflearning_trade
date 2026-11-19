@@ -9,6 +9,7 @@ all. Both fail CLOSED — when in doubt, hold the previous position.
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import numpy as np
 
@@ -82,7 +83,7 @@ def test_cache_only_replays_persisted_cache(tmp_path):
 
 # --- offline diagnoser --------------------------------------------------------
 def test_diagnose_narrates_the_null_result():
-    rec = json.loads(open("results/BTC-USD_4a150b23.json").read())
+    rec = json.loads(Path("results/BTC-USD_4a150b23.json").read_text(encoding="utf-8"))
     out = format_diagnosis(rec)
     assert "IDENTICAL to persistence" in out          # the zero-edge identity
     assert "persistence, not skill" in out

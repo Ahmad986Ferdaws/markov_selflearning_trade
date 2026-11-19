@@ -23,7 +23,6 @@ from app.services.data_cache import load_or_fetch
 from app.services.evaluation import evaluate
 
 OUT = Path("results/robustness")
-OUT.mkdir(parents=True, exist_ok=True)
 
 # Liquid, Yahoo-available. Crypto + equities + indices + macro ETFs + FX, so the
 # test spans very different regime structures. (Binance/exchange APIs excluded by
@@ -81,16 +80,17 @@ def _summarize(symbol: str, rep) -> dict:
 
 
 def run_one(symbol: str, history=None) -> dict | None:
+    OUT.mkdir(parents=True, exist_ok=True)
     try:
         if history is None:
-            history, src = load_or_fetch(symbol, years=3)
+            history, _ = load_or_fetch(symbol, years=3)
         rep = evaluate(
             history, symbol=symbol, train_frac=0.7,
             grid_windows=GRID_WINDOWS, grid_k=GRID_K,
             fee_pct=0.3, slippage_pct=0.5,
         )
         (OUT / f"{symbol.replace('/', '_').replace('=', '_')}.json").write_text(
-            json.dumps(asdict(rep), indent=2, default=str)
+            json.dumps(asdict(rep), indent=2), encoding="utf-8"
         )
         return _summarize(symbol, rep)
     except Exception as e:  # noqa: BLE001
@@ -99,6 +99,7 @@ def run_one(symbol: str, history=None) -> dict | None:
 
 
 def main() -> None:
+    OUT.mkdir(parents=True, exist_ok=True)
     rows = []
     print(f"=== Cross-asset robustness: {len(SYMBOLS)} symbols ===", flush=True)
     for i, sym in enumerate(SYMBOLS, 1):
@@ -142,7 +143,7 @@ def main() -> None:
         "max_edge_vs_persist_bal": max((r["edge_vs_persist_bal"] for r in ok), default=None),
     }
     summary = {"aggregate": agg, "assets": rows, "temporal": temporal}
-    (OUT / "summary.json").write_text(json.dumps(summary, indent=2, default=str))
+    (OUT / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
     print("\n=== AGGREGATE ===", flush=True)
     for k, v in agg.items():

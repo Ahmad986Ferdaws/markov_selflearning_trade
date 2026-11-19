@@ -36,6 +36,28 @@ def apply_trade(
     settings: Settings,
     liquidity_usd: float | None = None,
 ) -> Trade | None:
+    """Apply one intent to the run's paper ledger and record what was booked.
+
+    The intent passes through enforce_decision first; the enforced action and
+    percentage are what gets filled, and the Trade row keeps both the intended
+    and the enforced values.
+
+    HOLD handling is deliberate and pinned by tests/test_ledger_accounting.py:
+
+    * A plain HOLD (the intent was HOLD and no guard fired) writes NO Trade
+      row and returns None; the run is untouched.
+    * A HOLD produced by a guard (``guard_note`` is set, or the intent was not
+      HOLD and was reduced to one, e.g. a SELL with no position) writes a
+      zero-quantity Trade row with ``fees_paid=0.0`` carrying the guard note,
+      so the rejection is visible in the trade history.
+
+    A BUY commits ``cash * percentage`` at the fee- and slippage-adjusted
+    price and re-averages the entry price by quantity. A SELL exits that
+    share of the position, realises P&L against the average entry, and then
+    flattens dust: a remaining position at or below 1e-12 is reset to 0.0
+    along with the average entry, so a partial exit cannot decay into float
+    residue forever.
+    """
     enforced = enforce_decision(
         intent,
         cash=run.cash,

@@ -69,6 +69,20 @@ An **honest evaluation harness** that reports null when null is true
 
 It is explicitly **not** a money-maker, **not** self-learning, and makes **no** alpha claim.
 
+## Repository layout
+
+| Folder | What it holds |
+|---|---|
+| [`app/`](app/) | The engine (`services/`), the CLIs (`cli/`) and the quarantined legacy web API (`api/`, `models/`, `schemas/`). |
+| [`kalman/`](kalman/) | The Kalman pairs research harness (docs/20): filter, two-leg ledger, walk-forward, `kalman-cli`. |
+| [`scripts/`](scripts/) | The studies behind docs/16, 18 and 19, the independent re-derivation and the demo recorder. |
+| [`tests/`](tests/) | The offline suite: boundary pins, tripwires, positive controls. |
+| [`docs/`](docs/) | The numbered design and results docs, the status page and the glossary. |
+| [`design/`](design/) | The single-file static site, its headers and favicon. |
+| [`data/snapshots/`](data/snapshots/) | The pinned yfinance pulls every run reads, hashed into each record. |
+| [`results/`](results/) | The run records and study outputs the docs quote. |
+| [`media/`](media/) | Screenshots and the demo video of the site. |
+
 ## Safety & scope
 
 - **Simulation only.** Paper ledger. No real funds, no orders, no broker, no wallets, no keys, no on-chain execution — ever.
@@ -89,7 +103,7 @@ python scripts/long_history_study.py   # reproduce the 20-year / +0.000 result
 diagnose-cli                  # narrate the latest run record (offline, no model)
 python scripts/independent_rederivation.py   # re-derive the headline with ZERO app imports
 kalman-cli walkforward        # Kalman pairs walk-forward on SPY/QQQ (docs/20)
-make test                     # 90 tests
+make test                     # the offline suite (no network, pinned snapshots)
 make site                     # serve the website at http://localhost:8000
 ```
 
@@ -144,6 +158,8 @@ Current (post-reframe):
 - [docs/20 — Kalman pairs framework](docs/20-kalman-pairs.md) — dynamic-hedge Kalman research harness (`kalman/`): Joseph-form filter, two-leg ledger, walk-forward vs 5 baselines; verdict on SPY/QQQ: no edge after costs
 - [docs/12 — architecture review](docs/12-architecture-review.md) — headline-integrity fixes
 - [docs/STATUS.md](docs/STATUS.md) — living status / session handoff
+- [docs/21 — glossary](docs/21-glossary.md) — the terms the current docs use
+- [docs/README](docs/README.md) — the index, in reading order
 
 Legacy (pre-reframe build docs, the now-quarantined intraday path): [docs/01–11](docs/).
 
@@ -158,3 +174,5 @@ only (no intraday claim), Yahoo data only, and the LLM agent row is not yet meas
 ## License
 
 [MIT](LICENSE) © 2026 Ahmad Ferdaws Shafiq.
+
+Contributions follow the [code of conduct](CODE_OF_CONDUCT.md).

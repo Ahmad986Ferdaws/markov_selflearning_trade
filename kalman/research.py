@@ -38,13 +38,20 @@ BARS_PER_YEAR = 252
 # --------------------------------------------------------------------------- #
 def _causal_z(resid: np.ndarray, window: int = 60) -> np.ndarray:
     """Standardize residuals by TRAILING mean/std (ending at t-1). First
-    `window` values are NaN -> the state machine's stale-data gate holds flat."""
-    z = np.full(len(resid), np.nan)
-    for t in range(window, len(resid)):
-        past = resid[t - window:t]                  # ends at t-1: lagged
-        m, s = float(np.mean(past)), float(np.std(past, ddof=1))
-        if np.isfinite(resid[t]) and s > 0:
-            z[t] = (resid[t] - m) / s
+    `window` values are NaN -> the state machine's stale-data gate holds flat.
+
+    Vectorised with pandas rolling statistics; the shift(1) is what keeps it
+    causal: bar t is standardized against resid[t-window:t], never against
+    itself. NaN exactly where the per-bar loop this replaces was NaN: an
+    incomplete window, a window holding a non-finite value (pandas counts it
+    as missing, so min_periods is not met), a zero spread, or a non-finite
+    resid[t]."""
+    s = pd.Series(np.asarray(resid, dtype=float))
+    m = s.rolling(window).mean().shift(1)           # ends at t-1: lagged
+    sd = s.rolling(window).std(ddof=1).shift(1)
+    z = ((s - m) / sd).to_numpy(dtype=float, copy=True)
+    z[~(sd.to_numpy() > 0) | ~np.isfinite(s.to_numpy())] = np.nan
+    z[:window] = np.nan
     return z
 
 
@@ -131,6 +138,14 @@ def calibrate(y_train: np.ndarray, x_train: np.ndarray,
     """Positive log-space grid over (q_beta, r); q_alpha tied as a fraction of
     q_beta (different units — separately configurable, jointly gridding all
     three is left to the sensitivity surface). Returns best + full surface."""
+    n = len(y_train)
+    if len(x_train) != n:
+        raise ValueError("calibrate: y_train and x_train must align")
+    i0 = max(60, n // 5)                 # train_loglik's default OLS-init prefix
+    if i0 >= n - 10:
+        raise ValueError(
+            f"calibrate: training window of {n} bars is too short; the predictive "
+            f"likelihood needs more than {i0 + 10} bars ({i0} init + 10 scored)")
     rows = []
     best = (-np.inf, None)
     for qb, r in itertools.product(q_betas, rs):
@@ -205,10 +220,13 @@ def innovation_diagnostics(recs: list[StepRecord], start: int = 0) -> dict:
     z = np.array([r.z for r in recs[start:] if r.z is not None])
     nis = np.array([r.nis for r in recs[start:] if r.nis is not None])
     if len(z) < 10:
-        return {"n": int(len(z))}
-    ac1 = float(np.corrcoef(z[:-1], z[1:])[0, 1])
+        return {"n": len(z)}
+    if np.std(z[:-1]) == 0 or np.std(z[1:]) == 0:
+        ac1 = float("nan")                  # undefined for a constant stream; no divide warning
+    else:
+        ac1 = float(np.corrcoef(z[:-1], z[1:])[0, 1])
     return {
-        "n": int(len(z)),
+        "n": len(z),
         "z_mean": float(np.mean(z)),
         "z_std": float(np.std(z, ddof=1)),
         "z_autocorr_1": ac1,
@@ -289,13 +307,17 @@ def sharpe_ci_block_bootstrap(rets: np.ndarray, n_boot: int = 500,
                               block: int = 20, seed: int = 0,
                               bars_per_year: int = BARS_PER_YEAR) -> tuple[float, float]:
     """Moving-block bootstrap 90% CI for the annualized Sharpe."""
+    if isinstance(block, bool) or not isinstance(block, int) or block < 1:
+        raise ValueError(f"sharpe_ci_block_bootstrap: block must be an int >= 1, got {block!r}")
+    if isinstance(n_boot, bool) or not isinstance(n_boot, int) or n_boot < 1:
+        raise ValueError(f"sharpe_ci_block_bootstrap: n_boot must be an int >= 1, got {n_boot!r}")
     rng = np.random.default_rng(seed)
     n = len(rets)
     if n < block * 2:
         return (float("nan"), float("nan"))
+    k = int(np.ceil(n / block))             # blocks per resample; loop-invariant
     sharpes = []
     for _ in range(n_boot):
-        k = int(np.ceil(n / block))
         starts = rng.integers(0, n - block + 1, size=k)   # final block included
         sample = np.concatenate([rets[s:s + block] for s in starts])[:n]
         sd = np.std(sample, ddof=1)
@@ -315,6 +337,20 @@ class WalkForwardConfig:
     expanding: bool = True            # expanding vs rolling training window
     # small, PREDECLARED validation set (entry_z, exit_z):
     entry_exit_grid: tuple = ((1.5, 0.5), (2.0, 0.5), (2.5, 1.0))
+
+    def __post_init__(self) -> None:
+        # the fold loop advances by `test`, so a zero or negative window would
+        # never terminate; a float would silently produce float slice bounds
+        for name in ("train", "validation", "test"):
+            v = getattr(self, name)
+            if isinstance(v, bool) or not isinstance(v, int) or v < 1:
+                raise ValueError(
+                    f"WalkForwardConfig.{name} must be an int >= 1, got {v!r}")
+        g = self.entry_exit_grid
+        if (not isinstance(g, tuple) or len(g) == 0
+                or not all(isinstance(c, tuple) and len(c) == 2 for c in g)):
+            raise ValueError("WalkForwardConfig.entry_exit_grid must be a non-empty "
+                             "tuple of (entry_z, exit_z) 2-tuples")
 
 
 VARIANTS = ("static_ols", "rolling_ols", "ew_ols", "kalman_fixed", "kalman_adaptive", "cash")
@@ -349,6 +385,13 @@ def walk_forward(pair: PairData, wf: WalkForwardConfig,
     entry/exit from the predeclared grid by net Sharpe) -> test (once)."""
     c1 = pair.p1["Close"].to_numpy(float)
     c2 = pair.p2["Close"].to_numpy(float)
+    bad = ~(np.isfinite(c1) & np.isfinite(c2))
+    if bad.any():
+        raise ValueError(
+            f"walk_forward: {int(bad.sum())} bar(s) have a missing close on at least "
+            "one leg; the static-OLS and EW baselines cannot fit through NaN (their "
+            "z-stream becomes all-NaN, i.e. permanently flat) and from_ols rejects "
+            "it - drop or re-pin those bars first")
     y = np.log(c1) if use_log else c1
     x = np.log(c2) if use_log else c2
     n = len(y)
@@ -415,7 +458,7 @@ def walk_forward(pair: PairData, wf: WalkForwardConfig,
             pooled = (np.concatenate(results["test_returns"][v])
                       if results["test_returns"][v] else np.array([]))
             lo, hi = sharpe_ci_block_bootstrap(pooled)
-            zs = [m["z_std_test"] for m in ms if m.get("z_std_test")]
+            zs = [m["z_std_test"] for m in ms if m.get("z_std_test") is not None]
             agg[v] = {
                 "folds": len(ms),
                 "mean_test_sharpe": float(np.mean([m.get("sharpe", 0.0) for m in ms])),
@@ -441,6 +484,12 @@ def format_report(res: dict, pair_name: str) -> str:
         lines.append(f"fold 0 diagnostics (train only): {fr['diagnostics']}")
         lines.append(f"fold 0 calibration: {fr['calibrated']}")
         lines.append("")
+    if not res["aggregate"]:
+        # No fold fitted -> no variant was ever run. Say so instead of falling
+        # through to the positive-Sharpe verdict on an empty table.
+        lines.append("VERDICT: no complete train/validation/test fold fits this "
+                     "history; nothing was evaluated.")
+        return "\n".join(lines)
     lines.append(f"{'variant':<16} {'folds':>5} {'test Sharpe':>12} {'CI90':>14} "
                  f"{'total ret':>10} {'trades':>7} {'gated':>6} {'z-std':>6} {'costs':>9}")
     for v, a in res["aggregate"].items():
@@ -449,7 +498,7 @@ def format_report(res: dict, pair_name: str) -> str:
         zs = a.get("mean_z_std")
         lines.append(f"{v:<16} {a['folds']:>5} {a['mean_test_sharpe']:>12.2f} {ci_s:>14} "
                      f"{a['total_test_return']:>9.1%} {a['trades']:>7} "
-                     f"{a['gated_bars']:>6} {(f'{zs:.2f}' if zs else 'n/a'):>6} "
+                     f"{a['gated_bars']:>6} {(f'{zs:.2f}' if zs is not None else 'n/a'):>6} "
                      f"{a['total_costs']:>9.0f}")
     for v in ("kalman_fixed", "kalman_adaptive"):
         zs = res["aggregate"].get(v, {}).get("mean_z_std")

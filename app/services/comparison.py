@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import math
 from dataclasses import dataclass, field
+from datetime import date
 
 import numpy as np
 import pandas as pd
@@ -24,7 +25,7 @@ from app.schemas.trade import TradeIntent
 from app.services import agent as agent_service
 from app.services.baseline import baseline_decision
 from app.services.guards import enforce_decision
-from app.services.regime import fetch_daily_history, regime_feature
+from app.services.regime import RegimeFeature, fetch_daily_history, regime_feature
 
 
 SECONDS_PER_YEAR = 365 * 24 * 60 * 60
@@ -70,13 +71,13 @@ def _build_regime_lookup(
     snapshots: list[Snapshot],
     benchmark_history: pd.DataFrame,
     settings: Settings,
-) -> dict[object, "object"]:
+) -> dict[date, RegimeFeature]:
     """Precompute one point-in-time regime feature per unique snapshot date.
 
     O(unique_days) instead of O(snapshots), and makes the replay point-in-time:
     each snapshot sees the regime as of its own timestamp, not the latest.
     """
-    lookup: dict[object, object] = {}
+    lookup: dict[date, RegimeFeature] = {}
     for snap_row in snapshots:
         key = snap_row.created_at.date()
         if key in lookup:
@@ -116,6 +117,7 @@ def _simulate_strategy(
     prev_equity = cash
     states_seen: set[str] = set()
     _, ann_factor = _annualization_factor(settings)
+    fee_rate = (settings.fee_pct + settings.slippage_pct) / 100.0
 
     for snap_row in snapshots:
         metrics = _snapshot_metrics(snap_row)
@@ -148,7 +150,6 @@ def _simulate_strategy(
         price = snap_row.price
         if enforced.action == "BUY" and enforced.percentage > 0 and cash > 0:
             notional = cash * (enforced.percentage / 100.0)
-            fee_rate = (settings.fee_pct + settings.slippage_pct) / 100.0
             exec_p = price * (1 + fee_rate)
             buy_qty = notional / exec_p
             fee = notional - buy_qty * price
@@ -160,7 +161,6 @@ def _simulate_strategy(
             trades += 1
         elif enforced.action == "SELL" and enforced.percentage > 0 and qty > 0:
             sell_qty = qty * (enforced.percentage / 100.0)
-            fee_rate = (settings.fee_pct + settings.slippage_pct) / 100.0
             exec_p = price * (1 - fee_rate)
             proceeds = sell_qty * exec_p
             fee = sell_qty * price - proceeds
@@ -239,6 +239,23 @@ def _trade_snapshots_for_run(run: Run, snapshots: list[Snapshot]) -> list[Snapsh
     return [snapshot for snapshot in snapshots if snapshot.symbol == run.trade_symbol]
 
 
+def _empty_report(warning: str) -> ComparisonReport:
+    """An all-zero report carrying one warning, for runs with nothing to replay."""
+    def _zero(name: str) -> StrategyMetrics:
+        return StrategyMetrics(
+            name=name, total_return=0.0, annual_sharpe=0.0, max_drawdown=0.0,
+            win_rate=0.0, num_trades=0, total_costs=0.0, guard_interventions=0,
+        )
+
+    return ComparisonReport(
+        baseline=_zero("baseline"),
+        agent=_zero("agent"),
+        headline_agent_minus_baseline=0.0,
+        snapshot_count=0,
+        warnings=[warning],
+    )
+
+
 def run_comparison(db: Session, run_id: int, settings: Settings) -> ComparisonReport:
     run = db.get(Run, run_id)
     if run is None:
@@ -247,26 +264,12 @@ def run_comparison(db: Session, run_id: int, settings: Settings) -> ComparisonRe
         db.query(Snapshot).filter(Snapshot.run_id == run_id).order_by(Snapshot.created_at).all()
     )
     if not snapshots:
-        empty = StrategyMetrics("baseline", 0, 0, 0, 0, 0, 0, 0)
-        return ComparisonReport(
-            empty,
-            StrategyMetrics("agent", 0, 0, 0, 0, 0, 0, 0),
-            0.0,
-            0,
-            warnings=["No snapshots for run; nothing to compare."],
-        )
+        return _empty_report("No snapshots for run; nothing to compare.")
 
     trade_snapshots = _trade_snapshots_for_run(run, snapshots)
     if not trade_snapshots:
-        empty = StrategyMetrics("baseline", 0, 0, 0, 0, 0, 0, 0)
-        return ComparisonReport(
-            empty,
-            StrategyMetrics("agent", 0, 0, 0, 0, 0, 0, 0),
-            0.0,
-            0,
-            warnings=[f"No snapshots for trade symbol {run.trade_symbol!r}; "
-                      "refusing to compare across mixed symbols."],
-        )
+        return _empty_report(f"No snapshots for trade symbol {run.trade_symbol!r}; "
+                             "refusing to compare across mixed symbols.")
     history = fetch_daily_history(settings.benchmark_symbol, years=3)
     regime_lookup = _build_regime_lookup(trade_snapshots, history, settings)
     base_cash = getattr(run, "starting_cash", None) or settings.starting_cash
@@ -301,8 +304,8 @@ def _validate_report(report: ComparisonReport) -> list[str]:
             val = getattr(m, fieldname)
             if not math.isfinite(val):
                 warnings.append(f"{m.name}.{fieldname} is non-finite ({val}).")
-        if report.snapshot_count > 1 and report.sharpe_periods_per_year <= 0:
-            warnings.append("Sharpe annualization factor unresolved (check poll_interval_seconds).")
+    if report.snapshot_count > 1 and report.sharpe_periods_per_year <= 0:
+        warnings.append("Sharpe annualization factor unresolved (check poll_interval_seconds).")
     return warnings
 
 

@@ -49,7 +49,6 @@ from app.services.regime import STATE_ORDER, STATE_TO_IDX, estimate_transition_m
 from scripts.model_logic_study import _configs
 
 OUT = Path("results/logic_depth")
-OUT.mkdir(parents=True, exist_ok=True)
 MIN_OBS = 15
 TRAIN_FRAC = 0.7
 _EPS = 1e-12
@@ -67,7 +66,7 @@ def analyze(symbol: str, years: int, window: int, k: float,
     if expected_hash and history_hash(history) != expected_hash:
         raise ValueError(f"{symbol}: snapshot hash != run-record hash — refusing to mix.")
     closes = history["Close"] if "Close" in history.columns else history.squeeze()
-    returns = closes.pct_change().dropna()
+    returns = closes.pct_change(fill_method=None).dropna()
     states = causal_states(returns, window, k)
     n = len(returns)
     split = int(n * TRAIN_FRAC)
@@ -77,10 +76,13 @@ def analyze(symbol: str, years: int, window: int, k: float,
     # With the current labeler None only occurs in the warmup prefix — assert it
     # so a future labeler change fails loudly instead of silently drifting.
     labeled_idx = [i for i, s in enumerate(states) if s in STATE_TO_IDX]
-    assert labeled_idx == list(range(labeled_idx[0], labeled_idx[-1] + 1)), (
-        f"{symbol}: mid-series label gap — incremental counting no longer matches "
-        "the engine's compressed-pair semantics; fix before trusting results."
-    )
+    if not labeled_idx:
+        raise ValueError(f"{symbol}: no labeled bars after warm-up")
+    if labeled_idx != list(range(labeled_idx[0], labeled_idx[-1] + 1)):   # survives -O
+        raise ValueError(
+            f"{symbol}: mid-series label gap — incremental counting no longer matches "
+            "the engine's compressed-pair semantics; fix before trusting results."
+        )
 
     counts = np.zeros((N_STATES, N_STATES))        # first-order, incremental MLE
     counts2: dict = defaultdict(lambda: np.zeros(N_STATES))  # (prev,cur) contexts
@@ -110,7 +112,8 @@ def analyze(symbol: str, years: int, window: int, k: float,
         ):
             observed = [s for s in states[: t + 1] if s in STATE_TO_IDX]
             ref = estimate_transition_matrix(pd.Series(observed))[cur]
-            assert np.allclose(_row(counts, cur), ref), f"{symbol}: estimator drift at t={t}"
+            if not np.allclose(_row(counts, cur), ref):
+                raise ValueError(f"{symbol}: estimator drift at t={t}")
             checked += 1
 
         # ---- score day t (predict t+1) BEFORE updating any counts ----------
@@ -243,6 +246,7 @@ def main() -> None:
         "best_m2_edge": max((r["m2"]["edge"] for r in rows
                              if r["m2"]["attempts"] > 0 and r["m2"]["edge"] is not None), default=None),
     }
+    OUT.mkdir(parents=True, exist_ok=True)
     (OUT / "summary.json").write_text(json.dumps({"aggregate": agg, "runs": rows}, indent=2))
     print("\n=== AGGREGATE ===", flush=True)
     for kk, v in agg.items():

@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+from typing import Any
 
 from app.config import Settings
 from app.schemas.agent import AgentDecision
@@ -30,7 +31,7 @@ def parse_decision(raw: str) -> AgentDecision:
 
 
 async def get_agent_decision(
-    metrics: dict,
+    metrics: dict[str, Any],
     feature: RegimeFeature,
     symbol: str,
     settings: Settings,
@@ -71,12 +72,12 @@ async def get_agent_decision(
             )
             return parse_decision(repair.content[0].text)
     except Exception as e:
-        logger.exception("agent call failed: %s", e)
+        logger.exception("agent call failed")
         return AgentDecision(action="HOLD", percentage=0, reasoning=f"agent error: {e}")
 
 
 def get_agent_decision_sync(
-    metrics: dict,
+    metrics: dict[str, Any],
     feature: RegimeFeature,
     symbol: str,
     settings: Settings,
@@ -116,5 +117,5 @@ def get_agent_decision_sync(
             )
             return parse_decision(repair.content[0].text)
     except Exception as e:
-        logger.exception("agent sync call failed: %s", e)
+        logger.exception("agent sync call failed")
         return AgentDecision(action="HOLD", percentage=0, reasoning=f"agent error: {e}")

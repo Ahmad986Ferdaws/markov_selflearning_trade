@@ -38,7 +38,7 @@ app/
 |   |-- ledger.py      # paper trading: cash, positions, fills, PnL
 |   |-- baseline.py    # non-LLM regime strategy (the benchmark)
 |   |-- comparison.py  # run both strategies, compute metrics, build report
-|-- models/            # SQLAlchemy models: Run, Trade, Snapshot, Metric
+|-- models/            # SQLAlchemy models: Run, Trade, Snapshot
 |-- schemas/           # Pydantic models, incl. the AgentDecision contract
 `-- tests/
 ```

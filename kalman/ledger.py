@@ -48,15 +48,25 @@ class HedgeMode(Enum):
     REHEDGE = "rehedge"
 
 
-def _nonnegative(value, name, *, positive=False):
-    if isinstance(value, (bool, np.bool_)) or not isinstance(value, (int, float)):
+def _nonnegative(value: object, name: str, *, positive: bool = False) -> float:
+    """Validate a cost or sizing scalar and return it as a plain Python float.
+
+    numpy scalars are accepted but never kept (same pattern as
+    kalman.core._finite_real): a narrow integer such as np.int8 wraps when
+    the three per-side costs are summed, and a np.float32 capital would keep
+    the whole cash series in float32 under NEP 50.
+    """
+    if (isinstance(value, (bool, np.bool_))
+            or not isinstance(value, (int, float, np.integer, np.floating))):
         raise ValueError(f"{name} must be a real number")
     try:
-        valid = np.isfinite(float(value)) and (value > 0 if positive else value >= 0)
+        number = float(value)
+        valid = np.isfinite(number) and (number > 0 if positive else number >= 0)
     except OverflowError:
         valid = False
     if not valid:
         raise ValueError(f"{name} must be finite and {'positive' if positive else 'nonnegative'}")
+    return number
 
 
 @dataclass
@@ -71,10 +81,12 @@ class CostConfig:
     def __post_init__(self):
         for name in ("commission_bps", "half_spread_bps", "slippage_bps",
                      "borrow_bps_pa", "financing_bps_pa"):
-            _nonnegative(getattr(self, name), name)
-        if (isinstance(self.bars_per_year, bool) or not isinstance(self.bars_per_year, int)
+            setattr(self, name, _nonnegative(getattr(self, name), name))
+        if (isinstance(self.bars_per_year, (bool, np.bool_))
+                or not isinstance(self.bars_per_year, (int, np.integer))
                 or self.bars_per_year <= 0):
             raise ValueError("bars_per_year must be a positive integer")
+        self.bars_per_year = int(self.bars_per_year)   # a grid's np.int64 becomes a plain int
         _nonnegative(self.per_side_bps, "total per-side cost")
 
     @property
@@ -94,9 +106,9 @@ class LedgerConfig:
 
     def __post_init__(self):
         for name in ("capital", "max_gross"):
-            _nonnegative(getattr(self, name), name, positive=True)
+            setattr(self, name, _nonnegative(getattr(self, name), name, positive=True))
         for name in ("gross_target", "rehedge_threshold"):
-            _nonnegative(getattr(self, name), name)
+            setattr(self, name, _nonnegative(getattr(self, name), name))
         if not isinstance(self.price_model, PriceModel) or not isinstance(self.hedge_mode, HedgeMode):
             raise ValueError("price_model and hedge_mode must use their enum values")
         if not isinstance(self.costs, CostConfig):
@@ -203,12 +215,11 @@ def run_ledger(index: pd.DatetimeIndex,
             d = decisions[t - 1]
             b_signal = float(betas[t - 1])            # info from bar t-1 only
             want = d.target
-            retarget = False
-            if want is not cur_pos:
-                retarget = True
-            elif want is not Position.FLAT and cfg.hedge_mode is HedgeMode.REHEDGE \
-                    and abs(b_signal - beta_entry) > cfg.rehedge_threshold:
-                retarget = True
+            # re-target on a position change, or (REHEDGE only) once the hedge
+            # ratio has drifted past the threshold since the last fill
+            retarget = want is not cur_pos or (
+                want is not Position.FLAT and cfg.hedge_mode is HedgeMode.REHEDGE
+                and abs(b_signal - beta_entry) > cfg.rehedge_threshold)
             if retarget:
                 o1, o2 = float(open1[t]), float(open2[t])
                 if np.isfinite(o1) and np.isfinite(o2) and o1 > 0 and o2 > 0:
@@ -244,5 +255,5 @@ def run_ledger(index: pd.DatetimeIndex,
                               gross, s1 * c1 + s2 * c2, turnover, costs, reason))
 
     df = pd.DataFrame([r.__dict__ for r in rows]).set_index("obs_ts")
-    df["ret"] = df["equity"].pct_change().fillna(0.0)
+    df["ret"] = df["equity"].pct_change(fill_method=None).fillna(0.0)
     return df

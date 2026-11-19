@@ -2,9 +2,8 @@
 
 DEPRECATED (legacy 15-second intraday loop). Superseded by the daily evaluation
 path (app/services/evaluation.py + evaluate-cli). Retained only for the legacy
-/runs API. Known limits: blocking yfinance I/O in async paths, in-memory run
-registry that orphans runs on restart, inert request_stop cancel path. Not the
-integration point for the Phase-C LLM agent. See docs/13-reframed-plan.md.
+/runs API. Known limit: the in-memory run registry orphans runs on restart. Not
+the integration point for the Phase-C LLM agent. See docs/13-reframed-plan.md.
 """
 
 from __future__ import annotations
@@ -18,6 +17,7 @@ from app.config import Settings
 from app.db import get_session_factory
 from app.models.entities import Run
 from app.schemas.snapshot import NormalizedSnapshot
+from app.schemas.trade import TradeIntent
 from app.services import agent as agent_service
 from app.services.baseline import baseline_decision
 from app.services.ingestion import get_provider
@@ -26,7 +26,7 @@ from app.services.regime import fetch_daily_history, regime_feature
 
 logger = logging.getLogger(__name__)
 
-_active_tasks: dict[int, asyncio.Task] = {}
+_active_tasks: dict[int, asyncio.Task[None]] = {}
 _stop_flags: dict[int, bool] = {}
 
 
@@ -52,7 +52,17 @@ def request_stop(run_id: int) -> None:
 
 async def run_loop(run_id: int, settings: Settings) -> None:
     factory = get_session_factory()
-    benchmark_history = fetch_daily_history(settings.benchmark_symbol, years=3)
+    benchmark_history = None
+    try:
+        benchmark_history = await asyncio.to_thread(fetch_daily_history, settings.benchmark_symbol, years=3)
+    except asyncio.CancelledError:
+        # request_stop cancelled us mid-download: skip the loop, still finalise
+        _stop_flags[run_id] = True
+    except Exception:
+        # A dead benchmark fetch used to kill the coroutine here, leaving the
+        # row "running" and both registries holding a finished task forever.
+        logger.exception("run_loop benchmark fetch failed run_id=%s; stopping run", run_id)
+        _stop_flags[run_id] = True
 
     while not _stop_flags.get(run_id, False):
         db: Session = factory()
@@ -91,8 +101,6 @@ async def run_loop(run_id: int, settings: Settings) -> None:
                     trade_symbol,
                     settings,
                 )
-                from app.schemas.trade import TradeIntent
-
                 intent = TradeIntent(
                     action=decision.action,
                     percentage=decision.percentage,
@@ -124,7 +132,7 @@ async def run_loop(run_id: int, settings: Settings) -> None:
     _stop_flags.pop(run_id, None)
 
 
-def start_run_task(run_id: int, settings: Settings) -> asyncio.Task:
+def start_run_task(run_id: int, settings: Settings) -> asyncio.Task[None]:
     _stop_flags[run_id] = False
     task = asyncio.create_task(run_loop(run_id, settings))
     _active_tasks[run_id] = task

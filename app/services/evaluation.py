@@ -12,6 +12,7 @@ Two distinct questions are answered separately (R0):
 from __future__ import annotations
 
 import math
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from numbers import Real
 
@@ -74,7 +75,7 @@ class DailyReport:
     chosen_k: float
     train_size: int
     test_size: int
-    regime_mix: dict
+    regime_mix: dict[str, float]
     accuracy: AccuracyMetrics
     policies: list[PolicyResult]
     train_best_score: float
@@ -95,7 +96,7 @@ class PolicyContext:
 
 
 # A policy maps a context to a target position in [0, 1] (long/flat, v1).
-Policy = "callable[[PolicyContext], float]"
+Policy = Callable[[PolicyContext], float]
 
 
 def policy_buy_hold(ctx: PolicyContext) -> float:
@@ -113,7 +114,7 @@ def policy_regime_baseline(ctx: PolicyContext) -> float:
 
 # The one place policies are registered. Phase C adds the LLM agent here; it then
 # flows through the exact same fill/metrics path as every other policy.
-DEFAULT_POLICIES: dict = {
+DEFAULT_POLICIES: dict[str, Policy] = {
     "baseline": policy_regime_baseline,
     "buy_hold": policy_buy_hold,
 }
@@ -389,6 +390,12 @@ def _validate_controls(train_frac, grid_windows, grid_k, fee_pct, slippage_pct, 
         raise ValueError("combined one-way cost must be below 100 percent")
 
 
+def _validate_policies(policies: dict[str, Policy]) -> None:
+    if (not policies or any(not isinstance(name, str) for name in policies)
+            or any(not callable(fn) for fn in policies.values())):
+        raise ValueError("policies must be a non-empty mapping of str names to callables")
+
+
 def evaluate(
     history: pd.DataFrame,
     symbol: str = "BTC-USD",
@@ -398,7 +405,7 @@ def evaluate(
     fee_pct: float = 0.3,
     slippage_pct: float = 0.5,
     min_train: int = 60,
-    policies: dict | None = None,
+    policies: dict[str, Policy] | None = None,
 ) -> DailyReport:
     """Daily walk-forward eval with a real train/test split (R1, R3-R6).
 
@@ -409,6 +416,7 @@ def evaluate(
     """
     policies = policies if policies is not None else DEFAULT_POLICIES
     _validate_controls(train_frac, grid_windows, grid_k, fee_pct, slippage_pct, min_train)
+    _validate_policies(policies)
     # Do not let fixed-width NumPy arithmetic wrap costs during later walks.
     fee_pct, slippage_pct = float(fee_pct), float(slippage_pct)
     closes = _validated_closes(history)
@@ -512,7 +520,7 @@ def evaluate(
             f"Possible overfit: train balanced-acc {train_best_score:.1%} vs test "
             f"{accuracy.balanced_accuracy:.1%} (gap > 10pp)."
         )
-    if len({s for s in traded}) <= 1:
+    if len(set(traded)) <= 1:
         warnings.append("Constant-regime test window: comparison not meaningful.")
 
     # Gate 7 — all accuracy is stay-day credit. The only days any predictor can

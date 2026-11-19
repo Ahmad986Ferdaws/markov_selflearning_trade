@@ -32,7 +32,6 @@ from app.services.evaluation import _walk_forward, causal_states, evaluate
 from app.services.regime import STATE_TO_IDX
 
 OUT = Path("results/long_history")
-OUT.mkdir(parents=True, exist_ok=True)
 
 # (symbol, years requested) — years capped by Yahoo's actual coverage per asset.
 SYMBOLS = [
@@ -55,7 +54,7 @@ def _count_divergences(history: pd.DataFrame, window: int, k: float) -> dict:
     """Pointwise identity check on the held-out region with the chosen config:
     how often does argmax(P[today]) differ from today's state?"""
     closes = history["Close"] if "Close" in history.columns else history.squeeze()
-    returns = closes.pct_change().dropna()
+    returns = closes.pct_change(fill_method=None).dropna()
     n = len(returns)
     split = int(n * 0.7)
     states = causal_states(returns, window, k)
@@ -68,8 +67,9 @@ def _count_divergences(history: pd.DataFrame, window: int, k: float) -> dict:
 
 
 def run_one(symbol: str, years: int) -> dict:
+    OUT.mkdir(parents=True, exist_ok=True)
     try:
-        history, src = load_or_fetch(symbol, years=years)
+        history, _ = load_or_fetch(symbol, years=years)
         span = f"{history.index[0].date()} -> {history.index[-1].date()}"
         rep = evaluate(
             history, symbol=symbol, train_frac=0.7,
@@ -102,7 +102,7 @@ def run_one(symbol: str, years: int) -> dict:
             "warnings": rep.warnings,
         }
         (OUT / f"{symbol.replace('/', '_').replace('=', '_')}.json").write_text(
-            json.dumps({"summary": row, "report": asdict(rep)}, indent=2, default=str)
+            json.dumps({"summary": row, "report": asdict(rep)}, indent=2), encoding="utf-8"
         )
         return row
     except Exception as e:  # noqa: BLE001
@@ -110,6 +110,7 @@ def run_one(symbol: str, years: int) -> dict:
 
 
 def main() -> None:
+    OUT.mkdir(parents=True, exist_ok=True)
     rows = []
     print(f"=== Long-history study: {len(SYMBOLS)} assets, max available span ===", flush=True)
     for i, (sym, yrs) in enumerate(SYMBOLS, 1):
@@ -140,7 +141,8 @@ def main() -> None:
             (r["baseline_return"] or 0) > (r["buyhold_return"] or 0) for r in ok
         ),
     }
-    (OUT / "summary.json").write_text(json.dumps({"aggregate": agg, "assets": rows}, indent=2, default=str))
+    (OUT / "summary.json").write_text(json.dumps({"aggregate": agg, "assets": rows}, indent=2),
+                                      encoding="utf-8")
     print("\n=== AGGREGATE ===", flush=True)
     for k, v in agg.items():
         print(f"  {k}: {v}", flush=True)

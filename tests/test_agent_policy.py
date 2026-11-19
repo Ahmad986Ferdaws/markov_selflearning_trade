@@ -57,7 +57,7 @@ def test_salvages_labeled_number_from_prose():
 
 def test_labeled_value_beats_stray_number():
     # a stray z-score 0.5 precedes the real exposure 0.8 — must NOT return 0.5
-    pos, why = _parse_position("Given a 0.5 z-score I'd set exposure to 0.8", 0.0)
+    pos, _ = _parse_position("Given a 0.5 z-score I'd set exposure to 0.8", 0.0)
     assert pos == 0.8
 
 
@@ -68,7 +68,7 @@ def test_multiple_unlabeled_numbers_hold():
 
 
 def test_single_bare_number_salvaged():
-    pos, why = _parse_position("0.6", 0.0)
+    pos, _ = _parse_position("0.6", 0.0)
     assert pos == 0.6
 
 

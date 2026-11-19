@@ -139,7 +139,10 @@ class AdaptiveQ:
         self.window = int(self.window)
 
     def multiplier(self, past_returns: np.ndarray) -> float:
-        """past_returns must END at t-1 (caller guarantees the lag)."""
+        """past_returns must END at t-1 (caller guarantees the lag).
+
+        A non-finite value anywhere in the trailing window returns 1.0: after a
+        missing observation adaptive Q is neutral for `window` bars."""
         if len(past_returns) < self.window or self.sigma_ref <= 0:
             return 1.0
         sig = float(np.std(past_returns[-self.window:], ddof=1))
@@ -173,15 +176,26 @@ class PairFilter:
 
     @classmethod
     def diffuse(cls, q_beta: float, q_alpha: float, r: float,
-                prior_scale: float = 10.0, adaptive: AdaptiveQ | None = None) -> "PairFilter":
+                prior_scale: float = 10.0, adaptive: AdaptiveQ | None = None) -> PairFilter:
         return cls(q_beta, q_alpha, r, x0=np.zeros(2),
                    P0=np.diag([prior_scale, prior_scale]), adaptive=adaptive)
 
     @classmethod
     def from_ols(cls, y_train: np.ndarray, p2_train: np.ndarray,
                  q_beta: float, q_alpha: float, r: float,
-                 adaptive: AdaptiveQ | None = None) -> "PairFilter":
+                 adaptive: AdaptiveQ | None = None) -> PairFilter:
         """Training-only OLS initialization (state AND a data-scaled prior P)."""
+        y_train = np.asarray(y_train, float)
+        p2_train = np.asarray(p2_train, float)
+        if y_train.ndim != 1 or p2_train.ndim != 1 or len(y_train) != len(p2_train):
+            raise ValueError("from_ols: training arrays must align")
+        if len(y_train) < 3:   # ddof=2 below needs one degree of freedom
+            raise ValueError(f"from_ols: need at least 3 training bars, got {len(y_train)}")
+        if not (np.all(np.isfinite(y_train)) and np.all(np.isfinite(p2_train))):
+            raise ValueError("from_ols: training data contains non-finite values")
+        if np.ptp(p2_train) == 0:   # A.T @ A would be singular
+            raise ValueError("from_ols: hedge leg is constant over the training window; "
+                             "the OLS prior is undefined")
         A = np.column_stack([p2_train, np.ones(len(p2_train))])
         coef, res, *_ = np.linalg.lstsq(A, y_train, rcond=None)
         resid_var = float(res[0] / max(len(y_train) - 2, 1)) if len(res) else float(
