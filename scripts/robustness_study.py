@@ -14,7 +14,6 @@ results/robustness/.
 from __future__ import annotations
 
 import json
-import sys
 import traceback
 from dataclasses import asdict
 from pathlib import Path

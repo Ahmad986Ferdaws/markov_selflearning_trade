@@ -173,7 +173,6 @@ def test_train_loglik_scores_only_post_init_region():
 
 # review fix K6: the audit table aligns for non-zero-start slices
 def test_audit_table_aligns_on_sliced_backtest():
-    import numpy as np
 
     from kalman.data import synthetic_pair
     from kalman.ledger import LedgerConfig

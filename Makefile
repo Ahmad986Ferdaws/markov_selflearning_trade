@@ -2,7 +2,7 @@
 PY := .venv/bin/python
 PORT ?= 8000
 
-.PHONY: help site eval regime robust test demo clean-media
+.PHONY: help site eval regime robust test lint demo clean-media
 
 help:
 	@echo "REGIME — local commands"
@@ -11,6 +11,7 @@ help:
 	@echo "  make regime   run the Phase-0 regime report"
 	@echo "  make robust   run the 20-asset robustness study (writes results/robustness/)"
 	@echo "  make test     run the test suite"
+	@echo "  make lint     ruff, pyflakes rules only (unused imports, undefined names)"
 	@echo "  make demo     render screenshots + a scroll-through video into media/"
 
 site:
@@ -28,6 +29,9 @@ robust:
 
 test:
 	@$(PY) -m pytest -q
+
+lint:
+	@$(PY) -m ruff check app kalman scripts tests
 
 demo:
 	@node scripts/record_demo.mjs
