@@ -74,6 +74,26 @@ def define_states(
     silently ignored (verified: absurd thresholds used to produce byte-identical
     output with no hint).
     """
+    return _label_series(returns, window=window, k=k, mode=mode,
+                         bull_thresh=bull_thresh, bear_thresh=bear_thresh).dropna().astype(str)
+
+
+def _label_series(
+    returns: pd.Series,
+    window: int,
+    k: float,
+    mode: str,
+    bull_thresh: float,
+    bear_thresh: float,
+) -> pd.Series:
+    """Full-length per-day label on `returns.index`; missing during warm-up.
+
+    `define_states` is this with the warm-up rows dropped. The walk-forward
+    backtest uses the full-length form so it can label the series ONCE and
+    read the causal label at each step positionally, instead of re-labelling
+    the whole prefix at every step (a trailing-window label at day t depends
+    only on returns up to t, so the prefix and full-series labels agree).
+    """
     if mode == "zscore" and (bull_thresh, bear_thresh) != (0.02, -0.02):
         logger.warning(
             "define_states: bull_thresh/bear_thresh (%s/%s) are IGNORED in "
@@ -90,7 +110,7 @@ def define_states(
         states[rolling >= bull_thresh] = "bull"
         states[rolling <= bear_thresh] = "bear"
         states[(rolling > bear_thresh) & (rolling < bull_thresh)] = "sideways"
-    return states.dropna().astype(str)
+    return states
 
 
 def estimate_transition_matrix(states: pd.Series) -> np.ndarray:
@@ -231,15 +251,30 @@ def walk_forward_backtest(
     strat_returns: list[float] = []
     prev_position = 0.0
 
+    # Label the whole series once. At step t the old code re-labelled
+    # returns[:t] from scratch and read its last label — quadratic in history
+    # length (~14 s on a 20-year snapshot, and run_phase0_report walks twice).
+    # A trailing-window label never looks past its own day, so the label at
+    # position t-1 of the full series IS the last label of the prefix; we only
+    # need a running count of labelled days and the latest labelled state.
+    labels = _label_series(returns, window=window, k=k, mode="zscore",
+                           bull_thresh=bull_thresh, bear_thresh=bear_thresh)
+    label_list = labels.tolist()
+    valid = labels.notna().to_numpy()
+    n_labelled_before: list[int] = []      # labelled days at positions < t
+    last_label_before: list[str] = []      # latest labelled state before t ("" until one exists)
+    count, latest = 0, ""
+    for i in range(len(returns)):
+        n_labelled_before.append(count)
+        last_label_before.append(latest)
+        if valid[i]:
+            count += 1
+            latest = str(label_list[i])
+
     for t in range(min_train, len(returns)):
-        train_returns = returns.iloc[:t]
-        train_states = define_states(
-            train_returns, window=window, k=k,
-            bull_thresh=bull_thresh, bear_thresh=bear_thresh,
-        )
-        if len(train_states) < 10:
+        if n_labelled_before[t] < 10:
             continue
-        current_state = train_states.iloc[-1]
+        current_state = last_label_before[t]
         position = _position_from_state(current_state)
         market_r = float(returns.iloc[t])
         turnover = abs(position - prev_position)
@@ -276,8 +311,7 @@ def walk_forward_backtest(
     max_dd = float(dd.min()) if len(dd) else 0.0
     mix = states.value_counts(normalize=True).to_dict() if len(states) else {}
 
-    all_states = define_states(returns, window=window, k=k,
-                               bull_thresh=bull_thresh, bear_thresh=bear_thresh)
+    all_states = labels.dropna().astype(str)   # == define_states(returns, ...)
     warnings = sparse_cell_warnings(all_states)
 
     return BacktestResult(
