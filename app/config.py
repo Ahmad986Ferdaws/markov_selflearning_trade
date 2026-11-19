@@ -4,7 +4,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    # env_ignore_empty: a blank value (`ANTHROPIC_MODEL=`, `POLL_INTERVAL_SECONDS=`)
+    # means "not set" and keeps the code default. Without it the documented
+    # `cp .env.example .env` quick start set anthropic_model to "" and the
+    # Anthropic agent was reported "unreachable" after a call with model="".
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", extra="ignore", env_ignore_empty=True,
+    )
 
     database_url: str = "sqlite:///./paper_trading.db"
     poll_interval_seconds: int = 15
